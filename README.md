@@ -63,6 +63,23 @@ The repository will continuously evolve and may include:
 
 ---
 
+## 📚 Skills
+
+| Skill | Description | Languages |
+|-------|-------------|-----------|
+| [docs-context](skills/docs-context/) | Project development context loader & documentation synchronizer. Automatically loads project standards before coding and syncs documentation after code changes. | [EN](skills/docs-context/SKILL.md) / [中文](skills/docs-context/SKILL-CN.md) |
+
+### docs-context
+
+A two-mode skill for managing project documentation throughout the development lifecycle:
+
+- **Read Mode** — Triggered before coding (design, implementation, bug fix, etc.). Loads relevant project docs (`architecture.md`, `tech-stack.md`, `coding.md`, `modules.md`, `decisions.md`) based on task type, ensuring correct context awareness.
+- **Write Mode** — Triggered after coding (pre-commit, feature complete, etc.). Checks code changes against a sync checklist and updates affected documentation to keep docs in sync with code.
+
+Includes templates for initializing missing documentation under `docs/`.
+
+---
+
 ## 🌱 Philosophy
 
 > Build solid foundations. Enable continuous growth.
