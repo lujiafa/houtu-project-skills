@@ -20,7 +20,7 @@ Manages reading and writing of project documentation, ensuring correct contextua
 All documents are located under the workspace `docs/` directory:
 | Document | Path | Content |
 |----------|------|---------|
-| Architecture | `docs/architecture.md` | Workspace directory structure, project background, architecture, future plans |
+| Architecture | `docs/architecture.md` | Workspace directory structure, project background, architecture, shared infrastructure resources, future plans |
 | Tech Stack | `docs/tech-stack.md` | Framework versions, dependency constraints, environment requirements, AI code generation limits |
 | Coding Standards | `docs/coding.md` | Coding standards, naming conventions, API design standards, error handling standards |
 | Module Registry | `docs/modules.md` | Module responsibilities, boundaries, API purposes, dependencies, impact scope |
@@ -57,7 +57,7 @@ Every time read mode is triggered, MUST load:
 | Bug fix | modules.md | bug/fix/error/exception/debug, or during systematic-debugging flow |
 | Tech selection/dependency change | tech-stack.md + decisions.md | introduce new lib/upgrade version/install/upgrade/migrate |
 | Architecture discussion/design review | architecture.md + decisions.md + modules.md | architecture/design comparison/design review |
-| API design/development | modules.md + tech-stack.md | design new API/modify API params/integration/API design |
+| API design/development | architecture.md + modules.md + tech-stack.md | design new API/modify API params/integration/API design |
 
 ### Multi-type Overlay
 When a task spans multiple types (e.g., "add module and introduce new library"), merge and deduplicate all matching document sets.
