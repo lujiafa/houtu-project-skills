@@ -20,7 +20,7 @@ metadata:
 所有文档位于工作空间 `docs/` 目录下：
 | 文档 | 路径 | 内容 |
 |------|------|------|
-| 架构文档 | `docs/architecture.md` | 工作空间目录结构、项目背景、项目架构、未来规划 |
+| 架构文档 | `docs/architecture.md` | 工作空间目录结构、项目背景、项目架构、公共基础设施资源、未来规划 |
 | 技术栈文档 | `docs/tech-stack.md` | 框架版本、依赖约束、环境要求、AI 代码生成限制 |
 | 编码规范文档 | `docs/coding.md` | 编码规范、命名约定、API 设计规范、错误处理规范 |
 | 模块注册表 | `docs/modules.md` | 各模块职责、边界、API 用途、依赖关系、影响范围 |
@@ -57,7 +57,7 @@ metadata:
 | Bug 修复 | modules.md | Bug/修复/报错/异常/fix/debug/error，或 systematic-debugging 等流程中  |
 | 技术选型/依赖变更 | tech-stack.md + decisions.md | 引入新库/升级版本/install/upgrade/migrate 等技术选型产出                 |
 | 架构讨论/设计评审 | architecture.md + decisions.md + modules.md | 架构/方案对比/design review 等设计阶段                               |
-| 接口设计/API 开发 | modules.md + tech-stack.md | 设计新接口/修改接口参数/联调/API design                                |
+| 接口设计/API 开发 | architecture.md + modules.md + tech-stack.md | 设计新接口/修改接口参数/联调/API design                                |
 
 ### 多类型叠加
 当任务同时涉及多个类型时（如"新增模块并引入新库"），合并加载所有命中类型的文档，去重即可。
