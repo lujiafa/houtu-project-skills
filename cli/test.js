@@ -105,3 +105,16 @@ console.log('args tests: all passed');
 }
 
 console.log('install validation tests: all passed');
+
+// Test: list command exits 0 (even if API fails, graceful degradation)
+{
+  const r = runCli(['list']);
+  assert.strictEqual(r.status, 0, 'list should always exit 0');
+  const out = r.stdout;
+  assert.ok(
+    out.includes('Available skills:') || out.includes('github.com/lujiafa/houtu-project-skills'),
+    'list should print skills or fallback URL'
+  );
+}
+
+console.log('list tests: all passed');
