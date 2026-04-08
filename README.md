@@ -1,5 +1,7 @@
 # Houtu Project Skills
 
+[中文](README-CN.md) | English
+
 > A curated collection of skills, practices, and tooling used throughout the project lifecycle — from development to testing and beyond.
 
 ---
@@ -76,13 +78,13 @@ A two-mode skill for managing project documentation throughout the development l
 - **Read Mode** — Triggered before coding (design, implementation, bug fix, etc.). Loads relevant project docs (`architecture.md`, `tech-stack.md`, `coding.md`, `modules.md`, `decisions.md`) based on task type, ensuring correct context awareness.
 - **Write Mode** — Triggered after coding (pre-commit, feature complete, etc.). Checks code changes against a sync checklist and updates affected documentation to keep docs in sync with code.
 
-Includes templates for initializing missing documentation under `docs/`.
+Includes templates for initializing missing documentation when docs are absent under `docs/`.
 
 ---
 
 ## 📥 Installation
 
-Install skills via `npx` — no global install needed. Requires **Node.js >= 18** and **git**.
+Install skills via `npx`. Requires **Node.js >= 18** and **git**.
 
 **List available skills:**
 
