@@ -1,6 +1,14 @@
 *
 
 !skills/
+!skills/**/
+!skills/**/*
+!cli/
+!cli/**
+!docs/
+!docs/**/
+!docs/**/*
+!package.json
 !LICENSE
 !README.md
 !.gitignore
