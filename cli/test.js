@@ -96,3 +96,12 @@ function runCli(args) {
 }
 
 console.log('args tests: all passed');
+
+// Install validation tests (subprocess, no network needed)
+// Test: install with valid args passes arg validation (does not print Usage)
+{
+  const r = runCli(['install', 'docs-context', '--tool', 'claude']);
+  assert.ok(!r.stdout.includes('Usage:'), 'valid args should not print usage');
+}
+
+console.log('install validation tests: all passed');
