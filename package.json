@@ -1,0 +1,20 @@
+{
+  "name": "houtu-project-skills",
+  "version": "1.0.0",
+  "description": "Install AI coding skills from houtu-project-skills into your AI coding tool",
+  "bin": {
+    "houtu-project-skills": "cli/cli.js"
+  },
+  "files": [
+    "cli/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["ai", "skills", "claude", "codex", "cursor"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lujiafa/houtu-project-skills.git"
+  }
+}
