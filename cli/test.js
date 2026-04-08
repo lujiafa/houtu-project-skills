@@ -52,3 +52,47 @@ assert.strictEqual(
 );
 
 console.log('tools tests: all passed');
+
+// Arg-parsing tests — invoke cli.js as subprocess
+const { execSync, spawnSync } = require('child_process');
+const cliPath = path.join(__dirname, 'cli.js');
+
+function runCli(args) {
+  return spawnSync('node', [cliPath, ...args], { encoding: 'utf8' });
+}
+
+// Test: no args prints usage and exits 1
+{
+  const r = runCli([]);
+  assert.strictEqual(r.status, 1, 'no args should exit 1');
+  assert.ok(r.stdout.includes('Usage:'), 'no args should print usage');
+}
+
+// Test: unknown command exits 1
+{
+  const r = runCli(['unknown']);
+  assert.strictEqual(r.status, 1, 'unknown command should exit 1');
+}
+
+// Test: install missing skill exits 1
+{
+  const r = runCli(['install', '--tool', 'claude']);
+  assert.strictEqual(r.status, 1, 'missing skill should exit 1');
+  assert.ok(r.stdout.includes('Usage:'), 'missing skill should print usage');
+}
+
+// Test: install missing --tool exits 1
+{
+  const r = runCli(['install', 'docs-context']);
+  assert.strictEqual(r.status, 1, 'missing --tool should exit 1');
+  assert.ok(r.stdout.includes('Usage:'), 'missing --tool should print usage');
+}
+
+// Test: install unknown tool exits 1
+{
+  const r = runCli(['install', 'docs-context', '--tool', 'unknowntool']);
+  assert.strictEqual(r.status, 1, 'unknown tool should exit 1');
+  assert.ok(r.stdout.includes('Supported tools:'), 'should list supported tools');
+}
+
+console.log('args tests: all passed');
