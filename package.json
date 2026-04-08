@@ -11,7 +11,7 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["ai", "skills", "claude", "codex", "cursor"],
+  "keywords": ["ai", "skills"],
   "license": "MIT",
   "repository": {
     "type": "git",

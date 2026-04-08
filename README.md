@@ -82,21 +82,7 @@ Includes templates for initializing missing documentation under `docs/`.
 
 ## 📥 Installation
 
-Install a skill into your AI coding tool using `npx` — no global install needed:
-
-```bash
-# Project-level (default)
-npx houtu-project-skills install <skill> --tool <tool>
-
-# Global
-npx houtu-project-skills install <skill> --tool <tool> --global
-```
-
-**Example — install `docs-context` for Claude Code:**
-
-```bash
-npx houtu-project-skills install docs-context --tool claude
-```
+Install skills via `npx` — no global install needed. Requires **Node.js >= 18** and **git**.
 
 **List available skills:**
 
@@ -104,19 +90,75 @@ npx houtu-project-skills install docs-context --tool claude
 npx houtu-project-skills list
 ```
 
-### Supported Tools
+### [Claude Code](https://code.claude.com/)
 
-| `--tool` value | Project path | Global path |
-| :--- | :--- | :--- |
-| `claude` | `.claude/skills/` | `~/.claude/skills/` |
-| `codex` | `.agents/skills/` | `~/.agents/skills/` |
-| `opencode` | `.opencode/skills/` | `~/.config/opencode/skills/` |
-| `antigravity` | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
-| `cursor` | `.cursor/skills/` | `~/.cursor/skills/` |
-| `trae` | `.trae/skills/` | `~/.trae/skills/` |
-| `qoder` | `.qoder/skills/` | `~/.qoder/skills/` |
+```bash
+# Project-level
+npx houtu-project-skills install docs-context --tool claude
 
-> **Requires:** Node.js >= 18 and git installed on your system.
+# Global
+npx houtu-project-skills install docs-context --tool claude --global
+```
+
+### [Codex](https://codex.openai.com/)
+
+```bash
+# Project-level
+npx houtu-project-skills install docs-context --tool codex
+
+# Global
+npx houtu-project-skills install docs-context --tool codex --global
+```
+
+### [OpenCode](https://opencode.ai/)
+
+```bash
+# Project-level
+npx houtu-project-skills install docs-context --tool opencode
+
+# Global
+npx houtu-project-skills install docs-context --tool opencode --global
+```
+
+### [Antigravity](https://antigravity.google/)
+
+```bash
+# Project-level
+npx houtu-project-skills install docs-context --tool antigravity
+
+# Global
+npx houtu-project-skills install docs-context --tool antigravity --global
+```
+
+### [Cursor](https://cursor.com/)
+
+```bash
+# Project-level
+npx houtu-project-skills install docs-context --tool cursor
+
+# Global
+npx houtu-project-skills install docs-context --tool cursor --global
+```
+
+### [Trae](https://trae.ai/)
+
+```bash
+# Project-level
+npx houtu-project-skills install docs-context --tool trae
+
+# Global
+npx houtu-project-skills install docs-context --tool trae --global
+```
+
+### [Qoder](https://qoder.com/)
+
+```bash
+# Project-level
+npx houtu-project-skills install docs-context --tool qoder
+
+# Global
+npx houtu-project-skills install docs-context --tool qoder --global
+```
 
 ---
 
