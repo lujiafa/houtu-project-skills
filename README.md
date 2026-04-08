@@ -80,6 +80,46 @@ Includes templates for initializing missing documentation under `docs/`.
 
 ---
 
+## 📥 Installation
+
+Install a skill into your AI coding tool using `npx` — no global install needed:
+
+```bash
+# Project-level (default)
+npx houtu-project-skills install <skill> --tool <tool>
+
+# Global
+npx houtu-project-skills install <skill> --tool <tool> --global
+```
+
+**Example — install `docs-context` for Claude Code:**
+
+```bash
+npx houtu-project-skills install docs-context --tool claude
+```
+
+**List available skills:**
+
+```bash
+npx houtu-project-skills list
+```
+
+### Supported Tools
+
+| `--tool` value | Project path | Global path |
+| :--- | :--- | :--- |
+| `claude` | `.claude/skills/` | `~/.claude/skills/` |
+| `codex` | `.agents/skills/` | `~/.agents/skills/` |
+| `opencode` | `.opencode/skills/` | `~/.config/opencode/skills/` |
+| `antigravity` | `.agent/skills/` | `~/.gemini/antigravity/skills/` |
+| `cursor` | `.cursor/skills/` | `~/.cursor/skills/` |
+| `trae` | `.trae/skills/` | `~/.trae/skills/` |
+| `qoder` | `.qoder/skills/` | `~/.qoder/skills/` |
+
+> **Requires:** Node.js >= 18 and git installed on your system.
+
+---
+
 ## 🌱 Philosophy
 
 > Build solid foundations. Enable continuous growth.
