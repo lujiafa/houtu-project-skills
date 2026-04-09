@@ -69,16 +69,7 @@
 
 | Skill | 描述 | 语言 |
 |-------|------|------|
-| [docs-context](skills/docs-context/) | 项目开发上下文加载器与文档同步器。编码前自动加载项目规范，代码变更后同步更新文档。 | [EN](skills/docs-context/SKILL.md) / [中文](skills/docs-context/SKILL-CN.md) |
-
-### docs-context
-
-一个双模式 Skill，用于在开发全周期中管理项目文档：
-
-- **读取模式** — 在编码前触发（设计、实现、修复等）。根据任务类型加载相关项目文档（`architecture.md`、`tech-stack.md`、`coding.md`、`modules.md`、`decisions.md`），确保正确的上下文感知。
-- **写入模式** — 在编码后触发（提交前、功能完成等）。对照同步检查清单检查代码变更，更新受影响的文档，保持文档与代码同步。
-
-包含在 `docs/` 目录下文档缺失时，初始化缺失文档的模板。
+| [docs-context](skills/docs-context/) | 项目开发上下文加载器与文档同步器。编码前自动加载项目规范，用于上下文修正、补全和重建，代码变更后同步更新文档。[详情 [EN](skills/docs-context/README.md)/[中文](skills/docs-context/README-CN.md)] | [EN](skills/docs-context/SKILL.md) / [中文](skills/docs-context/SKILL-CN.md) |
 
 ---
 
