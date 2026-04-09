@@ -1,6 +1,7 @@
 *
 
 !skills/
+!skills/**
 !cli/
 !cli/**
 !package.json

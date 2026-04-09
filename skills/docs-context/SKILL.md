@@ -20,7 +20,7 @@ Manages reading and writing of project documentation, ensuring correct contextua
 All documents are located under the workspace `docs/` directory:
 | Document | Path | Content |
 |----------|------|---------|
-| Architecture | `docs/architecture.md` | Workspace directory structure, project background, architecture, shared infrastructure resources, future plans |
+| Architecture | `docs/architecture.md` | Workspace directory structure, project background, architecture, future plans |
 | Tech Stack | `docs/tech-stack.md` | Framework versions, dependency constraints, environment requirements, AI code generation limits |
 | Coding Standards | `docs/coding.md` | Coding standards, naming conventions, API design standards, error handling standards |
 | Module Registry | `docs/modules.md` | Module responsibilities, boundaries, API purposes, dependencies, impact scope |
@@ -91,7 +91,7 @@ Check each item against the current code changes. Only update affected docs; ski
 - [ ] Added/removed service → Update service topology
 - [ ] Changed inter-service communication → Update architecture description
 - [ ] Adjusted directory structure → Update directory structure description
-- [ ] Introduced new infrastructure component → Update infrastructure section
+- [ ] Described future plans → Update future plans section
 
 ### tech-stack.md
 - [ ] Introduced new framework/library → Add to tech stack list with version and purpose
