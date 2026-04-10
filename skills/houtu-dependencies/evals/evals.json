@@ -1,0 +1,131 @@
+{
+  "skill_name": "houtu-dependencies",
+  "evals": [
+    {
+      "id": 1,
+      "scenario": "写 Controller 接口",
+      "prompt": "帮我写一个商户查询接口，需要登录才能访问，返回商户详情。项目使用了 houtu-dependencies 3.5.1",
+      "must_use": ["@CheckSession", "ResponseData<T>", "BusinessException"],
+      "must_not_use": ["@PreAuthorize", "ResponseEntity", "@ControllerAdvice", "spring-boot-starter-security"]
+    },
+    {
+      "id": 2,
+      "scenario": "数据库字段加密",
+      "prompt": "用户手机号和身份证号需要加密存储到 MySQL，项目已引入 houtu 框架，帮我写实体类和 Mapper",
+      "must_use": ["@SecurityWatch", "@SecurityParam", "SecurityObject interface"],
+      "must_not_use": ["TypeHandler", "AESUtil.encrypt() in Service", "手动加解密"]
+    },
+    {
+      "id": 3,
+      "scenario": "Feign 微服务调用",
+      "prompt": "我需要从订单服务调用用户服务获取用户信息，项目使用 houtu 框架",
+      "must_use": ["spring-cloud-houtu-feign", "@AutoFeign", "ResponseData"],
+      "must_not_use": ["RequestInterceptor 手动传 header"]
+    },
+    {
+      "id": 4,
+      "scenario": "分布式锁",
+      "prompt": "订单支付需要防止并发重复扣款，项目引入了 houtu-cache",
+      "must_use": ["@Lock annotation 或 LockSupport", "Redisson"],
+      "must_not_use": ["手写 Redis SETNX", "synchronized"]
+    },
+    {
+      "id": 5,
+      "scenario": "签名验证 + 防重放",
+      "prompt": "支付回调接口需要签名验证和防重放检查",
+      "must_use": ["@CheckSign", "@CheckRepeatRequest"],
+      "must_not_use": ["手写签名校验 Filter/Interceptor", "手写 Redis 幂等检查"]
+    },
+    {
+      "id": 6,
+      "scenario": "访问日志",
+      "prompt": "给所有 API 接口加上访问日志记录，需要脱敏手机号",
+      "must_use": ["@AccessLog", "LogFilterHandler"],
+      "must_not_use": ["手写 Filter/Interceptor 记录日志", "HandlerInterceptor"]
+    },
+    {
+      "id": 7,
+      "scenario": "灰度路由",
+      "prompt": "需要实现全链路灰度发布，将特定用户的请求路由到灰度实例",
+      "must_use": ["HintContext.setX()", "HintContext.remove()", "spring-cloud-houtu-loadbalancer"],
+      "must_not_use": ["自写 LoadBalancer 策略"]
+    },
+    {
+      "id": 8,
+      "scenario": "RBAC 权限控制",
+      "prompt": "管理后台接口需要角色和权限控制，admin 角色可以管理用户，普通用户只能查看",
+      "must_use": ["@CheckSession", "@RequiresRole", "@RequiresPermission", "Logic.AND/OR", "Session.addRoles/addPermissions"],
+      "must_not_use": ["@Secured", "@PreAuthorize", "Spring Security"]
+    },
+    {
+      "id": 9,
+      "scenario": "限流",
+      "prompt": "秒杀接口需要限流，每秒最多 100 个请求",
+      "must_use": ["RateLimiter.fixSlidingWindow() 或 rollingSlidingWindow()", "tryAcquire()"],
+      "must_not_use": ["自写 Redis Lua 限流脚本", "@RateLimiter 注解（不存在）"]
+    },
+    {
+      "id": 10,
+      "scenario": "加密工具使用",
+      "prompt": "需要对用户密码做 SM4 加密后存储，同时需要对外部接口的请求参数做 RSA 签名",
+      "must_use": ["SM4Utils", "RSAUtils", "CodecData", "io.github.lujiafa.houtu.util.crypto"],
+      "must_not_use": ["自行引入 BouncyCastle", "手写加密算法", "javax.crypto.Cipher 直接调用"]
+    },
+    {
+      "id": 11,
+      "scenario": "HTTP 客户端调用",
+      "prompt": "需要调用第三方支付接口，POST JSON 数据，获取返回结果",
+      "must_use": ["HttpClients.post()", "RequestConfig.build()", "HttpResponseData.convert()"],
+      "must_not_use": ["new RestTemplate()", "new CloseableHttpClient()", "WebClient.builder()"]
+    },
+    {
+      "id": 12,
+      "scenario": "监控指标配置",
+      "prompt": "需要为微服务接入 Prometheus 监控，采集 HTTP 请求指标和 Redis 延迟指标",
+      "must_use": ["houtu-actuator", "management.metrics.distribution.percentiles"],
+      "must_not_use": ["自写 MeterBinder", "单独引入 micrometer-registry-prometheus"]
+    },
+    {
+      "id": 13,
+      "scenario": "分页查询",
+      "prompt": "帮我写一个用户列表分页查询接口，支持关键词搜索",
+      "must_use": ["PageForm 或 PageQueryDTO", "PageDataVO", "ResponseData<PageDataVO<T>>"],
+      "must_not_use": ["自定义 PageResult 类", "自定义 PageRequest 类"]
+    },
+    {
+      "id": 14,
+      "scenario": "业务场景主动增强 — 支付接口",
+      "prompt": "帮我写一个订单支付接口，用户提交支付请求后扣减余额并调用第三方支付网关",
+      "must_use": ["@CheckSession", "ResponseData<T>", "@Lock", "@CheckRepeatRequest", "@AccessLog", "HttpClients", "BusinessException"],
+      "must_not_use": ["ResponseEntity", "synchronized", "new RestTemplate()", "手写幂等检查"]
+    },
+    {
+      "id": 15,
+      "scenario": "首次接入 — 主动引入 BOM",
+      "prompt": "这是一个新的 Spring Boot 3.2 项目，我想用 houtu 框架，帮我搭建基础结构并写一个用户注册接口",
+      "must_use": ["houtu-dependencies BOM in dependencyManagement", "houtu-web", "ResponseData<T>", "BaseForm", "BusinessException"],
+      "must_not_use": ["ResponseEntity", "@ControllerAdvice", "自定义 Result 类"]
+    },
+    {
+      "id": 16,
+      "scenario": "JWT 会话模式",
+      "prompt": "项目使用 houtu 框架，会话需要用 JWT 无状态模式，帮我写登录和鉴权接口",
+      "must_use": ["houtu.web.session.type: JWT", "jwt-signature-key", "SessionContext.create()", "SessionContext.save()", "Authorization: Bearer", "@CheckSession"],
+      "must_not_use": ["自行引入 jjwt", "手写 JWT 工具类", "手动解析 token", "Spring Security"]
+    },
+    {
+      "id": 17,
+      "scenario": "配置文件敏感值解密",
+      "prompt": "数据库密码和 Redis 密码在配置文件中是加密存储的，需要在应用启动时自动解密，项目使用 houtu 框架",
+      "must_use": ["houtu.core.decrypt.encrypt-keys", "DecryptProcessor", "decrypt-processor-class"],
+      "must_not_use": ["自写 EnvironmentPostProcessor", "手动解密配置值", "自写 PropertySource"]
+    },
+    {
+      "id": 18,
+      "scenario": "Swagger API 文档",
+      "prompt": "需要为微服务接入 Swagger API 文档，项目使用 houtu 框架",
+      "must_use": ["houtu-web-swagger"],
+      "must_not_use": ["自行引入 springdoc-openapi", "自行引入 springfox", "手写 Docket/OpenAPI Bean"]
+    }
+  ]
+}
