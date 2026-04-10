@@ -39,5 +39,11 @@ houtu-dependencies/
 ## 安装
 
 ```bash
+# 项目级安装（推荐团队项目使用）
 npx houtu-project-skills install houtu-dependencies --tool claude
+
+# 全局安装（所有项目可用）
+npx houtu-project-skills install houtu-dependencies --tool claude --global
 ```
+
+> 将 `claude` 替换为 `codex`、`cursor`、`opencode`、`trae`、`antigravity` 或 `qoder` 可适配其他工具。详见[项目 README](../../README.md)。
