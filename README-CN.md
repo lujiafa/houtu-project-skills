@@ -84,6 +84,15 @@
 npx houtu-project-skills list
 ```
 
+**安装命令：**
+
+```bash
+npx houtu-project-skills install <skill-name> --tool <tool-name>
+
+# 全局
+npx houtu-project-skills install <skill-name> --tool <tool-name> --global
+```
+
 ### [Claude Code](https://code.claude.com/)
 
 ```bash

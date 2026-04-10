@@ -35,15 +35,3 @@ houtu-dependencies/
 └── evals/
     └── evals.json                       # 18 test scenarios for validation
 ```
-
-## Installation
-
-```bash
-# Project-level (recommended for team projects)
-npx houtu-project-skills install houtu-dependencies --tool claude
-
-# Global (available across all projects)
-npx houtu-project-skills install houtu-dependencies --tool claude --global
-```
-
-> Replace `claude` with `codex`, `cursor`, `opencode`, `trae`, `antigravity`, or `qoder` for other tools. See [root README](../../README.md) for details.
