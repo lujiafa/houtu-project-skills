@@ -208,6 +208,7 @@ CodecData encrypted = SM4Utils.encrypt("data".getBytes(), key, iv, SM4Transforma
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.RSAUtils;
+import io.github.lujiafa.houtu.util.crypto.extension.RSAKeyPair;
 import io.github.lujiafa.houtu.util.crypto.type.*;
 
 // 生成密钥对
@@ -228,6 +229,7 @@ boolean valid = RSAUtils.signVerify(CodecData.utf8("data"), publicKey, signature
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.SM2Utils;
+import io.github.lujiafa.houtu.util.crypto.extension.SM2KeyPair;
 import io.github.lujiafa.houtu.util.crypto.type.SM2SignAlgorithm;
 
 SM2KeyPair keyPair = SM2Utils.getKeyPair();
