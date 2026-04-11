@@ -18,9 +18,10 @@ function fetchJson(url) {
   });
 }
 
-async function list() {
+async function list(version) {
   try {
-    const entries = await fetchJson(API_URL);
+    const url = version ? `${API_URL}?ref=${encodeURIComponent(version)}` : API_URL;
+    const entries = await fetchJson(url);
     if (!Array.isArray(entries)) {
       throw new Error('Unexpected API response format');
     }
@@ -32,7 +33,8 @@ async function list() {
       console.log('No skills found.');
       return;
     }
-    console.log('Available skills:');
+    const versionHint = version ? ` (version: ${version})` : '';
+    console.log(`Available skills${versionHint}:`);
     for (const skill of skills) {
       console.log(`  - ${skill}`);
     }

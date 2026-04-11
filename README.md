@@ -81,16 +81,17 @@ Install skills via `npx`. Requires **Node.js >= 18** and **git**.
 **List available skills:**
 
 ```bash
-npx houtu-project-skills list
+npx houtu-project-skills list [--version <version>]
 ```
 
 **Install command:**
 
 ```bash
-npx houtu-project-skills install <skill-name> --tool <tool-name>
+# Project-level
+npx houtu-project-skills install <skill-name> --tool <tool-name> [--version <version>]
 
 # Global
-npx houtu-project-skills install <skill-name> --tool <tool-name> --global
+npx houtu-project-skills install <skill-name> --tool <tool-name> [--version <version>] --global
 ```
 
 ### [Claude Code](https://code.claude.com/)

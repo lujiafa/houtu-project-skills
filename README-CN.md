@@ -81,16 +81,17 @@
 **查看可用 Skills：**
 
 ```bash
-npx houtu-project-skills list
+npx houtu-project-skills list [--version <version>]
 ```
 
 **安装命令：**
 
 ```bash
-npx houtu-project-skills install <skill-name> --tool <tool-name>
+# 项目级
+npx houtu-project-skills install <skill-name> --tool <tool-name> [--version <version>]
 
 # 全局
-npx houtu-project-skills install <skill-name> --tool <tool-name> --global
+npx houtu-project-skills install <skill-name> --tool <tool-name> [--version <version>] --global
 ```
 
 ### [Claude Code](https://code.claude.com/)

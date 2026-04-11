@@ -4,9 +4,23 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const readline = require('readline');
 const { resolveTargetPath } = require('./tools');
 
 const REPO_URL = 'https://github.com/lujiafa/houtu-project-skills.git';
+
+/**
+ * Prompt user for confirmation via stdin.
+ */
+function confirm(question) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise(resolve => {
+    rl.question(question, answer => {
+      rl.close();
+      resolve(answer.trim().toLowerCase());
+    });
+  });
+}
 
 /**
  * Copy a directory recursively.
@@ -24,7 +38,7 @@ function copyDir(src, dest) {
   }
 }
 
-async function install(skill, toolName, isGlobal) {
+async function install(skill, toolName, isGlobal, version) {
   // 1. Check git is available
   try {
     execSync('git --version', { stdio: 'ignore' });
@@ -36,20 +50,29 @@ async function install(skill, toolName, isGlobal) {
   // 2. Resolve target path
   const targetPath = resolveTargetPath(toolName, skill, isGlobal, process.cwd(), os.homedir());
 
-  // 3. Check if already installed
+  // 3. Check if already installed — ask user whether to reinstall
   if (fs.existsSync(targetPath)) {
-    console.log(`Already installed at ${targetPath}. Remove it first to reinstall.`);
-    process.exit(0);
+    const answer = await confirm(
+      `"${skill}" already exists at ${targetPath}.\nReinstall? This will remove the existing version. (y/N) `
+    );
+    if (answer !== 'y' && answer !== 'yes') {
+      console.log('Skipped. Existing installation unchanged.');
+      process.exit(0);
+    }
+    fs.rmSync(targetPath, { recursive: true, force: true });
+    console.log(`Removed existing "${skill}".`);
   }
 
   // 4. Create unique temp directory
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'houtu-'));
 
   try {
-    // 5. Sparse clone
-    console.log(`Fetching skill "${skill}" from repository...`);
+    // 5. Sparse clone (with optional branch for version)
+    const versionHint = version ? ` (version: ${version})` : '';
+    console.log(`Fetching skill "${skill}"${versionHint} from repository...`);
+    const branchArg = version ? `--branch "${version}"` : '';
     execSync(
-      `git clone --depth 1 --filter=blob:none --sparse "${REPO_URL}" "${tmpDir}"`,
+      `git clone --depth 1 --filter=blob:none --sparse ${branchArg} "${REPO_URL}" "${tmpDir}"`,
       { stdio: ['ignore', 'inherit', 'pipe'] }
     );
 
@@ -70,13 +93,15 @@ async function install(skill, toolName, isGlobal) {
     copyDir(skillSrc, targetPath);
 
     // 9. Success
-    console.log(`Installed "${skill}" to ${targetPath}`);
+    const versionTag = version ? ` [${version}]` : '';
+    console.log(`Installed "${skill}"${versionTag} to ${targetPath}`);
   } catch (err) {
     if (err.stderr) {
       process.stderr.write(err.stderr);
     } else {
       console.error(err.message);
     }
+    console.error(`Failed to install "${skill}".`);
     process.exit(1);
   } finally {
     // Always clean up temp dir
