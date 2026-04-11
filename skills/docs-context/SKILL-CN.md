@@ -1,20 +1,31 @@
 ---
 name: docs-context
 description: >
-  项目开发上下文加载器与文档同步器。
-  【开发前·上下文加载】在进行任何代码设计、编写、修改、优化、重构、Bug修复、方案讨论、接口设计、技术选型时，必须先触发此 skill加载项目规范与模块信息。
-  触发词：写代码、改代码、新增功能、修改功能、修复Bug、重构、优化、设计方案、技术选型、实现、开发、implement、develop、code、build、create、add、modify、update、fix、refactor、optimize、design、spec、plan。
-  任何涉及代码生成或修改的任务都应触发。
-  【开发后·文档同步】当代码变更完成后触发，检查并同步项目文档与代码一致。
-  触发词：更新文档、同步文档、代码改完了、功能做完了、提交前检查、完成开发、sync docs、update docs、done、completed、ready to commit。
-  任何涉及代码生成或修改的任务都应触发。
+  超级基础上下文（Super Base Context）— Agent Coding 项目上下文加载器与文档同步器。
+  读模式：编码前加载项目规范（触发词：写代码/改代码/新增/修改/修复/重构/优化/设计/实现/开发/测试/迁移/性能/安全/implement/develop/code/build/create/add/modify/update/fix/refactor/optimize/design/spec/plan/test/migration/performance/security）。
+  写模式：编码后同步文档（触发词：更新文档/同步文档/代码改完了/功能做完了/提交前检查/完成开发/sync docs/update docs/done/completed/ready to commit）。
 metadata:
   author: jonlu
-  version: "1.0"
+  version: "1.1"
 ---
 
 # docs-context — 上下文加载器与文档同步器
 管理项目文档的读与写，确保开发时有正确的上下文约束，开发后文档与代码保持同步。
+
+### 定位：Super Base Context
+docs-context 是 Agent Coding 的**超级基础上下文（Super Base Context）**——继承并增强基础上下文概念，具备三大核心能力：
+1. **结构化分离** — 5 份职责明确的文档替代单一上下文文件，支持按需加载，减少上下文噪音。
+2. **任务感知加载** — 读模式根据当前任务类型动态加载相关文档，对抗长上下文注意力衰减。
+3. **双向同步** — 写模式保持文档与代码变更同步，防止上下文随时间漂移失真。
+
+docs-context 与任何 AI 工具的原生项目配置文件互补共存。原生配置管理工具特定的行为和快捷指令；docs-context 管理跨工具、跨会话、跨团队成员的可复用项目知识。
+
+### 上下文修正、补全和重建
+docs-context 的根本目标是**修正、补全和重建** AI Agent 的项目上下文。文档是**主干**——承载架构、规范、模块、决策、技术栈等权威项目知识。但文档不可能涵盖所有内容，尤其在大型项目（大型微服务 + 前端系统）中。因此 docs-context 采用**文档 + 代码扫描 + 注释扫描**协同工作：文档提供结构性主干，代码和注释补充实现级细节。
+
+- **修正** — 不仅是用约束修正生成的代码。当上下文因长对话注意力衰减、上下文压缩不准确或累积漂移而失真时，Agent 可以重新读取相关文档并扫描实际代码，恢复准确认知。文档是将失真上下文拉回正轨的事实基准。
+- **补全** — 当 Agent 缺乏当前任务所需的上下文时，文档提供结构性知识（架构、模块边界、依赖关系、约束），代码和注释扫描补充文档未覆盖的实现细节。
+- **重建** — 当新开会话或首次打开项目时，Agent 对项目完全陌生、上下文为零。此时用户触发 skill，通过加载文档（主干）并结合代码和注释扫描，从零重建对项目的完整认知。
 
 ## 文档路径
 所有文档位于工作空间 `docs/` 目录下：
@@ -41,6 +52,13 @@ metadata:
 - 用户说"做完了"（同步文档、提交前检查、功能完成）→ **写模式**
 - 不确定时 → 默认 **读模式**
 
+## 触发规则
+| 模式 | 触发词 | 说明 |
+|------|-------|------|
+| **读模式** | 写代码、改代码、新增功能、修改功能、修复Bug、重构、优化、设计方案、技术选型、实现、开发、测试、写测试、单测、集成测试、加字段、改表、迁移、性能、慢查询、安全、implement、develop、code、build、create、add、modify、update、fix、refactor、optimize、design、spec、plan、test、migration、schema、DDL、performance、security、vulnerability | 任何涉及代码生成、修改或设计的任务 |
+| **写模式** | 更新文档、同步文档、代码改完了、功能做完了、提交前检查、完成开发、sync docs、update docs、done、completed、ready to commit | 代码变更完成后触发 |
+
+> 不确定时默认进入读模式。
 
 # 读模式：上下文加载
 
@@ -58,6 +76,10 @@ metadata:
 | 技术选型/依赖变更 | tech-stack.md + decisions.md | 引入新库/升级版本/install/upgrade/migrate 等技术选型产出                 |
 | 架构讨论/设计评审 | architecture.md + decisions.md + modules.md | 架构/方案对比/design review 等设计阶段                               |
 | 接口设计/API 开发 | architecture.md + modules.md + tech-stack.md | 设计新接口/修改接口参数/联调/API design                                |
+| 测试/QA | modules.md + coding.md | 写测试/单测/集成测试/test/spec/unit test/integration test |
+| 数据库变更/迁移 | modules.md + tech-stack.md | 加字段/改表/migration/schema/DDL/数据库变更 |
+| 性能优化 | architecture.md + modules.md + tech-stack.md | 慢查询/性能/瓶颈/slow/perf/performance/optimize query |
+| 安全修复/审计 | coding.md + tech-stack.md + modules.md | 安全/XSS/注入/security/vulnerability/CVE/安全审计 |
 
 ### 多类型叠加
 当任务同时涉及多个类型时（如"新增模块并引入新库"），合并加载所有命中类型的文档，去重即可。
@@ -67,6 +89,13 @@ metadata:
 2. 涉及修改时，结合 `modules.md` 与 扫描代码 确认影响范围
 3. 涉及新增时，确认不与 `modules.md` 中现有模块的职责边界冲突
 4. 如果发现当前任务可能违反文档中的约束，主动提醒用户
+5. 当加载的文档不足以覆盖当前任务所需的细节时，扫描相关源码和注释补充上下文认知。文档是主干（架构、边界、约束），代码和注释补充实现级细节。
+6. 生成代码时，为接口、方法和重要逻辑编写完善的注释，确保未来会话中的 AI Agent 仅通过扫描代码和注释即可重建业务上下文。如果 `coding.md` 中定义了具体的注释规范，以 docs 中的要求为主。
+
+### 文档优先级
+当文档之间存在冲突时，优先级高的文档优先：
+
+`coding.md`（强制规范）> `architecture.md`（架构约束）> `tech-stack.md`（技术限制）> `modules.md`（模块描述）> `decisions.md`（历史参考）
 
 ---
 
@@ -114,7 +143,8 @@ metadata:
 2. 按上述检查清单逐项核对
 3. 对命中的条目，读取对应文档当前内容
 4. 按现有文档格式和风格执行更新（保持一致性）
-5. 输出同步摘要告知用户
+5. 跨文档一致性检查：验证对一份文档的更新与其他文档中的相关内容是否一致（如 modules.md 中新增的服务应同步出现在 architecture.md 的服务拓扑中）
+6. 输出同步摘要告知用户
 
 ## 文档不存在时的处理
 当检测到需要更新的文档缺失时，发起根据模版创建并初始化文档流程，必须先向用户确认，禁止静默创建。
