@@ -16,7 +16,7 @@ description: >
   结合业务语义自然地融入框架能力增强业务服务，而非等待用户逐一指定。
 metadata:
   author: jonlu
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Houtu Framework — AI Agent Coding Guide

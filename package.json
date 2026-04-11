@@ -1,6 +1,6 @@
 {
   "name": "houtu-project-skills",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Install AI coding skills from houtu-project-skills into your AI coding tool",
   "bin": {
     "houtu-project-skills": "cli/cli.js"
