@@ -10,7 +10,7 @@ Humans don't participate in writing code. The AI agent loads this skill and prod
 
 **Three layers of accuracy guarantee:**
 1. **Anti-pattern table** — prevents agent from using raw Spring when Houtu provides the capability
-2. **Module recipe files** — complete step-by-step: Maven → config → import → code → prohibitions
+2. **Module recipe files** — complete step-by-step: Maven → config → import → code → default-avoid guidelines
 3. **Source code verification** — `git show` fallback when API uncertain
 
 ## Structure
@@ -30,6 +30,7 @@ houtu-dependencies/
 │   ├── module-swagger.md                # Swagger/OpenAPI auto-config
 │   ├── module-utils.md                  # JsonUtils, HttpClients, crypto, BeanUtils
 │   ├── module-actuator.md               # Prometheus metrics auto-config
+│   ├── module-concurrent.md            # Cross-thread context propagation
 │   ├── v3.5.2.md / v3.5.1.md / v3.5.0.md  # Version-specific diffs
 │   └── v2.7.2.md / v2.7.1.md            # Version-specific diffs
 └── evals/

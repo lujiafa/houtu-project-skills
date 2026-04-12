@@ -6,7 +6,7 @@ description: >
   会话鉴权、权限控制、签名验签、防重放、分布式锁、限流、数据库字段加密、配置解密、
   访问日志、灰度路由、权重负载均衡、Feign增强、Sentinel熔断、服务发现、
   Swagger文档、加密工具、HTTP客户端、监控指标等企业级能力。
-  当项目 pom.xml 中包含 io.github.lujiafa 或 houtu 相关依赖时，
+  当项目构建文件（pom.xml 或 build.gradle/build.gradle.kts）中包含 io.github.lujiafa 或 houtu 相关依赖时，
   或当用户提到 houtu、houtu-dependencies 时，
   必须读取本 Skill 并严格按照框架约定生成代码。
   即使用户只是在做普通的 Spring Boot 开发（如写 Controller、Service、Feign），
@@ -32,7 +32,7 @@ houtu-dependencies 是一套面向 Spring Boot / Spring Cloud 微服务的企业
 
 1. **引入即生效** — 添加 starter 依赖后能力自动启用，无需 @Enable 注解或手动配置
 2. **注解声明式** — 通过注解控制行为（`@Lock`、`@CheckSession`、`@SecurityWatch`...），不要手写拦截器/AOP
-3. **框架优先** — 框架已封装的能力，禁止使用原生 Spring 方式重复实现
+3. **框架优先** — 框架已封装的能力，默认使用框架方式而非原生 Spring 方式；用户明确要求原生方式时服从用户
 4. **约定优于配置** — 遵循框架默认约定，仅在需要定制时覆盖
 5. **版本感知** — 不同版本的包路径、API 名称、配置方式存在差异，生成代码前必须确认版本
 
@@ -48,14 +48,17 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
 
 **生成任何代码前必须先确定版本，并确保 BOM 已引入。**
 
-读取项目 pom.xml，按以下顺序判断：
+读取项目构建文件（`pom.xml` 或 `build.gradle` / `build.gradle.kts`），按以下顺序判断：
 
-**1a. 已引入 houtu —** `<dependencyManagement>` 中存在 `houtu-dependencies` 或 `spring-cloud-houtu`：
-- 直接读取 `<version>` 值确定版本，进入 Step 2
+**1a. 已引入 houtu —** 构建文件中存在 `houtu-dependencies` 或 `spring-cloud-houtu`：
+- 直接读取版本号确定版本，进入 Step 2
+- **多模块项目**：BOM 通常在根 `pom.xml` 或根 `build.gradle` 的 `dependencyManagement` 中声明，子模块继承即可，无需重复添加
 
 **1b. 未引入但用户明确要用 houtu —** 用户提到"使用 houtu"、"接入 houtu"、"用 houtu-dependencies"等：
 - 确认版本（询问用户或根据项目 Spring Boot 版本推断：`3.x` → `3.5.2`，`2.x` → `2.7.2`）
-- **主动在 pom.xml 的 `<dependencyManagement>` 中添加 BOM**：
+- **主动在构建文件中添加 BOM**：
+
+  **Maven（pom.xml）：**
   ```xml
   <!-- 基础模块 BOM（必须） -->
   <dependency>
@@ -66,9 +69,14 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
       <scope>import</scope>
   </dependency>
   ```
+  **Gradle（build.gradle / build.gradle.kts）：**
+  ```kotlin
+  // 基础模块 BOM（必须）
+  implementation platform("io.github.lujiafa:houtu-dependencies:${version}")
+  ```
   如果任务涉及 Spring Cloud 模块（Feign、灰度路由、Sentinel、服务发现），同时添加：
   ```xml
-  <!-- Spring Cloud 增强模块 BOM -->
+  <!-- Maven: Spring Cloud 增强模块 BOM -->
   <dependency>
       <groupId>io.github.lujiafa</groupId>
       <artifactId>spring-cloud-houtu</artifactId>
@@ -76,6 +84,10 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
       <type>pom</type>
       <scope>import</scope>
   </dependency>
+  ```
+  ```kotlin
+  // Gradle: Spring Cloud 增强模块 BOM
+  implementation platform("io.github.lujiafa:spring-cloud-houtu:${version}")
   ```
 - 加载 `references/quick-start.md` 完成首次接入
 
@@ -106,12 +118,13 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
 | API 文档 | houtu-web-swagger | `references/module-swagger.md` |
 | 加密/签名/哈希/JSON/HTTP 客户端工具 | houtu-utils | `references/module-utils.md` |
 | 监控指标 / Metrics / 可观测性 | houtu-actuator | `references/module-actuator.md` |
+| 异步 / 定时任务 / 跨线程上下文传播 | houtu-core | `references/module-concurrent.md` |
 
 > **示例**：用户说"写一个支付接口"，你应该同时识别出：`houtu-web`（Controller 响应）+ `houtu-web-security`（登录鉴权）+ `houtu-cache`（`@Lock` 防并发 + `@CheckRepeatRequest` 防重放）+ `houtu-access-log`（资金操作审计日志），而不是只写一个裸 Controller。
 
 ### Step 3 — 加载模块参考文件
 
-**编写代码前加载对应模块参考文件。** 每个文件是完整配方：Maven 依赖 → 必需配置 → import → 代码模式 → 禁止做的事 → 内部行为。
+**编写代码前加载对应模块参考文件。** 每个文件是完整配方：Maven 依赖 → 必需配置 → import → 代码模式 → 默认避免的做法 → 内部行为。
 
 若任务涉及多个模块，加载所有相关文件。
 
@@ -160,6 +173,7 @@ git show 3.5.2:houtu-cache/src/main/java/io/github/lujiafa/houtu/lock/annotation
 | 对象转换（Entity → VO / Form → DTO） | `BeanUtils.smartCopyProperties` | 不要用 Spring BeanUtils |
 | JSON 操作 | `JsonUtils` | 不要自建 ObjectMapper |
 | 高并发热点操作（如秒杀） | `RateLimiter` | 识别到"限流""秒杀""抢购"意图时应用 |
+| 异步/定时任务中需访问会话或上下文 | 框架自动传播（`TransferThreadPoolTaskExecutor`） | `@Async`、`@Scheduled`、`CompletableFuture` 自动继承父线程的 SessionContext、HintContext 等上下文，无需手动处理 |
 
 ### 数据层
 
@@ -185,9 +199,9 @@ git show 3.5.2:houtu-cache/src/main/java/io/github/lujiafa/houtu/lock/annotation
 
 ---
 
-## 反模式清单（生成代码时必须回避）
+## 反模式清单（Agent 自主编码时默认遵循，用户明确要求时服从用户）
 
-| 场景 | ❌ 禁止 | ✅ houtu 正确方式 |
+| 场景 | ⚠️ 默认避免 | ✅ 框架方式（优先） |
 |------|--------|-----------------|
 | 接口鉴权 | 引入 spring-security 或手写 Filter 校验 token | `@CheckSession` + `@RequiresRole` / `@RequiresPermission` |
 | 统一响应 | 自定义 Result/Response 类或用 ResponseEntity 包装 | 返回 `ResponseData<T>` 或 `EmbedResponseData` |
@@ -207,6 +221,7 @@ git show 3.5.2:houtu-cache/src/main/java/io/github/lujiafa/houtu/lock/annotation
 | HTTP 客户端 | 自行创建 RestTemplate 或 HttpClient | 使用框架自动配置的 `HttpClients` |
 | 配置值解密 | 自写 EnvironmentPostProcessor 或启动时手动解密 | 使用 houtu-core 的 `decrypt` 配置 |
 | 监控指标 | 自写 Micrometer MeterBinder 采集接口指标 | 引入 `houtu-actuator` starter 自动采集 |
+| 异步线程上下文传递 | 手写 `TaskDecorator` 或手动在子线程中 set/get 上下文 | 框架自动替换为 `TransferThreadPoolTaskExecutor`，`@Async`/`CompletableFuture`/`@Scheduled` 自动传播 SessionContext、HintContext 等 |
 
 ---
 
@@ -229,6 +244,7 @@ BaseDTO                    (数据传输基类, implements Serializable)
 BaseVO                     (视图对象基类, implements Serializable)
 
 PageDataVO<V> extends BaseDTO  (分页响应, 含 records/totalRecords/totalPages/currentPage/pageSize)
+└── PageDataExtVO<D,V>         (分页响应 + 额外数据字段 D data，如分页列表附带汇总统计)
 ```
 
 **PageDataVO 静态工厂方法：**

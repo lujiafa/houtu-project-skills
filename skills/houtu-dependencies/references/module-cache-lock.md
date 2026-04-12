@@ -50,19 +50,11 @@ public boolean pay(String paymentId) {
     // Wait up to 5s to acquire lock, hold max 30s
 }
 
-// SpEL expression (v3.5.2+): nested property access
-@Lock(prefix = "user:", key = "#user.id")
-public void updateUser(User user) {
-    // Lock key resolved via SpEL: user.getId()
-}
 ```
 
 **Annotation attributes:**
 - `prefix` — prepended to lock key (default: `""`)
-- `key` — lock key, supports three modes:
-  - empty → uses `className.methodName`
-  - without `#` → exact parameter name match (e.g., `key = "orderId"`)
-  - with `#` prefix → SpEL expression (v3.5.2+, e.g., `key = "#user.id"`, `key = "#order.customer.vipId"`)
+- `key` — parameter name to use as key. If empty, uses `className.methodName`. Key resolution 在不同版本有增强，详见版本参考文件
 - `leaseTime` — max lock hold time in `unit` (-1 = indefinite, default)
 - `waitTime` — max wait to acquire (-1 = block forever, default)
 - `unit` — TimeUnit (default: SECONDS)
@@ -148,7 +140,7 @@ limiter.acquire();
 ## Common Mistakes
 
 - **@Lock requires Redisson on classpath** — without it, the aspect bean won't register, annotation silently ignored
-- **@Lock key resolution is version-dependent** — v3.5.2+: `key = "#user.id"` uses SpEL (must have `#` prefix), supports nested properties; older versions: only exact parameter name matching (`key = "orderId"`), no SpEL or nested property
+- **@Lock key resolution** — 基础模式为参数名精确匹配（`key = "orderId"`），部分版本有增强，详见版本参考文件
 - **@Lock throws RuntimeException when tryLock fails** — if `waitTime` is set and lock acquisition times out, a RuntimeException is thrown (not silently ignored)
 - **Lock key = `redis:distributed:lock:` + prefix + key** — be aware of the auto prefix when debugging
 - **RateLimiter needs RedisTemplate** — inject it, not create manually

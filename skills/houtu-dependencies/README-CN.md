@@ -10,7 +10,7 @@
 
 **三层准确性保障：**
 1. **反模式清单** — 防止 agent 用原生 Spring 方式替代 Houtu 能力
-2. **模块配方文件** — 完整步骤：Maven → 配置 → import → 代码 → 禁止事项
+2. **模块配方文件** — 完整步骤：Maven → 配置 → import → 代码 → 默认避免事项
 3. **源码验证** — API 不确定时通过 `git show` 读源码兜底
 
 ## 结构
@@ -30,6 +30,7 @@ houtu-dependencies/
 │   ├── module-swagger.md                # Swagger/OpenAPI 自动配置
 │   ├── module-utils.md                  # JsonUtils、HttpClients、加密工具、BeanUtils
 │   ├── module-actuator.md               # Prometheus 监控指标自动配置
+│   ├── module-concurrent.md            # 跨线程上下文自动传播
 │   ├── v3.5.2.md / v3.5.1.md / v3.5.0.md  # 版本差异
 │   └── v2.7.2.md / v2.7.1.md            # 版本差异
 └── evals/

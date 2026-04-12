@@ -23,7 +23,7 @@ houtu:
     decrypt:
       encrypt-keys:                                    # 需要解密的配置项列表
         - spring.datasource.password
-        - spring.data.redis.password                   # v2.7.x: spring.redis.password
+        - spring.data.redis.password                   # Redis 配置路径因版本而异，详见版本参考文件
       decrypt-processor-class: com.example.MyDecryptProcessor  # 自定义解密处理器类（全限定名）
 ```
 
@@ -66,7 +66,7 @@ houtu:
 - 在所有 Bean 初始化之前完成，确保 DataSource 等组件获取到明文密码
 - 仅处理 `encrypt-keys` 列表中指定的配置项
 
-## ❌ 禁止
+## 默认避免（用户明确要求时除外）
 
-- 不要自写 `EnvironmentPostProcessor` 或 `PropertySource` 做配置解密
-- 不要在代码中手动解密配置值
+- 默认不自写 `EnvironmentPostProcessor` 或 `PropertySource` 做配置解密
+- 默认不在代码中手动解密配置值

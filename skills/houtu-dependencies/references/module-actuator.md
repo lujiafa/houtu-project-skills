@@ -197,10 +197,10 @@ public HttpClient5ObservationConvention customConvention() {
 
 ---
 
-## 禁止做的事
+## 默认避免（用户明确要求时除外）
 
-1. **禁止** 自行创建 MeterBinder 采集 HTTP 接口指标 — 框架已自动采集
-2. **禁止** 自行注册 Micrometer Filter 采集 HttpClient 指标 — 使用框架的 Observation 机制
-3. **禁止** 自行配置 HikariCP 的 MetricsTrackerFactory — 框架自动注册
-4. **禁止** 单独引入 `micrometer-registry-prometheus` — houtu-actuator 已传递依赖
-5. **禁止** 忽略 `HttpClientMetric.metric()` 调用 — 对含路径变量的请求不调用会导致指标基数爆炸
+1. **默认避免** 自行创建 MeterBinder 采集 HTTP 接口指标 — 框架已自动采集
+2. **默认避免** 自行注册 Micrometer Filter 采集 HttpClient 指标 — 使用框架的 Observation 机制
+3. **默认避免** 自行配置 HikariCP 的 MetricsTrackerFactory — 框架自动注册
+4. **默认避免** 单独引入 `micrometer-registry-prometheus` — houtu-actuator 已传递依赖
+5. **默认避免** 忽略 `HttpClientMetric.metric()` 调用 — 对含路径变量的请求不调用会导致指标基数爆炸

@@ -31,6 +31,28 @@
 
 > 如果项目不使用 Spring Cloud 模块（loadbalancer、feign、discovery、sentinel），可以只引入 `houtu-dependencies`。
 
+**Gradle（build.gradle.kts）：**
+
+```kotlin
+dependencies {
+    // 基础模块 BOM（必须）
+    implementation platform("io.github.lujiafa:houtu-dependencies:${houtuVersion}") // 根据版本文件调整，如 3.5.2
+    // Spring Cloud 增强模块 BOM（使用 spring-cloud-houtu-* 模块时必须）
+    implementation platform("io.github.lujiafa:spring-cloud-houtu:${houtuVersion}")
+}
+```
+
+**Gradle（build.gradle）：**
+
+```groovy
+dependencies {
+    implementation platform('io.github.lujiafa:houtu-dependencies:${houtuVersion}')
+    implementation platform('io.github.lujiafa:spring-cloud-houtu:${houtuVersion}')
+}
+```
+
+> Gradle 项目中引入 Starter 同样无需写 version，由 BOM platform 管理。
+
 ### 2. 按需引入 Starter（无需写 version）
 
 | ArtifactId | 功能 | 传递依赖 |
@@ -114,10 +136,10 @@ public class OrderForm extends BaseForm {
 }
 ```
 
-### ❌ 禁止
+### 默认避免（用户明确要求时除外）
 
-- 不要自定义 Result/Response 包装类 — 用 `ResponseData<T>`
-- 不要写 @ControllerAdvice — 框架已有 `UnifiedHandlerExceptionResolver`
-- 不要给 `BaseForm` 参数加 @RequestBody — 框架自动处理
-- 不要引入 spring-boot-starter-security — 用 houtu-web-security
-- 不要自己引入 springdoc — 用 houtu-web-swagger
+- 默认不自定义 Result/Response 包装类 — 用 `ResponseData<T>`
+- 默认不写 @ControllerAdvice — 框架已有 `UnifiedHandlerExceptionResolver`
+- 默认不给 `BaseForm` 参数加 @RequestBody — 框架自动处理
+- 默认不引入 spring-boot-starter-security — 用 houtu-web-security
+- 默认不自己引入 springdoc — 用 houtu-web-swagger

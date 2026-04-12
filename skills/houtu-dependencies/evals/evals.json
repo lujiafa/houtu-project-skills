@@ -133,6 +133,55 @@
       "prompt": "用户更新个人信息时需要按用户 ID 加分布式锁防止并发，方法参数是 UserForm 对象，项目使用 houtu-dependencies 3.5.2",
       "must_use": ["@Lock", "key = \"#userForm.userId\" 或类似 SpEL 表达式"],
       "must_not_use": ["手写 Redis SETNX", "synchronized", "手动从参数中提取 userId 再传入 LockSupport"]
+    },
+    {
+      "id": 20,
+      "scenario": "版本检测 — Spring Boot 2.7 项目",
+      "prompt": "这是一个 Spring Boot 2.7.18 项目，已引入 houtu-dependencies 2.7.2，帮我写一个用户查询接口返回手机号需脱敏",
+      "must_use": ["javax.servlet（非 jakarta）", "spring.redis.*（非 spring.data.redis.*）", "ResponseData<T>", "@CheckSession"],
+      "must_not_use": ["jakarta.servlet", "spring.data.redis"]
+    },
+    {
+      "id": 21,
+      "scenario": "JWT 登录鉴权完整流程",
+      "prompt": "项目使用 houtu 框架 JWT 模式，帮我写完整的登录、获取用户信息、登出接口",
+      "must_use": ["houtu.web.session.type: JWT", "jwt-signature-key", "SessionContext.create()", "SessionContext.save()", "SessionContext.get()", "SessionContext.remove()", "@CheckSession", "Authorization: Bearer"],
+      "must_not_use": ["自行引入 jjwt", "手写 JWT 工具类", "手动解析 token", "Spring Security"]
+    },
+    {
+      "id": 22,
+      "scenario": "跨模块组合 — 用户管理 CRUD",
+      "prompt": "帮我写一个完整的用户管理模块：分页列表、详情、创建、修改、删除。手机号和身份证需加密存储，所有写操作需要审计日志，需要管理员权限",
+      "must_use": ["ResponseData<T>", "PageForm", "PageDataVO<T>", "@CheckSession", "@RequiresRole 或 @RequiresPermission", "@SecurityWatch", "@SecurityParam", "@AccessLog", "BusinessException", "BeanUtils.smartCopyProperties"],
+      "must_not_use": ["ResponseEntity", "Spring Security", "手写 TypeHandler", "手写 Filter 记录日志"]
+    },
+    {
+      "id": 23,
+      "scenario": "负向测试 — 用户要求用 Spring Security",
+      "prompt": "项目已引入 houtu-web-security，用户说：帮我用 Spring Security 实现登录和权限控制",
+      "must_use": ["@CheckSession", "@RequiresRole 或 @RequiresPermission", "SessionContext"],
+      "must_not_use": ["spring-boot-starter-security", "@PreAuthorize", "@Secured", "SecurityFilterChain"]
+    },
+    {
+      "id": 24,
+      "scenario": "Gradle 项目首次接入",
+      "prompt": "这是一个新的 Gradle (Kotlin DSL) Spring Boot 3.3 项目，我想用 houtu 框架，帮我搭建基础结构并写一个商品查询接口",
+      "must_use": ["implementation platform(\"io.github.lujiafa:houtu-dependencies:...\")", "ResponseData<T>", "BaseForm"],
+      "must_not_use": ["pom.xml 语法", "ResponseEntity"]
+    },
+    {
+      "id": 25,
+      "scenario": "EmbedResponseData 扁平响应",
+      "prompt": "帮我写一个健康检查接口，返回服务状态、版本号、当前时间，不需要嵌套 data 层",
+      "must_use": ["EmbedResponseData"],
+      "must_not_use": ["ResponseData<Map>", "ResponseEntity", "自定义 Result 类"]
+    },
+    {
+      "id": 26,
+      "scenario": "异步方法中获取会话上下文",
+      "prompt": "帮我写一个异步通知发送服务，在 @Async 方法中需要获取当前登录用户 ID 记录操作人",
+      "must_use": ["@Async", "SessionContext.get()"],
+      "must_not_use": ["手写 TaskDecorator", "手动传递 userId 参数到异步方法", "自建 ThreadLocal 传递上下文"]
     }
   ]
 }

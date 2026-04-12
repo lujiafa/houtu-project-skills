@@ -260,6 +260,21 @@ PageDataVO<UserVO> empty = PageDataVO.empty();
 // Fields: pageSize, currentPage, totalPages, totalRecords, records (List<V>)
 ```
 
+### PageDataExtVO\<D, V\> (extends PageDataVO\<V\>)
+
+```java
+import io.github.lujiafa.houtu.web.model.vo.PageDataExtVO;
+
+// 分页列表 + 额外数据（如汇总统计）
+PageDataExtVO<OrderSummary, OrderVO> extVO = new PageDataExtVO<>();
+extVO.setRecords(orderVOList);
+extVO.setTotalRecords(total);
+extVO.setCurrentPage(currentPage);
+extVO.setPageSize(pageSize);
+extVO.setData(new OrderSummary(totalAmount, totalCount));  // 额外数据字段
+// JSON: {records:[...], totalRecords:100, ..., data:{totalAmount:9999, totalCount:50}}
+```
+
 ### HandlerExceptionResolverCustomizer 接口
 
 ```java

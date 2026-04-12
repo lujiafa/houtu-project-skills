@@ -9,9 +9,7 @@
 </dependency>
 ```
 
-Transitively includes SpringDoc OpenAPI:
-- **v3.5.x**: `springdoc-openapi-starter-webmvc-ui` 2.8.9
-- **v2.7.x**: `springdoc-openapi-ui` 1.8.0
+Transitively includes SpringDoc OpenAPI（具体 artifact 和版本因框架版本而异，详见版本参考文件）。
 
 ## 自动能力
 
@@ -77,15 +75,15 @@ spring:
     active: prod    # SwaggerConfiguration 不会激活
 ```
 
-## ❌ 禁止
+## 默认避免（用户明确要求时除外）
 
 ```xml
-<!-- ❌ 不要自己引入 springdoc -->
+<!-- ⚠️ 默认不自己引入 springdoc -->
 <dependency>
     <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>  <!-- 禁止，框架已包含 -->
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>  <!-- 默认避免，框架已包含 -->
 </dependency>
 ```
 
-- 不要自己引入 `springdoc-openapi-*` 依赖 — 版本由框架 BOM 管理
+- 默认不自己引入 `springdoc-openapi-*` 依赖 — 版本由框架 BOM 管理
 - 不要写 `@EnableSwagger2` 或 `@EnableOpenApi` — 框架已自动配置

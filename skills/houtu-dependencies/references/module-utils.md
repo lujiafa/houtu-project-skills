@@ -366,10 +366,127 @@ Map<String, String> strMap = MapUtils.toStringMap(map);   // 转 String Map
 
 ---
 
-## 禁止做的事
+## 6. 签名工具 — SignUtils
 
-1. **禁止** 自行创建 `ObjectMapper` 实例 — 使用 `JsonUtils`
-2. **禁止** 自行创建 `RestTemplate` / `HttpClient` — 使用 `HttpClients`
-3. **禁止** 自行引入 BouncyCastle 依赖 — houtu-utils 已包含
-4. **禁止** 自行实现 MD5/SHA/AES/SM4 等加密算法 — 使用对应的 `*Utils` 工具类
-5. **禁止** 使用 Spring 的 `org.springframework.beans.BeanUtils` — 使用 houtu 的 `BeanUtils`（支持批量转换和泛型）
+**包路径**：`io.github.lujiafa.houtu.util.crypto.SignUtils`
+
+对参数 Map 按 ASCII 排序后拼接 query string，然后执行签名/验签。自动排除 `sign` 和 `signature` 字段、null 键值。
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `signMd5(Map<String,String> params, String key)` | `String` (hex) | MD5 签名，key 追加到 query string 末尾 |
+| `verifyMd5(Map<String,String> params, String key, String sign)` | `boolean` | MD5 签名验证 |
+| `signMD5WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-MD5 签名 |
+| `signSHA1WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-SHA1 签名 |
+| `signSHA256WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-SHA256 签名 |
+| `verifyMD5WithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-MD5 验签 |
+| `verifySHAWithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-SHA1 验签 |
+| `verifySHA256WithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-SHA256 验签 |
+| `buildParam(Map<String,String> params, boolean encode)` | `StringBuilder` | 构建排序后的 query string |
+
+```java
+import io.github.lujiafa.houtu.util.crypto.SignUtils;
+
+// MD5 签名（与 @CheckSign 服务端校验算法一致）
+Map<String, String> params = Map.of("orderId", "123", "amount", "100");
+String sign = SignUtils.signMd5(params, "your-sign-key");
+
+// RSA-SHA256 签名
+String sign = SignUtils.signSHA256WithRSA(params, privateKeyBase64);
+boolean valid = SignUtils.verifySHA256WithRSA(params, publicKeyBase64, sign);
+```
+
+---
+
+## 7. 其他加密工具补充
+
+### DESUtils / DESedeUtils
+
+```java
+import io.github.lujiafa.houtu.util.crypto.DESUtils;
+import io.github.lujiafa.houtu.util.crypto.DESedeUtils;
+import io.github.lujiafa.houtu.util.crypto.type.DESTransformation;
+import io.github.lujiafa.houtu.util.crypto.type.DESedeTransformation;
+
+// DES
+CodecData key = DESUtils.getKey();
+CodecData encrypted = DESUtils.encrypt(CodecData.utf8("data"), key, DESTransformation.ECB_PKCS5);
+CodecData decrypted = DESUtils.decrypt(encrypted, key, DESTransformation.ECB_PKCS5);
+
+// 3DES (DESede)
+CodecData key3 = DESedeUtils.getKey(DESedeKeySize.DESede_168);
+CodecData encrypted = DESedeUtils.encrypt(CodecData.utf8("data"), key3, DESedeTransformation.ECB_PKCS5);
+```
+
+### ECDSAUtils
+
+```java
+import io.github.lujiafa.houtu.util.crypto.ECDSAUtils;
+import io.github.lujiafa.houtu.util.crypto.extension.ECDSAKeyPair;
+import io.github.lujiafa.houtu.util.crypto.type.ECDSAKeyType;
+import io.github.lujiafa.houtu.util.crypto.type.ECDSASignAlgorithm;
+
+ECDSAKeyPair keyPair = ECDSAUtils.getKeyPair(ECDSAKeyType.SECP256R1);
+CodecData sig = ECDSAUtils.sign(CodecData.utf8("data"), keyPair.getEncodedPrivateKey(), ECDSASignAlgorithm.SHA256withECDSA);
+boolean valid = ECDSAUtils.verify(CodecData.utf8("data"), keyPair.getEncodedPublicKey(), sig, ECDSASignAlgorithm.SHA256withECDSA);
+```
+
+### SM3Utils（国密哈希）
+
+```java
+import io.github.lujiafa.houtu.util.crypto.SM3Utils;
+
+CodecData hash = SM3Utils.sm3(CodecData.utf8("data"));
+String hex = hash.hex();
+
+// HMAC-SM3
+CodecData key = SM3Utils.getKey();
+CodecData hmac = SM3Utils.hmacSM3(CodecData.utf8("data"), key);
+```
+
+### HMacSHAUtils
+
+```java
+import io.github.lujiafa.houtu.util.crypto.HMacSHAUtils;
+import io.github.lujiafa.houtu.util.crypto.type.HmacSHAAlgorithm;
+
+CodecData key = HMacSHAUtils.getKey(HmacSHAAlgorithm.HmacSHA256);
+CodecData hmac = HMacSHAUtils.hash(CodecData.utf8("data"), key, HmacSHAAlgorithm.HmacSHA256);
+```
+
+---
+
+## 8. Web 工具 — WebUtils
+
+**包路径**：`io.github.lujiafa.houtu.util.web.WebUtils`
+
+在非 Controller 层（如 Service、Filter）中获取当前 HTTP 请求/响应对象。
+
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getRequest()` | `HttpServletRequest` | 获取当前线程绑定的 HttpServletRequest |
+| `getResponse()` | `HttpServletResponse` | 获取当前线程绑定的 HttpServletResponse |
+| `isHttpPost(request)` | `boolean` | 判断是否 POST 请求 |
+| `isHttpGet(request)` | `boolean` | 判断是否 GET 请求 |
+| `isHttpMultipart(request)` | `boolean` | 判断是否 Multipart 请求 |
+| `getRequestMethod(request)` | `RequestMethod` | 获取请求方法枚举 |
+| `getUrlEncodedParams(request)` | `Map<String, String>` | 获取 URL 编码的表单参数 |
+| `getRequestBodyStream(request)` | `byte[]` | 读取请求体字节流 |
+
+```java
+import io.github.lujiafa.houtu.util.web.WebUtils;
+
+// 在 Service 层获取客户端 IP
+HttpServletRequest request = WebUtils.getRequest();
+String clientIp = request.getRemoteAddr();
+```
+
+---
+
+## 默认避免（用户明确要求时除外）
+
+1. **默认避免** 自行创建 `ObjectMapper` 实例 — 使用 `JsonUtils`
+2. **默认避免** 自行创建 `RestTemplate` / `HttpClient` — 使用 `HttpClients`
+3. **默认避免** 自行引入 BouncyCastle 依赖 — houtu-utils 已包含
+4. **默认避免** 自行实现 MD5/SHA/AES/SM4 等加密算法 — 使用对应的 `*Utils` 工具类
+5. **默认避免** 使用 Spring 的 `org.springframework.beans.BeanUtils` — 使用 houtu 的 `BeanUtils`（支持批量转换和泛型）

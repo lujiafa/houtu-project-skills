@@ -29,7 +29,7 @@ houtu:
 
 # Redis connection (required for CACHE type)
 spring:
-  data:                                # v2.7.x: spring.redis.* (无 data 层级)
+  data:                                # Redis 配置路径因版本而异，详见版本参考文件
     redis:
       host: localhost
       port: 6379
