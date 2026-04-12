@@ -24,7 +24,7 @@ metadata:
 houtu-dependencies 是一套面向 Spring Boot / Spring Cloud 微服务的企业级基础框架，通过 Spring Boot Starter 机制实现"引入即生效"，让开发者完全聚焦业务逻辑。
 
 **Repository**: https://github.com/lujiafa/houtu-dependencies
-**Git Branches**: `3.5.1`, `3.5.0`, `2.7.1` (branch name = version)
+**Git Branches**: `3.5.1`, `3.5.0`, `2.7.2`, `2.7.1` (branch name = version)
 
 ---
 
@@ -54,7 +54,7 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
 - 直接读取 `<version>` 值确定版本，进入 Step 2
 
 **1b. 未引入但用户明确要用 houtu —** 用户提到"使用 houtu"、"接入 houtu"、"用 houtu-dependencies"等：
-- 确认版本（询问用户或根据项目 Spring Boot 版本推断：`3.x` → `3.5.1`，`2.x` → `2.7.1`）
+- 确认版本（询问用户或根据项目 Spring Boot 版本推断：`3.x` → `3.5.1`，`2.x` → `2.7.2`）
 - **主动在 pom.xml 的 `<dependencyManagement>` 中添加 BOM**：
   ```xml
   <!-- 基础模块 BOM（必须） -->
@@ -286,7 +286,8 @@ PageDataVO<V> extends BaseDTO  (分页响应, 含 records/totalRecords/totalPage
 | 31 | PARAMETER_FORMAT_ERROR | 参数格式错误 |
 | 32 | NOT_SUPPORTED_PARAMETER_TYPE_CONVERSION | 参数类型转换不支持 |
 | 40 | DATA_LOADING_FAILED | 数据加载失败 |
-| 41 | DATA_NOT_EXIST / DATA_ALREADY_EXIST | 数据不存在 / 数据已存在 |
+| 41 | DATA_NOT_EXIST | 数据不存在 |
+| 42 | DATA_ALREADY_EXIST | 数据已存在（v2.7.1、v3.5.0 中为 41，存在与 DATA_NOT_EXIST 相同的BUG） |
 
 业务自定义错误码建议从 **100** 开始，通过 `ErrorCode.build(code)` 构建，支持 i18n。
 
@@ -321,14 +322,14 @@ git show <branch>:<file-path>
 
 ## 版本快速对比
 
-| 特性 | v3.5.1 | v3.5.0 | v2.7.1 |
-|------|--------|--------|--------|
-| JDK | 17+ | 17+ | 1.8+ |
-| Spring Boot | 3.5.11 | 3.5.11 | 2.7.18 |
-| 包前缀 | `io.github.lujiafa.houtu` | `io.github.lujiafa.houtu` | `io.github.lujiafa.houtu` |
-| Namespace | `jakarta.*` | `jakarta.*` | `javax.*` |
-| Redis 配置 | `spring.data.redis.*` | `spring.data.redis.*` | `spring.redis.*` |
-| Nacos 配置 | `spring.config.import` | **bootstrap.yml** | bootstrap.yml |
-| SCA 版本 | 2025.0.0.0 | **2023.0.1.2** | 2021.0.6.2 |
+| 特性 | v3.5.1 | v3.5.0 | v2.7.2 | v2.7.1 |
+|------|--------|--------|--------|--------|
+| JDK | 17+ | 17+ | 1.8+ | 1.8+ |
+| Spring Boot | 3.5.11 | 3.5.11 | 2.7.18 | 2.7.18 |
+| 包前缀 | `io.github.lujiafa.houtu` | 同左 | 同左 | 同左 |
+| Namespace | `jakarta.*` | `jakarta.*` | `javax.*` | `javax.*` |
+| Redis 配置 | `spring.data.redis.*` | 同左 | `spring.redis.*` | `spring.redis.*` |
+| Nacos 配置 | `spring.config.import` | **bootstrap.yml** | bootstrap.yml | bootstrap.yml |
+| SCA 版本 | 2025.0.0.0 | **2023.0.1.2** | 2021.0.6.2 | 2021.0.6.2 |
 
 > 详细版本信息见 `references/v{version}.md`

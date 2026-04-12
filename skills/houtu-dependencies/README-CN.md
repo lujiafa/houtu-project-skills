@@ -31,7 +31,7 @@ houtu-dependencies/
 │   ├── module-utils.md                  # JsonUtils、HttpClients、加密工具、BeanUtils
 │   ├── module-actuator.md               # Prometheus 监控指标自动配置
 │   ├── v3.5.1.md / v3.5.0.md           # 版本差异
-│   └── v2.7.1.md                        # 版本差异
+│   └── v2.7.2.md / v2.7.1.md            # 版本差异
 └── evals/
     └── evals.json                       # 18 个验证测试场景
 ```
