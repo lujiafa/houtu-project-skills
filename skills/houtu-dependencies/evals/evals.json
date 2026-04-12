@@ -126,6 +126,13 @@
       "prompt": "需要为微服务接入 Swagger API 文档，项目使用 houtu 框架",
       "must_use": ["houtu-web-swagger"],
       "must_not_use": ["自行引入 springdoc-openapi", "自行引入 springfox", "手写 Docket/OpenAPI Bean"]
+    },
+    {
+      "id": 19,
+      "scenario": "分布式锁 — SpEL 锁键（v3.5.2）",
+      "prompt": "用户更新个人信息时需要按用户 ID 加分布式锁防止并发，方法参数是 UserForm 对象，项目使用 houtu-dependencies 3.5.2",
+      "must_use": ["@Lock", "key = \"#userForm.userId\" 或类似 SpEL 表达式"],
+      "must_not_use": ["手写 Redis SETNX", "synchronized", "手动从参数中提取 userId 再传入 LockSupport"]
     }
   ]
 }

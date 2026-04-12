@@ -24,7 +24,7 @@ metadata:
 houtu-dependencies 是一套面向 Spring Boot / Spring Cloud 微服务的企业级基础框架，通过 Spring Boot Starter 机制实现"引入即生效"，让开发者完全聚焦业务逻辑。
 
 **Repository**: https://github.com/lujiafa/houtu-dependencies
-**Git Branches**: `3.5.1`, `3.5.0`, `2.7.2`, `2.7.1` (branch name = version)
+**Git Branches**: `3.5.2`, `3.5.1`, `3.5.0`, `2.7.2`, `2.7.1` (branch name = version)
 
 ---
 
@@ -54,7 +54,7 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
 - 直接读取 `<version>` 值确定版本，进入 Step 2
 
 **1b. 未引入但用户明确要用 houtu —** 用户提到"使用 houtu"、"接入 houtu"、"用 houtu-dependencies"等：
-- 确认版本（询问用户或根据项目 Spring Boot 版本推断：`3.x` → `3.5.1`，`2.x` → `2.7.2`）
+- 确认版本（询问用户或根据项目 Spring Boot 版本推断：`3.x` → `3.5.2`，`2.x` → `2.7.2`）
 - **主动在 pom.xml 的 `<dependencyManagement>` 中添加 BOM**：
   ```xml
   <!-- 基础模块 BOM（必须） -->
@@ -79,7 +79,7 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
   ```
 - 加载 `references/quick-start.md` 完成首次接入
 
-**1c. 无法确定 —** 询问用户，或默认最新版 `3.5.1`
+**1c. 无法确定 —** 询问用户，或默认最新版 `3.5.2`
 
 **确定版本后，立即加载对应版本参考文件**（`references/v{version}.md`），获取：
 - 正确的包前缀（`io.github.lujiafa.houtu.*`）
@@ -98,7 +98,7 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
 | 新建微服务 / 首次接入 | — | `references/quick-start.md` |
 | 写 Controller / 统一响应 / 异常处理 / 参数绑定 | houtu-web | `references/module-web.md` |
 | 鉴权 / 权限 / 会话 / 签名 / 防重放 | houtu-web-security | `references/module-security.md` |
-| 分布式锁 / 限流 / 性能监控 | houtu-cache | `references/module-cache-lock.md` |
+| 分布式锁 / 限流 | houtu-cache | `references/module-cache-lock.md` |
 | 数据库敏感字段加密 | houtu-data-security | `references/module-data-security.md` |
 | 请求访问日志 | houtu-access-log | `references/module-access-log.md` |
 | 灰度路由 / Feign / Sentinel / 服务发现 | spring-cloud-houtu-* | `references/module-cloud.md` |
@@ -130,7 +130,7 @@ Step 1: 检测版本与依赖 → Step 2: 识别场景 → Step 3: 加载模块�
 ```bash
 git show <branch>:<file-path>
 # 示例：
-git show 3.5.1:houtu-cache/src/main/java/io/github/lujiafa/houtu/lock/annotation/Lock.java
+git show 3.5.2:houtu-cache/src/main/java/io/github/lujiafa/houtu/lock/annotation/Lock.java
 ```
 
 ---
@@ -156,7 +156,7 @@ git show 3.5.1:houtu-cache/src/main/java/io/github/lujiafa/houtu/lock/annotation
 |---------|----------------|------|
 | 并发写操作（如下单、扣库存、扣款） | `@Lock` | 识别到"支付""库存""余额"等并发敏感操作时主动加上 |
 | 提交类操作（如下单、支付、转账） | `@CheckRepeatRequest` | 有幂等需求的写操作主动加上 |
-| 调用外部 HTTP 接口（如支付回调、三方对接） | `HttpClients` + `@RpcMonitor` | 不要用 RestTemplate/WebClient |
+| 调用外部 HTTP 接口（如支付回调、三方对接） | `HttpClients` | 不要用 RestTemplate/WebClient |
 | 对象转换（Entity → VO / Form → DTO） | `BeanUtils.smartCopyProperties` | 不要用 Spring BeanUtils |
 | JSON 操作 | `JsonUtils` | 不要自建 ObjectMapper |
 | 高并发热点操作（如秒杀） | `RateLimiter` | 识别到"限流""秒杀""抢购"意图时应用 |
@@ -248,8 +248,6 @@ PageDataVO<V> extends BaseDTO  (分页响应, 含 records/totalRecords/totalPage
 | `@CheckSign` | TYPE, METHOD | houtu-web-security | `value`(bool, default true) |
 | `@CheckRepeatRequest` | TYPE, METHOD | houtu-web-security | (无参数) |
 | `@Lock` | METHOD | houtu-cache | `prefix`(String), `key`(String), `leaseTime`(long, -1), `waitTime`(long, -1), `unit`(TimeUnit.SECONDS) |
-| `@ReqMonitor` | TYPE, METHOD | houtu-cache | `cmd`(String, 请求地址/指令) |
-| `@RpcMonitor` | TYPE, METHOD | houtu-cache | `rmtsrv`(String, 远程服务名), `cmd`(String) |
 | `@AccessLog` | TYPE, METHOD | houtu-access-log | `value`(bool), `requestHeaders`(String[], default USER_AGENT), `requestBody`(bool, default false), `logFilterHandler`(Class) |
 | `@SecurityWatch` | TYPE, METHOD | houtu-data-security | `encrypt`(bool), `encryptMapKeys`(String[]), `decrypt`(bool), `decryptMapKeys`(String[]), `processorBeanName`(String), `processorClass`(Class) |
 | `@SecurityParam` | PARAMETER, FIELD | houtu-data-security | (无参数) |
@@ -287,7 +285,7 @@ PageDataVO<V> extends BaseDTO  (分页响应, 含 records/totalRecords/totalPage
 | 32 | NOT_SUPPORTED_PARAMETER_TYPE_CONVERSION | 参数类型转换不支持 |
 | 40 | DATA_LOADING_FAILED | 数据加载失败 |
 | 41 | DATA_NOT_EXIST | 数据不存在 |
-| 42 | DATA_ALREADY_EXIST | 数据已存在（v2.7.1、v3.5.0 中为 41，存在与 DATA_NOT_EXIST 相同的BUG） |
+| 42 | DATA_ALREADY_EXIST | 数据已存在（v2.7.1、v3.5.0、v3.5.1 中为 41，与 DATA_NOT_EXIST 相同的BUG，v2.7.2 和 v3.5.2 已修复） |
 
 业务自定义错误码建议从 **100** 开始，通过 `ErrorCode.build(code)` 构建，支持 i18n。
 
@@ -306,7 +304,7 @@ git show <branch>:<file-path>
 | houtu-core | `.../core/exception/BusinessException.java`, `.../core/exception/ErrorCode.java`, `.../core/constant/ErrorCodeConstant.java`, `.../core/context/SpringApplicationContext.java` |
 | houtu-web | `.../web/model/ResponseData.java`, `.../web/model/EmbedResponseData.java`, `.../web/model/vo/PageDataVO.java`, `.../web/model/form/PageForm.java`, `.../web/handler/UnifiedHandlerExceptionResolver.java`, `.../web/validation/constroins/NotXss.java` |
 | houtu-web-security | `.../websecurity/annotation/*.java`, `.../websecurity/session/SessionContext.java` |
-| houtu-cache | `.../lock/annotation/Lock.java`, `.../lock/support/LockSupport.java`, `.../lock/support/BLock.java`, `.../limit/RateLimiter.java`, `.../cache/annotation/ReqMonitor.java`, `.../cache/annotation/RpcMonitor.java` |
+| houtu-cache | `.../lock/annotation/Lock.java`, `.../lock/support/LockSupport.java`, `.../lock/support/BLock.java`, `.../limit/RateLimiter.java` |
 | houtu-data-security | `.../data/security/annotation/SecurityWatch.java`, `.../data/security/handler/SecurityProcessor.java` |
 | houtu-access-log | `.../accesslog/annotation/AccessLog.java`, `.../accesslog/handler/LogFilterHandler.java` |
 | houtu-utils | `.../util/crypto/*.java`, `.../util/JsonUtils.java`, `.../util/HttpClients.java` |
@@ -322,14 +320,15 @@ git show <branch>:<file-path>
 
 ## 版本快速对比
 
-| 特性 | v3.5.1 | v3.5.0 | v2.7.2 | v2.7.1 |
-|------|--------|--------|--------|--------|
-| JDK | 17+ | 17+ | 1.8+ | 1.8+ |
-| Spring Boot | 3.5.11 | 3.5.11 | 2.7.18 | 2.7.18 |
-| 包前缀 | `io.github.lujiafa.houtu` | 同左 | 同左 | 同左 |
-| Namespace | `jakarta.*` | `jakarta.*` | `javax.*` | `javax.*` |
-| Redis 配置 | `spring.data.redis.*` | 同左 | `spring.redis.*` | `spring.redis.*` |
-| Nacos 配置 | `spring.config.import` | **bootstrap.yml** | bootstrap.yml | bootstrap.yml |
-| SCA 版本 | 2025.0.0.0 | **2023.0.1.2** | 2021.0.6.2 | 2021.0.6.2 |
+| 特性 | v3.5.2 | v3.5.1 | v3.5.0 | v2.7.2 | v2.7.1 |
+|------|--------|--------|--------|--------|--------|
+| JDK | 17+ | 17+ | 17+ | 1.8+ | 1.8+ |
+| Spring Boot | 3.5.11 | 3.5.11 | 3.5.11 | 2.7.18 | 2.7.18 |
+| 包前缀 | `io.github.lujiafa.houtu` | 同左 | 同左 | 同左 | 同左 |
+| Namespace | `jakarta.*` | `jakarta.*` | `jakarta.*` | `javax.*` | `javax.*` |
+| Redis 配置 | `spring.data.redis.*` | 同左 | 同左 | `spring.redis.*` | `spring.redis.*` |
+| Nacos 配置 | `spring.config.import` | 同左 | **bootstrap.yml** | bootstrap.yml | bootstrap.yml |
+| SCA 版本 | 2025.0.0.0 | 同左 | **2023.0.1.2** | 2021.0.6.2 | 2021.0.6.2 |
+| @Lock SpEL | ✅ | ✗ | ✗ | ✗ | ✗ |
 
 > 详细版本信息见 `references/v{version}.md`

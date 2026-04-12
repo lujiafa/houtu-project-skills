@@ -50,14 +50,19 @@ public boolean pay(String paymentId) {
     // Wait up to 5s to acquire lock, hold max 30s
 }
 
-// Nested parameter (reads form.getUserId())
-@Lock(prefix = "user:", key = "form.userId")
-public void updateUser(UserForm form) { ... }
+// SpEL expression (v3.5.2+): nested property access
+@Lock(prefix = "user:", key = "#user.id")
+public void updateUser(User user) {
+    // Lock key resolved via SpEL: user.getId()
+}
 ```
 
 **Annotation attributes:**
 - `prefix` — prepended to lock key (default: `""`)
-- `key` — parameter name to use as key. If empty, uses `className.methodName`
+- `key` — lock key, supports three modes:
+  - empty → uses `className.methodName`
+  - without `#` → exact parameter name match (e.g., `key = "orderId"`)
+  - with `#` prefix → SpEL expression (v3.5.2+, e.g., `key = "#user.id"`, `key = "#order.customer.vipId"`)
 - `leaseTime` — max lock hold time in `unit` (-1 = indefinite, default)
 - `waitTime` — max wait to acquire (-1 = block forever, default)
 - `unit` — TimeUnit (default: SECONDS)
@@ -140,25 +145,11 @@ limiter.acquire();
 
 ---
 
-## @ReqMonitor / @RpcMonitor — Performance Monitoring
-
-```java
-import io.github.lujiafa.houtu.cache.annotation.ReqMonitor;
-import io.github.lujiafa.houtu.cache.annotation.RpcMonitor;
-
-@ReqMonitor(cmd = "/api/order/create")
-public void createOrder() { ... }
-
-@RpcMonitor(rmtsrv = "payment-service", cmd = "/pay")
-public PayResult callPayment() { ... }
-```
-
----
-
 ## Common Mistakes
 
 - **@Lock requires Redisson on classpath** — without it, the aspect bean won't register, annotation silently ignored
-- **@Lock key resolves by parameter name matching**, not SpEL expression — `key = "orderId"` matches parameter named `orderId`
+- **@Lock key resolution is version-dependent** — v3.5.2+: `key = "#user.id"` uses SpEL (must have `#` prefix), supports nested properties; older versions: only exact parameter name matching (`key = "orderId"`), no SpEL or nested property
+- **@Lock throws RuntimeException when tryLock fails** — if `waitTime` is set and lock acquisition times out, a RuntimeException is thrown (not silently ignored)
 - **Lock key = `redis:distributed:lock:` + prefix + key** — be aware of the auto prefix when debugging
 - **RateLimiter needs RedisTemplate** — inject it, not create manually
-- **Do NOT confuse houtu-cache with Spring Cache** — houtu-cache provides lock/rate-limit/monitoring, not @Cacheable replacement
+- **Do NOT confuse houtu-cache with Spring Cache** — houtu-cache provides lock/rate-limit, not @Cacheable replacement

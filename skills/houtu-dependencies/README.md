@@ -30,7 +30,7 @@ houtu-dependencies/
 │   ├── module-swagger.md                # Swagger/OpenAPI auto-config
 │   ├── module-utils.md                  # JsonUtils, HttpClients, crypto, BeanUtils
 │   ├── module-actuator.md               # Prometheus metrics auto-config
-│   ├── v3.5.1.md / v3.5.0.md           # Version-specific diffs
+│   ├── v3.5.2.md / v3.5.1.md / v3.5.0.md  # Version-specific diffs
 │   └── v2.7.2.md / v2.7.1.md            # Version-specific diffs
 └── evals/
     └── evals.json                       # 18 test scenarios for validation

@@ -13,7 +13,7 @@
         <dependency>
             <groupId>io.github.lujiafa</groupId>
             <artifactId>houtu-dependencies</artifactId>
-            <version>${houtu.version}</version> <!-- 根据版本文件调整，如 3.5.1 -->
+            <version>${houtu.version}</version> <!-- 根据版本文件调整，如 3.5.2 -->
             <type>pom</type>
             <scope>import</scope>
         </dependency>
