@@ -29,7 +29,7 @@ houtu:
 
 # Redis connection (required for CACHE type)
 spring:
-  data:                                # Redis 配置路径因版本而异，详见版本参考文件
+  data:                                # Redis config path varies by version, see version reference file for details
     redis:
       host: localhost
       port: 6379
@@ -41,26 +41,26 @@ houtu:
   web:
     session:
       type: JWT
-      jwt-signature-key: "your-base64-key"          # REQUIRED（必须为 Base64 编码）
-      jwt-signature-verify-key: "your-verify-key"   # Optional（非对称算法时为公钥 Base64）
+      jwt-signature-key: "your-base64-key"          # REQUIRED (must be Base64 encoded)
+      jwt-signature-verify-key: "your-verify-key"   # Optional (public key Base64 for asymmetric algorithms)
       jwt-signature-algorithm: HS256                 # Default
 ```
 
-### JWT 模式实战指南
+### JWT Mode Practical Guide
 
-**与 CACHE 模式的区别：**
+**Differences from CACHE mode:**
 
-| 维度 | CACHE（默认） | JWT |
-|------|-------------|-----|
-| 会话存储 | Redis | Token 自包含（无服务端存储） |
-| 客户端传递 | 请求头 `sid: <sessionId>` | 请求头 `Authorization: Bearer <token>` |
-| 登录响应 | 响应头 `sid: <sessionId>` | 响应头 `Authorization: Bearer <token>` |
-| 是否依赖 Redis | 是 | 否（但 `@CheckSign`/`@CheckRepeatRequest` 仍需 Redis） |
-| 续期方式 | Redis TTL 自动延长 | 重新签发 token（返回新 Authorization header） |
-| 登出 | 删除 Redis 中 session | 签发过期时间为 0 的 token（客户端丢弃） |
-| 额外依赖 | 无 | `jjwt-api` + `jjwt-impl` + `jjwt-jackson` |
+| Dimension | CACHE (default) | JWT |
+|-----------|----------------|-----|
+| Session storage | Redis | Token self-contained (no server-side storage) |
+| Client transport | Header `sid: <sessionId>` | Header `Authorization: Bearer <token>` |
+| Login response | Response header `sid: <sessionId>` | Response header `Authorization: Bearer <token>` |
+| Requires Redis | Yes | No (but `@CheckSign`/`@CheckRepeatRequest` still need Redis) |
+| Renewal mechanism | Redis TTL auto-extend | Re-issue token (returns new Authorization header) |
+| Logout | Delete session from Redis | Issue token with expiration time 0 (client discards) |
+| Additional dependencies | None | `jjwt-api` + `jjwt-impl` + `jjwt-jackson` |
 
-**JWT 模式 Maven 额外依赖：**
+**JWT mode additional Maven dependencies:**
 ```xml
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
@@ -78,17 +78,17 @@ houtu:
 </dependency>
 ```
 
-> 版本由 houtu-dependencies BOM 管理，无需写 version。
+> Version managed by houtu-dependencies BOM, no need to specify version.
 
-**支持的签名算法（JWTSignatureAlgorithm）：**
+**Supported signature algorithms (JWTSignatureAlgorithm):**
 
-| 类型 | 算法 | 密钥要求 |
-|------|------|---------|
-| HMAC（对称） | `HS256`, `HS384`, `HS512` | `jwt-signature-key` = Base64 编码的密钥 |
-| RSA（非对称） | `RS256`, `RS384`, `RS512` | `jwt-signature-key` = 私钥 Base64，`jwt-signature-verify-key` = 公钥 Base64 |
-| ECDSA（非对称） | `ES256`, `ES384`, `ES512` | 同 RSA，使用 EC 密钥对 |
+| Type | Algorithm | Key requirements |
+|------|-----------|-----------------|
+| HMAC (symmetric) | `HS256`, `HS384`, `HS512` | `jwt-signature-key` = Base64 encoded key |
+| RSA (asymmetric) | `RS256`, `RS384`, `RS512` | `jwt-signature-key` = private key Base64, `jwt-signature-verify-key` = public key Base64 |
+| ECDSA (asymmetric) | `ES256`, `ES384`, `ES512` | Same as RSA, using EC key pair |
 
-**JWT 模式完整登录示例：**
+**JWT mode complete login example:**
 
 ```java
 // === application.yml ===
@@ -96,11 +96,11 @@ houtu:
 //   web:
 //     session:
 //       type: JWT
-//       jwt-signature-key: "Base64编码的密钥"
+//       jwt-signature-key: "Base64 encoded key"
 //       jwt-signature-algorithm: HS256
 //       expire: 7200s
 
-// === 登录 — 代码与 CACHE 模式完全一样 ===
+// === Login — code is exactly the same as CACHE mode ===
 @PostMapping("/login")
 public ResponseData<LoginVO> login(LoginForm form) {
     User user = userService.authenticate(form);
@@ -110,43 +110,43 @@ public ResponseData<LoginVO> login(LoginForm form) {
     session.addRoles(Set.of("user"));
     session.addPermissions(Set.of("order:read", "order:create"));
     SessionContext.save(session);
-    // JWT 模式：框架自动将 JWT 写入响应头 Authorization: Bearer <token>
-    // 客户端后续请求需携带: Authorization: Bearer <token>
+    // JWT mode: framework automatically writes JWT to response header Authorization: Bearer <token>
+    // Client must include in subsequent requests: Authorization: Bearer <token>
 
     return ResponseData.success(new LoginVO(session.getId()));
 }
 
-// === 鉴权 — 代码与 CACHE 模式完全一样 ===
+// === Authorization — code is exactly the same as CACHE mode ===
 @CheckSession
 @RequiresPermission("order:read")
 @GetMapping("/orders")
 public ResponseData<List<OrderVO>> myOrders() {
     Session session = SessionContext.get();
-    // JWT 模式下 session 数据从 token Claims 中解析，无需访问 Redis
+    // In JWT mode, session data is parsed from token Claims, no Redis access needed
     Long userId = (Long) session.getAttribute("userId");
     return ResponseData.success(orderService.listByUserId(userId));
 }
 ```
 
-> **关键点**：业务代码（Controller/Service）在 CACHE 和 JWT 模式下**完全一致**，只需改 `application.yml` 中的 `type` 和密钥配置即可切换。框架内部自动处理 token 的签发、解析和传递。
+> **Key point**: Business code (Controller/Service) is **exactly the same** in CACHE and JWT modes. Just change `type` and key configuration in `application.yml` to switch. The framework automatically handles token issuance, parsing, and transport.
 
-### Session 全部配置属性
+### Session Full Configuration Properties
 
-| 属性路径 | 类型 | 默认值 | 说明 |
-|---------|------|--------|------|
-| `houtu.web.security.enabled` | boolean | true | 是否启用安全模块 |
-| `houtu.web.session.type` | SessionRepositoryType | CACHE | 存储类型: CACHE / JWT |
-| `houtu.web.session.expire` | Duration | 1800s | 会话有效期 |
-| `houtu.web.session.delay` | boolean | true | 是否自动续期 |
-| `houtu.web.session.login-url` | String | — | 登录页 URL |
-| `houtu.web.session.session-id-name` | String | `sid` | 请求头中 session ID 字段名 |
-| `houtu.web.session.redis-base-key` | String | `security:session:` | Redis key 前缀 |
-| `houtu.web.session.efficient-cache-name` | String | `session` | L2 缓存名称 |
-| `houtu.web.session.efficient-cache-sync-channel` | String | `session-sync` | L2 缓存同步频道 |
-| `houtu.web.session.jwt-signature-key` | String | — | JWT 签名密钥 |
-| `houtu.web.session.jwt-signature-verify-key` | String | — | JWT 验签密钥（非对称时） |
-| `houtu.web.session.jwt-signature-algorithm` | JWTSignatureAlgorithm | HS256 | JWT 签名算法 |
-| `houtu.web.sign.sign-key` | String | — | HMAC-MD5 签名密钥 |
+| Property path | Type | Default | Description |
+|--------------|------|---------|-------------|
+| `houtu.web.security.enabled` | boolean | true | Whether to enable the security module |
+| `houtu.web.session.type` | SessionRepositoryType | CACHE | Storage type: CACHE / JWT |
+| `houtu.web.session.expire` | Duration | 1800s | Session validity period |
+| `houtu.web.session.delay` | boolean | true | Whether to auto-renew |
+| `houtu.web.session.login-url` | String | — | Login page URL |
+| `houtu.web.session.session-id-name` | String | `sid` | Session ID field name in request header |
+| `houtu.web.session.redis-base-key` | String | `security:session:` | Redis key prefix |
+| `houtu.web.session.efficient-cache-name` | String | `session` | L2 cache name |
+| `houtu.web.session.efficient-cache-sync-channel` | String | `session-sync` | L2 cache sync channel |
+| `houtu.web.session.jwt-signature-key` | String | — | JWT signing key |
+| `houtu.web.session.jwt-signature-verify-key` | String | — | JWT verification key (for asymmetric) |
+| `houtu.web.session.jwt-signature-algorithm` | JWTSignatureAlgorithm | HS256 | JWT signature algorithm |
+| `houtu.web.sign.sign-key` | String | — | HMAC-MD5 signing key |
 
 ---
 
@@ -203,15 +203,15 @@ void addPermission(String) / addPermissions(Set<String>)
 Set<String> getPermissions()
 ```
 
-**SessionContext 静态方法：**
+**SessionContext static methods:**
 ```java
-static String getSessionId()       // 从请求头或 Cookie 获取 session ID
-static Session create()            // 创建新 Session（UUID 作为 ID）
-static boolean save(Session)       // 持久化并写入响应头
-static Session get()               // 获取当前请求的 Session
-static boolean delay(Session)      // 延长过期时间
-static boolean remove()            // 销毁当前 Session
-static void reset()                // 释放 ThreadLocal（框架内部调用）
+static String getSessionId()       // Get session ID from request header or Cookie
+static Session create()            // Create new Session (UUID as ID)
+static boolean save(Session)       // Persist and write to response header
+static Session get()               // Get the current request's Session
+static boolean delay(Session)      // Extend expiration time
+static boolean remove()            // Destroy current Session
+static void reset()                // Release ThreadLocal (called internally by framework)
 ```
 
 **Client must send session ID** in request header (default name: `sid`).

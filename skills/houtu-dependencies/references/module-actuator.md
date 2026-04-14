@@ -1,6 +1,6 @@
-# houtu-actuator — 监控指标 / Metrics / 可观测性
+# houtu-actuator — Monitoring / Metrics / Observability
 
-## Maven 依赖
+## Maven Dependency
 
 ```xml
 <dependency>
@@ -9,28 +9,28 @@
 </dependency>
 ```
 
-传递依赖：Spring Boot Starter Actuator、Micrometer Registry Prometheus、SkyWalking APM Toolkit
+Transitive dependencies: Spring Boot Starter Actuator, Micrometer Registry Prometheus, SkyWalking APM Toolkit
 
-> houtu-actuator 的 web、redis、jdbc 依赖均为 optional，需项目自行引入对应 starter。
+> houtu-actuator's web, redis, and jdbc dependencies are all optional; the project must import the corresponding starters separately.
 
-## 自动配置
+## Auto-configuration
 
-引入即生效，根据 classpath 和配置自动注册以下能力：
+Works out-of-the-box; automatically registers the following capabilities based on classpath and configuration:
 
-| 能力 | 条件 | 自动配置类 |
+| Capability | Condition | Auto-config class |
 |------|------|-----------|
-| Web 请求指标（业务状态码分布） | Servlet 应用 + 配置 percentiles | `ActuatorWebMetricsAutoConfiguration` |
-| HttpClient5 请求指标 | HttpClient on classpath + 配置 percentiles | `ActuatorWebMetricsAutoConfiguration` |
-| DataSource 连接池指标 | HikariDataSource + MeterRegistry | `ActuatorDataSourcePoolMetricsAutoConfiguration` |
-| Redis 命令延迟指标 | Lettuce RedisClient + MeterRegistry | `ActuatorRedisMetricsAutoConfiguration` |
+| Web request metrics (business status code distribution) | Servlet application + percentiles configured | `ActuatorWebMetricsAutoConfiguration` |
+| HttpClient5 request metrics | HttpClient on classpath + percentiles configured | `ActuatorWebMetricsAutoConfiguration` |
+| DataSource connection pool metrics | HikariDataSource + MeterRegistry | `ActuatorDataSourcePoolMetricsAutoConfiguration` |
+| Redis command latency metrics | Lettuce RedisClient + MeterRegistry | `ActuatorRedisMetricsAutoConfiguration` |
 
 ---
 
-## 1. Web 请求指标
+## 1. Web Request Metrics
 
-### 启用条件
+### Activation condition
 
-在 `application.yml` 中配置 percentiles：
+Configure percentiles in `application.yml`:
 
 ```yaml
 management:
@@ -40,27 +40,27 @@ management:
         http.server.requests: 0.5, 0.95, 0.99
 ```
 
-### 自动采集内容
+### Auto-collected metrics
 
-- 标准 HTTP 指标（method、status、uri）
-- **业务状态码分布**（自动从 `ResponseData.getCode()` 提取 `code` tag）
-- 异常类型标签（`BusinessException` 及其包装异常）
+- Standard HTTP metrics (method, status, uri)
+- **Business status code distribution** (automatically extracts `code` tag from `ResponseData.getCode()`)
+- Exception type tags (`BusinessException` and its wrapped exceptions)
 
-### 工作原理
+### How it works
 
-框架通过 `ResponseBodyAdviceAndWebMvcTagsContributor`（同时实现 `ResponseBodyAdvice` 和 `DefaultServerRequestObservationConvention`）自动拦截响应体：
+The framework uses `ResponseBodyAdviceAndWebMvcTagsContributor` (implementing both `ResponseBodyAdvice` and `DefaultServerRequestObservationConvention`) to automatically intercept response bodies:
 
-1. 在响应写出前，从 `BaseResponseData.getCode()` 提取业务码
-2. 将业务码作为 low cardinality tag `code` 注入到 Observation 中
-3. 对 `BusinessException` 提取异常类型标签
+1. Before the response is written, extracts the business code from `BaseResponseData.getCode()`
+2. Injects the business code as a low cardinality tag `code` into the Observation
+3. Extracts exception type tags for `BusinessException`
 
-> 无需手动埋点，只要 Controller 返回 `ResponseData<T>` 即可自动采集。
+> No manual instrumentation needed — as long as the Controller returns `ResponseData<T>`, metrics are collected automatically.
 
 ---
 
-## 2. HttpClient5 请求指标
+## 2. HttpClient5 Request Metrics
 
-### 启用条件
+### Activation condition
 
 ```yaml
 management:
@@ -70,97 +70,97 @@ management:
         http.client.requests: 0.5, 0.95, 0.99
 ```
 
-### 自动采集的 Tags
+### Auto-collected Tags
 
-**Low Cardinality Tags（用于聚合）：**
+**Low Cardinality Tags (for aggregation):**
 
-| Tag | 说明 | 示例 |
+| Tag | Description | Example |
 |-----|------|------|
 | `svrname` | scheme://host:port | `https://api.example.com:443` |
-| `method` | HTTP 方法 | `GET`, `POST` |
-| `uri` | 请求 URI | `/api/users` |
-| `status` | HTTP 响应状态码 | `200`, `500`, `UNKNOWN` |
-| `exception` | 异常类名 | `none`, `IOException` |
+| `method` | HTTP method | `GET`, `POST` |
+| `uri` | Request URI | `/api/users` |
+| `status` | HTTP response status code | `200`, `500`, `UNKNOWN` |
+| `exception` | Exception class name | `none`, `IOException` |
 
-### 控制 URI 基数 — HttpClientMetric
+### Controlling URI Cardinality — HttpClientMetric
 
-当请求路径包含路径变量（如 `/users/{id}`）时，每个不同的 id 都会生成新的 metric tag，导致 OOM。使用 `HttpClientMetric` 自定义 metric URI：
+When request paths contain path variables (e.g., `/users/{id}`), each different id generates a new metric tag, leading to OOM. Use `HttpClientMetric` to customize the metric URI:
 
 ```java
 import io.github.lujiafa.houtu.actuator.metrics.client.HttpClientMetric;
 
-// 在发起 HTTP 请求前调用
-HttpClientMetric.metric("/api/users/{id}");  // 自定义 metric URI
+// Call before making the HTTP request
+HttpClientMetric.metric("/api/users/{id}");  // Custom metric URI
 HttpClients.get("https://api.example.com/users/12345");
 
-// 或使用默认 URI（不含路径变量时）
+// Or use the default URI (when no path variables)
 HttpClientMetric.metric();
 HttpClients.get("https://api.example.com/users");
 ```
 
-**注意**：`HttpClientMetric.metric()` 基于 ThreadLocal，必须在 HTTP 请求前调用。不调用时不采集该请求的指标。
+**Note**: `HttpClientMetric.metric()` is ThreadLocal-based and must be called before the HTTP request. If not called, metrics for that request are not collected.
 
 ---
 
-## 3. DataSource 连接池指标
+## 3. DataSource Connection Pool Metrics
 
-### 启用条件
+### Activation condition
 
-classpath 存在 `HikariDataSource` + `MeterRegistry` 即自动启用，无需额外配置。
+Automatically enabled when `HikariDataSource` + `MeterRegistry` are on the classpath; no additional configuration needed.
 
-### 自动采集内容
+### Auto-collected metrics
 
-通过 `MicrometerMetricsTrackerFactory` 自动采集 HikariCP 连接池指标：
+Automatically collects HikariCP connection pool metrics via `MicrometerMetricsTrackerFactory`:
 
-- `hikaricp.connections` — 总连接数
-- `hikaricp.connections.active` — 活跃连接数
-- `hikaricp.connections.idle` — 空闲连接数
-- `hikaricp.connections.pending` — 等待连接的线程数
-- `hikaricp.connections.creation` — 连接创建时间
-- `hikaricp.connections.acquire` — 连接获取时间
-- `hikaricp.connections.usage` — 连接使用时间
-- `hikaricp.connections.timeout` — 连接超时次数
+- `hikaricp.connections` — Total connections
+- `hikaricp.connections.active` — Active connections
+- `hikaricp.connections.idle` — Idle connections
+- `hikaricp.connections.pending` — Threads waiting for a connection
+- `hikaricp.connections.creation` — Connection creation time
+- `hikaricp.connections.acquire` — Connection acquisition time
+- `hikaricp.connections.usage` — Connection usage time
+- `hikaricp.connections.timeout` — Connection timeout count
 
-### 多数据源支持
+### Multi-datasource support
 
-框架自动检测 `Map<String, HikariDataSource>` 类型的 Bean（如动态数据源），为每个数据源设置独立的 pool name 并注册独立的 metrics。
+The framework automatically detects `Map<String, HikariDataSource>` type Beans (e.g., dynamic datasources), sets an independent pool name for each datasource, and registers independent metrics.
 
 ---
 
-## 4. Redis 命令延迟指标
+## 4. Redis Command Latency Metrics
 
-### 启用条件
+### Activation condition
 
-classpath 存在 Lettuce `RedisClient` + `MicrometerCommandLatencyRecorder` + `MeterRegistry`。
+Lettuce `RedisClient` + `MicrometerCommandLatencyRecorder` + `MeterRegistry` on the classpath.
 
-### 配置
+### Configuration
 
 ```yaml
 management:
   metrics:
     enable:
-      redis.lettuce: true                              # 启用 Redis 指标
+      redis.lettuce: true                              # Enable Redis metrics
     distribution:
       percentiles-histogram:
-        redis.lettuce: true                            # 启用直方图
+        redis.lettuce: true                            # Enable histogram
       percentiles:
-        redis.lettuce: 0.5, 0.95, 0.99                # 百分位配置
+        redis.lettuce: 0.5, 0.95, 0.99                # Percentile config
 ```
 
-### 自动采集内容
+### Auto-collected metrics
 
-通过 Lettuce 的 `MicrometerCommandLatencyRecorder` 采集 Redis 命令延迟：
+Collects Redis command latency via Lettuce's `MicrometerCommandLatencyRecorder`:
 
-- `lettuce.command.completion` — 命令完成延迟
-- `lettuce.command.firstresponse` — 首次响应延迟
+- `lettuce.command.completion` — Command completion latency
+- `lettuce.command.firstresponse` — First response latency
 
 ---
 
-## 5. Prometheus 端点
+## 5. Prometheus Endpoint
 
-houtu-actuator 传递依赖 `micrometer-registry-prometheus`，默认暴露 `/actuator/prometheus` 端点。
+houtu-actuator transitively depends on `micrometer-registry-prometheus`, exposing the `/actuator/prometheus` endpoint by default.
 
-确保配置：
+Ensure the following is configured:
 
 ```yaml
 management:
@@ -172,11 +172,11 @@ management:
 
 ---
 
-## 自定义扩展
+## Custom extensions
 
-### 自定义 HttpClient5 Observation Convention
+### Custom HttpClient5 Observation Convention
 
-注册自定义 `HttpClient5ObservationConvention` Bean 覆盖默认实现：
+Register a custom `HttpClient5ObservationConvention` Bean to override the default implementation:
 
 ```java
 @Bean
@@ -184,23 +184,23 @@ public HttpClient5ObservationConvention customConvention() {
     return new HttpClient5ObservationConvention("custom.http.client") {
         @Override
         public KeyValues getLowCardinalityKeyValues(HttpClient5RequestReplySenderContext context) {
-            // 自定义 tag 逻辑
+            // Custom tag logic
             return super.getLowCardinalityKeyValues(context);
         }
     };
 }
 ```
 
-### 自定义 Web 业务码采集
+### Custom Web Business Code Collection
 
-默认从 `BaseResponseData.getCode()` 提取。如需覆盖，注册自定义 `ResponseBodyAdviceAndWebMvcTagsContributor` Bean。
+By default, business codes are extracted from `BaseResponseData.getCode()`. To override, register a custom `ResponseBodyAdviceAndWebMvcTagsContributor` Bean.
 
 ---
 
-## 默认避免（用户明确要求时除外）
+## Avoid by default (follow user if explicitly requested)
 
-1. **默认避免** 自行创建 MeterBinder 采集 HTTP 接口指标 — 框架已自动采集
-2. **默认避免** 自行注册 Micrometer Filter 采集 HttpClient 指标 — 使用框架的 Observation 机制
-3. **默认避免** 自行配置 HikariCP 的 MetricsTrackerFactory — 框架自动注册
-4. **默认避免** 单独引入 `micrometer-registry-prometheus` — houtu-actuator 已传递依赖
-5. **默认避免** 忽略 `HttpClientMetric.metric()` 调用 — 对含路径变量的请求不调用会导致指标基数爆炸
+1. **Avoid by default** creating custom MeterBinder to collect HTTP endpoint metrics — the framework already collects them automatically
+2. **Avoid by default** registering custom Micrometer Filter to collect HttpClient metrics — use the framework's Observation mechanism
+3. **Avoid by default** manually configuring HikariCP's MetricsTrackerFactory — the framework registers it automatically
+4. **Avoid by default** importing `micrometer-registry-prometheus` separately — houtu-actuator already includes it as a transitive dependency
+5. **Avoid by default** omitting `HttpClientMetric.metric()` calls — not calling it for requests with path variables will cause metric cardinality explosion

@@ -1,23 +1,23 @@
-# 快速接入 Houtu Framework
+# Quick Start with Houtu Framework
 
-## 创建新微服务的标准步骤
+## Standard steps for creating a new microservice
 
-### 1. BOM 引入
+### 1. Import BOM
 
-框架分为两个 BOM：`houtu-dependencies`（基础模块）和 `spring-cloud-houtu`（Spring Cloud 增强模块）。
+The framework is divided into two BOMs: `houtu-dependencies` (base modules) and `spring-cloud-houtu` (Spring Cloud enhancement modules).
 
 ```xml
 <dependencyManagement>
     <dependencies>
-        <!-- 基础模块 BOM（必须） -->
+        <!-- Base module BOM (required) -->
         <dependency>
             <groupId>io.github.lujiafa</groupId>
             <artifactId>houtu-dependencies</artifactId>
-            <version>${houtu.version}</version> <!-- 根据版本文件调整，如 3.5.2 -->
+            <version>${houtu.version}</version> <!-- Adjust according to version file, e.g. 3.5.2 -->
             <type>pom</type>
             <scope>import</scope>
         </dependency>
-        <!-- Spring Cloud 增强模块 BOM（使用 spring-cloud-houtu-* 模块时必须） -->
+        <!-- Spring Cloud enhancement module BOM (required when using spring-cloud-houtu-* modules) -->
         <dependency>
             <groupId>io.github.lujiafa</groupId>
             <artifactId>spring-cloud-houtu</artifactId>
@@ -29,20 +29,20 @@
 </dependencyManagement>
 ```
 
-> 如果项目不使用 Spring Cloud 模块（loadbalancer、feign、discovery、sentinel），可以只引入 `houtu-dependencies`。
+> If your project does not use Spring Cloud modules (loadbalancer, feign, discovery, sentinel), you can import only `houtu-dependencies`.
 
-**Gradle（build.gradle.kts）：**
+**Gradle (build.gradle.kts):**
 
 ```kotlin
 dependencies {
-    // 基础模块 BOM（必须）
-    implementation platform("io.github.lujiafa:houtu-dependencies:${houtuVersion}") // 根据版本文件调整，如 3.5.2
-    // Spring Cloud 增强模块 BOM（使用 spring-cloud-houtu-* 模块时必须）
+    // Base module BOM (required)
+    implementation platform("io.github.lujiafa:houtu-dependencies:${houtuVersion}") // Adjust according to version file, e.g. 3.5.2
+    // Spring Cloud enhancement module BOM (required when using spring-cloud-houtu-* modules)
     implementation platform("io.github.lujiafa:spring-cloud-houtu:${houtuVersion}")
 }
 ```
 
-**Gradle（build.gradle）：**
+**Gradle (build.gradle):**
 
 ```groovy
 dependencies {
@@ -51,25 +51,25 @@ dependencies {
 }
 ```
 
-> Gradle 项目中引入 Starter 同样无需写 version，由 BOM platform 管理。
+> In Gradle projects, Starters also do not need a version specified — managed by the BOM platform.
 
-### 2. 按需引入 Starter（无需写 version）
+### 2. Import Starters as needed (no version required)
 
-| ArtifactId | 功能 | 传递依赖 |
+| ArtifactId | Feature | Transitive dependencies |
 |-----------|------|---------|
-| `houtu-web` | 统一响应、异常处理、参数自动绑定 | spring-boot-starter-web, validation, houtu-core, houtu-utils |
-| `houtu-web-security` | 会话、鉴权、签名、防重放、RBAC | houtu-web, houtu-cache (→ Redis) |
-| `houtu-cache` | 分布式锁、限流、缓存增强 | spring-data-redis, commons-pool2 |
-| `houtu-data-security` | 数据库字段自动加解密 | houtu-core, houtu-utils (需额外加 spring-boot-starter-aop) |
-| `houtu-access-log` | 请求访问日志 | spring-boot-starter-aop, houtu-utils |
-| `houtu-web-swagger` | Swagger/OpenAPI 文档 | springdoc-openapi |
-| `houtu-actuator` | 监控指标 (Prometheus/SkyWalking) | spring-boot-starter-actuator, micrometer |
-| `spring-cloud-houtu-loadbalancer` | 灰度路由、权重负载均衡 | spring-cloud-starter-loadbalancer |
-| `spring-cloud-houtu-feign` | Feign 自动发布、异常穿透 | spring-cloud-starter-openfeign |
-| `spring-cloud-houtu-discovery` | 服务在线状态检测 | houtu-core |
-| `spring-cloud-houtu-alibaba-sentinel` | 熔断限流 (Nacos 持久化) | sentinel, sentinel-datasource-nacos |
+| `houtu-web` | Unified response, exception handling, automatic parameter binding | spring-boot-starter-web, validation, houtu-core, houtu-utils |
+| `houtu-web-security` | Session, authentication, signature, replay prevention, RBAC | houtu-web, houtu-cache (-> Redis) |
+| `houtu-cache` | Distributed lock, rate limiting, cache enhancement | spring-data-redis, commons-pool2 |
+| `houtu-data-security` | Automatic database field encryption/decryption | houtu-core, houtu-utils (requires additional spring-boot-starter-aop) |
+| `houtu-access-log` | Request access logging | spring-boot-starter-aop, houtu-utils |
+| `houtu-web-swagger` | Swagger/OpenAPI documentation | springdoc-openapi |
+| `houtu-actuator` | Monitoring / Metrics (Prometheus/SkyWalking) | spring-boot-starter-actuator, micrometer |
+| `spring-cloud-houtu-loadbalancer` | Canary routing, weighted load balancing | spring-cloud-starter-loadbalancer |
+| `spring-cloud-houtu-feign` | Feign auto-publish, exception propagation | spring-cloud-starter-openfeign |
+| `spring-cloud-houtu-discovery` | Service online status detection | houtu-core |
+| `spring-cloud-houtu-alibaba-sentinel` | Circuit breaking & rate limiting (Nacos persistence) | sentinel, sentinel-datasource-nacos |
 
-### 3. 最小化 application.yml
+### 3. Minimal application.yml
 
 ```yaml
 server:
@@ -78,21 +78,21 @@ server:
 spring:
   application:
     name: your-service-name
-  data:                             # ⚠️ v2.7.x: spring.redis.* (无 data 层级)
-    redis:                          # houtu-web-security / houtu-cache 需要
+  data:                             # ⚠️ v2.7.x: spring.redis.* (no data level)
+    redis:                          # Required by houtu-web-security / houtu-cache
       host: localhost
       port: 6379
 
 houtu:
   web:
     sign:
-      sign-key: "your-sign-key"    # houtu-web-security 必需
+      sign-key: "your-sign-key"    # Required by houtu-web-security
   data:
     security:
-      secret-key: "your-sm4-key"   # houtu-data-security 必需
+      secret-key: "your-sm4-key"   # Required by houtu-data-security
 ```
 
-### 4. 标准 Controller 写法
+### 4. Standard Controller pattern
 
 ```java
 import io.github.lujiafa.houtu.web.model.ResponseData;
@@ -102,7 +102,7 @@ import io.github.lujiafa.houtu.core.exception.ErrorCode;
 import io.github.lujiafa.houtu.websecurity.annotation.CheckSession;
 import io.github.lujiafa.houtu.websecurity.annotation.RequiresPermission;
 
-@CheckSession                                   // 整个 Controller 需要登录
+@CheckSession                                   // Entire Controller requires login
 @RestController
 @RequestMapping("/api/v1/orders")
 public class OrderController {
@@ -117,18 +117,18 @@ public class OrderController {
         if (order == null) {
             throw new BusinessException(ErrorCode.build(41, "订单不存在"));
         }
-        return ResponseData.success(order);      // 无需 @ResponseBody
+        return ResponseData.success(order);      // No need for @ResponseBody
     }
 
     @RequiresPermission("order:create")
     @PostMapping
-    public ResponseData<Long> create(@Valid OrderForm form) {  // 无需 @RequestBody, 自动绑定
+    public ResponseData<Long> create(@Valid OrderForm form) {  // No need for @RequestBody, auto-binding
         Long id = orderService.create(form);
         return ResponseData.success(id);
     }
 }
 
-// Form 继承 BaseForm 即可自动绑定 query + body 参数
+// Form extends BaseForm to automatically bind query + body parameters
 public class OrderForm extends BaseForm {
     @NotBlank private String productName;
     @NotNull private Integer quantity;
@@ -136,10 +136,10 @@ public class OrderForm extends BaseForm {
 }
 ```
 
-### 默认避免（用户明确要求时除外）
+### Avoid by default (follow user if explicitly requested)
 
-- 默认不自定义 Result/Response 包装类 — 用 `ResponseData<T>`
-- 默认不写 @ControllerAdvice — 框架已有 `UnifiedHandlerExceptionResolver`
-- 默认不给 `BaseForm` 参数加 @RequestBody — 框架自动处理
-- 默认不引入 spring-boot-starter-security — 用 houtu-web-security
-- 默认不自己引入 springdoc — 用 houtu-web-swagger
+- Do not customize Result/Response wrapper classes by default — use `ResponseData<T>`
+- Do not write @ControllerAdvice by default — the framework already provides `UnifiedHandlerExceptionResolver`
+- Do not add @RequestBody to `BaseForm` parameters by default — the framework handles this automatically
+- Do not import spring-boot-starter-security by default — use houtu-web-security
+- Do not import springdoc manually by default — use houtu-web-swagger

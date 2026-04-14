@@ -76,21 +76,21 @@ public EmbedResponseData status() {
 }
 ```
 
-## ResponseData vs EmbedResponseData — 如何选择
+## ResponseData vs EmbedResponseData — How to Choose
 
-| 维度 | `ResponseData<T>` | `EmbedResponseData` |
-|------|-------------------|---------------------|
-| **JSON 结构** | `{code, message, data: {...}}` — data 嵌套在 data 字段中 | `{code, message, key1: v1, key2: v2}` — 业务字段与 code/message 平铺 |
-| **类型安全** | 泛型 `<T>`，编译期检查 data 类型 | `Map<String, Object>`，无编译期检查 |
-| **适用场景** | **绝大多数接口** — 返回强类型对象、列表、分页等 | **少数特殊接口** — 状态检查、简单 KV 结果、无需前端定义类型的场景 |
-| **前端配合** | 前端统一从 `response.data.data` 取业务数据 | 前端直接从 `response.data` 取所有字段（无 data 包装层） |
-| **序列化** | Jackson 自动序列化泛型对象 | 继承 `LinkedHashMap`，字段顺序可控 |
+| Dimension | `ResponseData<T>` | `EmbedResponseData` |
+|-----------|--------------------|---------------------|
+| **JSON structure** | `{code, message, data: {...}}` — data nested in data field | `{code, message, key1: v1, key2: v2}` — business fields flattened alongside code/message |
+| **Type safety** | Generic `<T>`, compile-time type checking for data | `Map<String, Object>`, no compile-time checking |
+| **Use cases** | **Most APIs** — returning strongly-typed objects, lists, pagination, etc. | **Few special APIs** — status checks, simple KV results, scenarios where frontend doesn't need to define types |
+| **Frontend integration** | Frontend uniformly reads business data from `response.data.data` | Frontend reads all fields directly from `response.data` (no data wrapper layer) |
+| **Serialization** | Jackson auto-serializes generic objects | Extends `LinkedHashMap`, field order controllable |
 
-**决策规则**：
-1. **默认使用 `ResponseData<T>`** — 除非有明确理由
-2. 当需要返回**动态 KV 结构**（字段名和数量不固定）时使用 `EmbedResponseData`
-3. 当接口是**对外开放 API**且对方要求**不嵌套 data 层**时使用 `EmbedResponseData`
-4. 当返回的业务对象**已有明确 VO 类**时，始终用 `ResponseData<T>`
+**Decision rules**:
+1. **Use `ResponseData<T>` by default** — unless there is a specific reason not to
+2. Use `EmbedResponseData` when returning **dynamic KV structures** (field names and count are not fixed)
+3. Use `EmbedResponseData` when the API is **externally exposed** and the consumer requires **no nested data layer**
+4. When the business object **already has a defined VO class**, always use `ResponseData<T>`
 
 ## Exception Handling
 
@@ -172,7 +172,7 @@ public ResponseData<List<User>> list(UserQueryForm form) {
 ## @NotXss — XSS Validation
 
 ```java
-import io.github.lujiafa.houtu.web.validation.constroins.NotXss;  // 注意包名 constroins（框架原始拼写）
+import io.github.lujiafa.houtu.web.validation.constroins.NotXss;  // Note package name constroins (original framework spelling)
 
 public class CommentForm extends BaseForm {
     @NotXss private String content;   // Rejects content with XSS patterns, also implies @NotNull
@@ -180,33 +180,33 @@ public class CommentForm extends BaseForm {
 }
 ```
 
-> `@NotXss` 包含 `@NotNull` 语义，无需额外添加 `@NotNull`。默认 message: `"内容包含不安全信息"`。
+> `@NotXss` includes `@NotNull` semantics, no need to add `@NotNull` separately. Default message: `"内容包含不安全信息"`.
 
 ---
 
-## BusinessException 构造方式
+## BusinessException Construction Methods
 
 ```java
 import io.github.lujiafa.houtu.core.exception.BusinessException;
 import io.github.lujiafa.houtu.core.exception.ErrorCode;
 
-// 方式 1: ErrorCode（推荐，支持 i18n）
+// Approach 1: ErrorCode (recommended, supports i18n)
 throw new BusinessException(ErrorCode.build(41, "订单不存在"));
 throw new BusinessException(ErrorCode.build(30, new Object[]{"name"}));  // i18n with args
-throw new BusinessException(ErrorCode.build(41));                         // message 从 MessageSource 读取
+throw new BusinessException(ErrorCode.build(41));                         // message read from MessageSource
 
-// 方式 2: code + message
+// Approach 2: code + message
 throw new BusinessException(1001, "自定义错误");
 
-// 方式 3: 带原始异常
+// Approach 3: With original cause
 throw new BusinessException(ErrorCode.build(2), cause);
 throw new BusinessException(1001, "自定义错误", cause);
 
-// 方式 4: 仅包装异常（code 默认为 SERVER_BUSY=2）
+// Approach 4: Wrap exception only (code defaults to SERVER_BUSY=2)
 throw new BusinessException(cause);
 ```
 
-**ErrorCode.build() 完整重载：**
+**ErrorCode.build() full overloads:**
 ```java
 static ErrorCode build(int code)
 static ErrorCode build(int code, String defaultMessage)
@@ -220,7 +220,7 @@ static ErrorCode build(int code, Locale locale, Object[] args, String defaultMes
 
 ---
 
-## Model 基类详细 API
+## Model Base Class Detailed API
 
 ### PageForm (extends BaseForm)
 
@@ -248,13 +248,13 @@ import io.github.lujiafa.houtu.web.model.dto.PageQueryDTO;
 ```java
 import io.github.lujiafa.houtu.web.model.vo.PageDataVO;
 
-// 构建方式 1: 从 PageDataDTO 转换
+// Construction method 1: Convert from PageDataDTO
 PageDataVO<UserVO> pageVO = PageDataVO.build(pageDataDTO, UserVO.class);
 
-// 构建方式 2: 手动构建
+// Construction method 2: Build manually
 PageDataVO<UserVO> pageVO = PageDataVO.build(currentPage, pageSize, totalRecords, records);
 
-// 构建方式 3: 空分页
+// Construction method 3: Empty page
 PageDataVO<UserVO> empty = PageDataVO.empty();
 
 // Fields: pageSize, currentPage, totalPages, totalRecords, records (List<V>)
@@ -265,22 +265,22 @@ PageDataVO<UserVO> empty = PageDataVO.empty();
 ```java
 import io.github.lujiafa.houtu.web.model.vo.PageDataExtVO;
 
-// 分页列表 + 额外数据（如汇总统计）
+// Paginated list + extra data (e.g., summary statistics)
 PageDataExtVO<OrderSummary, OrderVO> extVO = new PageDataExtVO<>();
 extVO.setRecords(orderVOList);
 extVO.setTotalRecords(total);
 extVO.setCurrentPage(currentPage);
 extVO.setPageSize(pageSize);
-extVO.setData(new OrderSummary(totalAmount, totalCount));  // 额外数据字段
+extVO.setData(new OrderSummary(totalAmount, totalCount));  // Extra data field
 // JSON: {records:[...], totalRecords:100, ..., data:{totalAmount:9999, totalCount:50}}
 ```
 
-### HandlerExceptionResolverCustomizer 接口
+### HandlerExceptionResolverCustomizer Interface
 
 ```java
 public interface HandlerExceptionResolverCustomizer {
-    // 返回 BusinessException 则框架使用其 ErrorCode 作为响应
-    // 返回 null 则跳过，由下一个 Customizer 或默认处理器处理
+    // Return BusinessException and the framework uses its ErrorCode as the response
+    // Return null to skip, letting the next Customizer or default handler process it
     BusinessException process(HttpServletRequest request, HttpServletResponse response,
                               Object handler, Exception ex);
 }

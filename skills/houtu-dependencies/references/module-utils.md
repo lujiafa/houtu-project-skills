@@ -1,89 +1,89 @@
-# houtu-utils — 加密 / JSON / HTTP 客户端 / 通用工具
+# houtu-utils — Encryption / JSON / HTTP Client / Common Utilities
 
-## Maven 依赖
+## Maven Dependency
 
 ```xml
-<!-- 通常无需单独引入，houtu-web 已传递依赖 houtu-utils -->
-<!-- 如果仅需工具类而不需要 Web 能力，可直接引入 -->
+<!-- Usually no need to import separately; houtu-web already transitively depends on houtu-utils -->
+<!-- If you only need utility classes without Web capabilities, you can import directly -->
 <dependency>
     <groupId>io.github.lujiafa</groupId>
     <artifactId>houtu-utils</artifactId>
 </dependency>
 ```
 
-传递依赖：Apache HttpClient 5、BouncyCastle 1.82、Commons Lang3、Jackson
+Transitive dependencies: Apache HttpClient 5, BouncyCastle 1.82, Commons Lang3, Jackson
 
-## 自动配置
+## Auto-configuration
 
-引入即生效，自动注册：
-- `CloseableHttpClient` — Apache HttpClient 5 实例（连接池、SSL、代理已配置）
-- `HttpClients` — 静态 HTTP 请求工具（基于上述 HttpClient）
-- `JsonUtils` — JSON 序列化/反序列化（基于 Jackson ObjectMapper）
+Works out-of-the-box, automatically registers:
+- `CloseableHttpClient` — Apache HttpClient 5 instance (connection pool, SSL, proxy pre-configured)
+- `HttpClients` — Static HTTP request utility (based on the above HttpClient)
+- `JsonUtils` — JSON serialization/deserialization (based on Jackson ObjectMapper)
 
 ---
 
-## 1. JSON 工具 — JsonUtils
+## 1. JSON Utility — JsonUtils
 
-**包路径**：`io.github.lujiafa.houtu.util.common.JsonUtils`
+**Package**: `io.github.lujiafa.houtu.util.common.JsonUtils`
 
 ### API
 
-| 方法 | 返回值 | 说明 |
+| Method | Return type | Description |
 |------|--------|------|
-| `JsonUtils.toString(Object bean)` | `String` | 对象 → JSON 字符串 |
-| `JsonUtils.toStringIgnoreNull(Object bean)` | `String` | 对象 → JSON 字符串（忽略 null 字段） |
-| `JsonUtils.parseObject(String json, Class<T> clazz)` | `T` | JSON 字符串 → 对象 |
-| `JsonUtils.parseObject(String json, TypeReference<T> typeRef)` | `T` | JSON 字符串 → 泛型对象 |
-| `JsonUtils.convertValue(Object from, Class<T> toType)` | `T` | 对象类型转换 |
-| `JsonUtils.convertValueIgnoreNull(Object from, Class<T> toType)` | `T` | 对象类型转换（忽略 null） |
-| `JsonUtils.convertValue(Object from, TypeReference<T> typeRef)` | `T` | 对象 → 泛型类型转换 |
-| `JsonUtils.convertValueIgnoreNull(Object from, TypeReference<T> typeRef)` | `T` | 对象 → 泛型类型转换（忽略 null） |
+| `JsonUtils.toString(Object bean)` | `String` | Object -> JSON string |
+| `JsonUtils.toStringIgnoreNull(Object bean)` | `String` | Object -> JSON string (ignoring null fields) |
+| `JsonUtils.parseObject(String json, Class<T> clazz)` | `T` | JSON string -> Object |
+| `JsonUtils.parseObject(String json, TypeReference<T> typeRef)` | `T` | JSON string -> Generic object |
+| `JsonUtils.convertValue(Object from, Class<T> toType)` | `T` | Object type conversion |
+| `JsonUtils.convertValueIgnoreNull(Object from, Class<T> toType)` | `T` | Object type conversion (ignoring null) |
+| `JsonUtils.convertValue(Object from, TypeReference<T> typeRef)` | `T` | Object -> Generic type conversion |
+| `JsonUtils.convertValueIgnoreNull(Object from, TypeReference<T> typeRef)` | `T` | Object -> Generic type conversion (ignoring null) |
 
-### 代码示例
+### Code Example
 
 ```java
 import io.github.lujiafa.houtu.util.common.JsonUtils;
 
-// 序列化
+// Serialization
 String json = JsonUtils.toString(userVO);
 String jsonNoNull = JsonUtils.toStringIgnoreNull(userVO);
 
-// 反序列化
+// Deserialization
 UserVO user = JsonUtils.parseObject(json, UserVO.class);
 List<UserVO> users = JsonUtils.parseObject(json, new TypeReference<List<UserVO>>() {});
 
-// 对象转换（类似 BeanUtils 但通过 JSON 中转）
+// Object conversion (similar to BeanUtils but via JSON intermediate)
 UserDTO dto = JsonUtils.convertValue(form, UserDTO.class);
 ```
 
 ---
 
-## 2. HTTP 客户端 — HttpClients
+## 2. HTTP Client — HttpClients
 
-**包路径**：`io.github.lujiafa.houtu.util.http.HttpClients`
+**Package**: `io.github.lujiafa.houtu.util.http.HttpClients`
 
 ### API
 
-| 方法 | 返回值 | 说明 |
+| Method | Return type | Description |
 |------|--------|------|
-| `HttpClients.get(String url)` | `HttpResponseData` | 简单 GET 请求 |
-| `HttpClients.get(String url, RequestConfig config)` | `HttpResponseData` | 带配置 GET 请求 |
-| `HttpClients.post(String url, RequestConfig config)` | `HttpResponseData` | 带配置 POST 请求 |
-| `HttpClients.execute(CloseableHttpClient client, HttpUriRequestBase request)` | `HttpResponseData` | 自定义请求执行 |
+| `HttpClients.get(String url)` | `HttpResponseData` | Simple GET request |
+| `HttpClients.get(String url, RequestConfig config)` | `HttpResponseData` | GET request with config |
+| `HttpClients.post(String url, RequestConfig config)` | `HttpResponseData` | POST request with config |
+| `HttpClients.execute(CloseableHttpClient client, HttpUriRequestBase request)` | `HttpResponseData` | Custom request execution |
 
-### RequestConfig 构建器
+### RequestConfig Builder
 
 ```java
 RequestConfig config = RequestConfig.build()
-    .headers(Map.of("Authorization", "Bearer xxx"))  // 设置 header
-    .header("X-Custom", "value")                     // 单个 header
-    .params(Map.of("key", "value"))                  // 查询参数 / 表单参数
-    .param("id", 123)                                // 单个参数
+    .headers(Map.of("Authorization", "Bearer xxx"))  // Set headers
+    .header("X-Custom", "value")                     // Single header
+    .params(Map.of("key", "value"))                  // Query params / form params
+    .param("id", 123)                                // Single param
     .data("{\"name\":\"test\"}")                      // JSON body
-    .httpClient(customClient);                       // 可选：使用自定义 HttpClient
+    .httpClient(customClient);                       // Optional: use custom HttpClient
 ```
 
-### MultipartConfig（文件上传）
+### MultipartConfig (File Upload)
 
 ```java
 RequestConfig config = RequestConfig.build()
@@ -96,23 +96,23 @@ RequestConfig config = RequestConfig.build()
 
 ### HttpResponseData
 
-| 方法 | 返回值 | 说明 |
+| Method | Return type | Description |
 |------|--------|------|
-| `getStatusCode()` | `int` | HTTP 状态码 |
-| `getStatusText()` | `String` | HTTP 状态描述 |
-| `getContent()` | `String` | 响应体字符串 |
-| `getHeaderMap()` | `Map<String, String>` | 响应头 |
-| `getCharset()` | `Charset` | 响应字符集 |
-| `convert(Class<T> clazz)` | `T` | 响应体 → 对象 |
-| `convert(TypeReference<T> typeRef)` | `T` | 响应体 → 泛型对象 |
+| `getStatusCode()` | `int` | HTTP status code |
+| `getStatusText()` | `String` | HTTP status text |
+| `getContent()` | `String` | Response body string |
+| `getHeaderMap()` | `Map<String, String>` | Response headers |
+| `getCharset()` | `Charset` | Response charset |
+| `convert(Class<T> clazz)` | `T` | Response body -> Object |
+| `convert(TypeReference<T> typeRef)` | `T` | Response body -> Generic object |
 
-### 代码示例
+### Code Example
 
 ```java
 import io.github.lujiafa.houtu.util.http.HttpClients;
 import io.github.lujiafa.houtu.util.http.HttpClients.RequestConfig;
 
-// 简单 GET
+// Simple GET
 HttpClients.HttpResponseData resp = HttpClients.get("https://api.example.com/users");
 List<UserVO> users = resp.convert(new TypeReference<List<UserVO>>() {});
 
@@ -123,7 +123,7 @@ HttpClients.HttpResponseData resp = HttpClients.post("https://api.example.com/us
         .data(JsonUtils.toString(createDTO)));
 UserVO created = resp.convert(UserVO.class);
 
-// 文件上传
+// File upload
 HttpClients.HttpResponseData resp = HttpClients.post("https://api.example.com/upload",
     RequestConfig.build()
         .multipart()
@@ -132,34 +132,34 @@ HttpClients.HttpResponseData resp = HttpClients.post("https://api.example.com/up
             .build());
 ```
 
-### HttpClient 配置属性
+### HttpClient Configuration Properties
 
-配置前缀：`houtu.http`
+Config prefix: `houtu.http`
 
-| 属性 | 类型 | 默认值 | 说明 |
+| Property | Type | Default | Description |
 |------|------|--------|------|
-| `houtu.http.pool.max-total` | int | — | 连接池最大连接数 |
-| `houtu.http.pool.max-per-route` | int | — | 每路由最大连接数 |
-| `houtu.http.pool.disable-ssl-validation` | boolean | — | 是否禁用 SSL 验证 |
-| `houtu.http.pool.pool-reuse-policy` | PoolReusePolicy | — | 连接复用策略 |
-| `houtu.http.pool.pool-concurrency-policy` | PoolConcurrencyPolicy | — | 并发策略 |
-| `houtu.http.request.connect-timeout` | Duration | — | 连接超时 |
-| `houtu.http.request.response-timeout` | Duration | — | 响应超时 |
-| `houtu.http.request.connection-keep-alive` | Duration | — | 连接保持时间 |
+| `houtu.http.pool.max-total` | int | — | Max total connections |
+| `houtu.http.pool.max-per-route` | int | — | Max connections per route |
+| `houtu.http.pool.disable-ssl-validation` | boolean | — | Whether to disable SSL validation |
+| `houtu.http.pool.pool-reuse-policy` | PoolReusePolicy | — | Connection reuse policy |
+| `houtu.http.pool.pool-concurrency-policy` | PoolConcurrencyPolicy | — | Concurrency policy |
+| `houtu.http.request.connect-timeout` | Duration | — | Connect timeout |
+| `houtu.http.request.response-timeout` | Duration | — | Response timeout |
+| `houtu.http.request.connection-keep-alive` | Duration | — | Connection keep-alive duration |
 | `houtu.http.request.user-agent` | String | — | User-Agent |
-| `houtu.http.request.redirects-enabled` | boolean | — | 是否跟随重定向 |
-| `houtu.http.proxy.hostname` | String | — | 代理主机 |
-| `houtu.http.proxy.port` | int | — | 代理端口 |
+| `houtu.http.request.redirects-enabled` | boolean | — | Whether to follow redirects |
+| `houtu.http.proxy.hostname` | String | — | Proxy host |
+| `houtu.http.proxy.port` | int | — | Proxy port |
 
 ---
 
-## 3. 加密工具
+## 3. Encryption Utilities
 
-所有加密工具位于 `io.github.lujiafa.houtu.util.crypto` 包。
+All encryption utilities are in the `io.github.lujiafa.houtu.util.crypto` package.
 
-> 加密方法均返回 `CodecData`，可通过 `.bytes()`、`.base64()`、`.hex()` 获取不同格式结果。
+> All encryption methods return `CodecData`, which provides results in different formats via `.bytes()`, `.base64()`, `.hex()`.
 
-### 3.1 对称加密
+### 3.1 Symmetric Encryption
 
 #### AESUtils
 
@@ -169,27 +169,27 @@ import io.github.lujiafa.houtu.util.crypto.type.AESKeySize;
 import io.github.lujiafa.houtu.util.crypto.type.AESTransformation;
 import io.github.lujiafa.houtu.util.common.CodecData;
 
-// 生成密钥
+// Generate key
 CodecData key = AESUtils.getKey(AESKeySize.AES_128);
 
-// 加密
+// Encrypt
 CodecData encrypted = AESUtils.encrypt(
-    CodecData.utf8("plaintext"),   // 明文
-    key,                          // 密钥
-    AESTransformation.ECB_PKCS5   // 模式
+    CodecData.utf8("plaintext"),   // Plaintext
+    key,                          // Key
+    AESTransformation.ECB_PKCS5   // Mode
 );
 String base64 = encrypted.base64();
 
-// 带 IV 加密（CBC 模式）
+// Encrypt with IV (CBC mode)
 CodecData encrypted = AESUtils.encrypt(
     "plaintext".getBytes(), key, AESTransformation.CBC_PKCS5, iv);
 
-// 解密
+// Decrypt
 CodecData decrypted = AESUtils.decrypt(encrypted, key, AESTransformation.ECB_PKCS5);
 String plaintext = new String(decrypted.bytes());
 ```
 
-#### SM4Utils（国密）
+#### SM4Utils (GM — Chinese national cryptographic standard)
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.SM4Utils;
@@ -198,11 +198,11 @@ import io.github.lujiafa.houtu.util.crypto.type.SM4Transformation;
 CodecData key = SM4Utils.getKey();
 CodecData encrypted = SM4Utils.encrypt(CodecData.utf8("data"), key, SM4Transformation.ECB_PKCS5);
 CodecData decrypted = SM4Utils.decrypt(encrypted, key, SM4Transformation.ECB_PKCS5);
-// 带 IV
+// With IV
 CodecData encrypted = SM4Utils.encrypt("data".getBytes(), key, iv, SM4Transformation.CBC_PKCS5);
 ```
 
-### 3.2 非对称加密
+### 3.2 Asymmetric Encryption
 
 #### RSAUtils
 
@@ -211,21 +211,21 @@ import io.github.lujiafa.houtu.util.crypto.RSAUtils;
 import io.github.lujiafa.houtu.util.crypto.extension.RSAKeyPair;
 import io.github.lujiafa.houtu.util.crypto.type.*;
 
-// 生成密钥对
+// Generate key pair
 RSAKeyPair keyPair = RSAUtils.getKeyPair(RSAKeySize.RSA_2048);
 CodecData publicKey = keyPair.getEncodedPublicKey();
 CodecData privateKey = keyPair.getEncodedPrivateKey();
 
-// 公钥加密 → 私钥解密
+// Public key encrypt -> Private key decrypt
 CodecData encrypted = RSAUtils.encryptByPublicKey(CodecData.utf8("data"), publicKey, RSATransformationAlgorithm.ECB_PKCS1);
 CodecData decrypted = RSAUtils.decryptByPrivateKey(encrypted, privateKey, RSATransformationAlgorithm.ECB_PKCS1);
 
-// 私钥签名 → 公钥验签
+// Private key sign -> Public key verify
 CodecData signature = RSAUtils.sign(CodecData.utf8("data"), privateKey, RSASignAlgorithm.SHA256withRSA);
 boolean valid = RSAUtils.signVerify(CodecData.utf8("data"), publicKey, signature, RSASignAlgorithm.SHA256withRSA);
 ```
 
-#### SM2Utils（国密）
+#### SM2Utils (GM — Chinese national cryptographic standard)
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.SM2Utils;
@@ -236,12 +236,12 @@ SM2KeyPair keyPair = SM2Utils.getKeyPair();
 CodecData encrypted = SM2Utils.encrypt(CodecData.utf8("data"), keyPair.getEncodedPublicKey());
 CodecData decrypted = SM2Utils.decrypt(encrypted, keyPair.getEncodedPrivateKey());
 
-// 签名/验签
+// Sign / Verify
 CodecData sig = SM2Utils.sign(CodecData.utf8("data"), keyPair.getEncodedPrivateKey(), SM2SignAlgorithm.SM3withSM2);
 boolean valid = SM2Utils.signVerify(CodecData.utf8("data"), keyPair.getEncodedPublicKey(), sig, SM2SignAlgorithm.SM3withSM2);
 ```
 
-### 3.3 哈希 / HMAC
+### 3.3 Hash / HMAC
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.MD5Utils;
@@ -257,11 +257,11 @@ String md5Hex = hash.hex();
 CodecData hmacKey = HMacMD5Utils.getKey();
 CodecData hmac = HMacMD5Utils.hash(CodecData.utf8("data"), hmacKey);
 
-// SHA (类似接口：SHAUtils)
-// SM3 国密哈希 (类似接口：SM3Utils)
+// SHA (similar interface: SHAUtils)
+// SM3 GM hash (similar interface: SM3Utils)
 ```
 
-### 3.4 编码
+### 3.4 Encoding
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.Base64Utils;
@@ -272,49 +272,49 @@ String base64 = Base64Utils.encode(data);
 byte[] decoded = Base64Utils.decode(base64);
 ```
 
-### CodecData 通用数据载体
+### CodecData — Universal Data Carrier
 
-所有加密工具的输入输出均使用 `CodecData`：
+All encryption utilities use `CodecData` for input and output:
 
-**工厂方法（静态）：**
+**Factory methods (static):**
 
-| 方法 | 说明 |
+| Method | Description |
 |------|------|
-| `CodecData.utf8(String text)` | 从 UTF-8 字符串创建 |
-| `CodecData.bytes(byte[] bytes)` | 从字节数组创建 |
-| `CodecData.base64(String base64)` | 从 Base64 编码字符串创建 |
-| `CodecData.hex(String hex)` | 从十六进制编码字符串创建 |
+| `CodecData.utf8(String text)` | Create from UTF-8 string |
+| `CodecData.bytes(byte[] bytes)` | Create from byte array |
+| `CodecData.base64(String base64)` | Create from Base64 encoded string |
+| `CodecData.hex(String hex)` | Create from hex encoded string |
 
-**实例方法：**
+**Instance methods:**
 
-| 方法 | 说明 |
+| Method | Description |
 |------|------|
-| `.bytes()` | 获取字节数组 |
-| `.utf8()` | 获取 UTF-8 字符串 |
-| `.base64()` | 获取 Base64 编码字符串 |
-| `.hex()` | 获取十六进制编码字符串 |
-| `.ascii()` | 获取 ASCII 字符串 |
+| `.bytes()` | Get byte array |
+| `.utf8()` | Get UTF-8 string |
+| `.base64()` | Get Base64 encoded string |
+| `.hex()` | Get hex encoded string |
+| `.ascii()` | Get ASCII string |
 
 ---
 
-## 4. Bean 对象工具 — BeanUtils
+## 4. Bean Object Utilities — BeanUtils
 
-**包路径**：`io.github.lujiafa.houtu.util.common.BeanUtils`
+**Package**: `io.github.lujiafa.houtu.util.common.BeanUtils`
 
 ### API
 
-| 方法 | 说明 |
+| Method | Description |
 |------|------|
-| `smartCopyProperties(Object source, Object target)` | 智能属性复制 |
-| `smartCopyProperties(Object source, Object target, boolean nonNullProperties)` | 智能复制（可跳过 null） |
-| `smartCopyProperties(Object source, Object target, String... ignoreProperties)` | 智能复制（排除指定属性） |
-| `smartCopyProperties(S source, Class<T> targetClass)` | 智能复制到新实例 |
-| `smartCopyProperties(List<S> source, Class<T> targetClass)` | 批量智能复制 |
-| `copyProperties(Object source, Object target, boolean nonNullProperties)` | 标准复制 |
-| `copyProperties(S source, Class<T> targetClass)` | 标准复制到新实例 |
-| `copyProperties(List<S> source, Class<T> targetClass)` | 批量标准复制 |
+| `smartCopyProperties(Object source, Object target)` | Smart property copy |
+| `smartCopyProperties(Object source, Object target, boolean nonNullProperties)` | Smart copy (can skip null) |
+| `smartCopyProperties(Object source, Object target, String... ignoreProperties)` | Smart copy (excluding specified properties) |
+| `smartCopyProperties(S source, Class<T> targetClass)` | Smart copy to new instance |
+| `smartCopyProperties(List<S> source, Class<T> targetClass)` | Batch smart copy |
+| `copyProperties(Object source, Object target, boolean nonNullProperties)` | Standard copy |
+| `copyProperties(S source, Class<T> targetClass)` | Standard copy to new instance |
+| `copyProperties(List<S> source, Class<T> targetClass)` | Batch standard copy |
 
-> `smartCopyProperties` 与 `copyProperties` 的区别：smart 版本使用内省机制，支持更灵活的属性匹配。
+> The difference between `smartCopyProperties` and `copyProperties`: the smart version uses introspection for more flexible property matching.
 
 ```java
 import io.github.lujiafa.houtu.util.common.BeanUtils;
@@ -325,7 +325,7 @@ List<UserVO> voList = BeanUtils.smartCopyProperties(entityList, UserVO.class);
 
 ---
 
-## 5. 其他常用工具
+## 5. Other Common Utilities
 
 ### DateUtils
 
@@ -334,16 +334,16 @@ import io.github.lujiafa.houtu.util.common.DateUtils;
 
 String dateStr = DateUtils.formatDate(new Date());              // yyyy-MM-dd
 String dateTimeStr = DateUtils.formatDateTime(LocalDateTime.now()); // yyyy-MM-dd HH:mm:ss
-String utcStr = DateUtils.formatUTCDateTime(new Date());        // UTC 格式
+String utcStr = DateUtils.formatUTCDateTime(new Date());        // UTC format
 
-Date dayStart = DateUtils.toDayStart(new Date());               // 当天 00:00:00
-Date dayEnd = DateUtils.toDayEnd(new Date());                   // 当天 23:59:59
+Date dayStart = DateUtils.toDayStart(new Date());               // Day start 00:00:00
+Date dayEnd = DateUtils.toDayEnd(new Date());                   // Day end 23:59:59
 
-// Date ↔ LocalDateTime 互转
+// Date <-> LocalDateTime conversion
 LocalDateTime ldt = DateUtils.toLocalDateTime(new Date());
 Date date = DateUtils.toDate(LocalDateTime.now());
 
-// 时间戳转换
+// Timestamp conversion
 LocalDateTime ldt = DateUtils.toLocalDateTime(timestamp);
 Date date = DateUtils.toDate(timestamp);
 ```
@@ -352,53 +352,53 @@ Date date = DateUtils.toDate(timestamp);
 
 ```java
 import io.github.lujiafa.houtu.util.common.UUIDUtils;
-String uuid = UUIDUtils.genUUIDString();  // 32 位无连字符 UUID
+String uuid = UUIDUtils.genUUIDString();  // 32-character UUID without hyphens
 ```
 
 ### MapUtils
 
 ```java
 import io.github.lujiafa.houtu.util.common.MapUtils;
-T value = MapUtils.getIgnoreCase(map, "Key");           // 忽略大小写取值
-boolean has = MapUtils.containsIgnoreCaseKey(map, "key"); // 忽略大小写判断 key
-Map<String, String> strMap = MapUtils.toStringMap(map);   // 转 String Map
+T value = MapUtils.getIgnoreCase(map, "Key");           // Case-insensitive get
+boolean has = MapUtils.containsIgnoreCaseKey(map, "key"); // Case-insensitive key check
+Map<String, String> strMap = MapUtils.toStringMap(map);   // Convert to String Map
 ```
 
 ---
 
-## 6. 签名工具 — SignUtils
+## 6. Signature Utility — SignUtils
 
-**包路径**：`io.github.lujiafa.houtu.util.crypto.SignUtils`
+**Package**: `io.github.lujiafa.houtu.util.crypto.SignUtils`
 
-对参数 Map 按 ASCII 排序后拼接 query string，然后执行签名/验签。自动排除 `sign` 和 `signature` 字段、null 键值。
+Sorts parameter Map by ASCII order, concatenates into a query string, then performs signing/verification. Automatically excludes `sign` and `signature` fields and null key-values.
 
-| 方法 | 返回值 | 说明 |
+| Method | Return type | Description |
 |------|--------|------|
-| `signMd5(Map<String,String> params, String key)` | `String` (hex) | MD5 签名，key 追加到 query string 末尾 |
-| `verifyMd5(Map<String,String> params, String key, String sign)` | `boolean` | MD5 签名验证 |
-| `signMD5WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-MD5 签名 |
-| `signSHA1WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-SHA1 签名 |
-| `signSHA256WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-SHA256 签名 |
-| `verifyMD5WithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-MD5 验签 |
-| `verifySHAWithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-SHA1 验签 |
-| `verifySHA256WithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-SHA256 验签 |
-| `buildParam(Map<String,String> params, boolean encode)` | `StringBuilder` | 构建排序后的 query string |
+| `signMd5(Map<String,String> params, String key)` | `String` (hex) | MD5 signature, key appended to end of query string |
+| `verifyMd5(Map<String,String> params, String key, String sign)` | `boolean` | MD5 signature verification |
+| `signMD5WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-MD5 signature |
+| `signSHA1WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-SHA1 signature |
+| `signSHA256WithRSA(Map<String,String> params, String privateKeyBase64)` | `String` (base64) | RSA-SHA256 signature |
+| `verifyMD5WithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-MD5 verification |
+| `verifySHAWithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-SHA1 verification |
+| `verifySHA256WithRSA(params, publicKeyBase64, sign)` | `boolean` | RSA-SHA256 verification |
+| `buildParam(Map<String,String> params, boolean encode)` | `StringBuilder` | Build sorted query string |
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.SignUtils;
 
-// MD5 签名（与 @CheckSign 服务端校验算法一致）
+// MD5 signature (consistent with @CheckSign server-side verification algorithm)
 Map<String, String> params = Map.of("orderId", "123", "amount", "100");
 String sign = SignUtils.signMd5(params, "your-sign-key");
 
-// RSA-SHA256 签名
+// RSA-SHA256 signature
 String sign = SignUtils.signSHA256WithRSA(params, privateKeyBase64);
 boolean valid = SignUtils.verifySHA256WithRSA(params, publicKeyBase64, sign);
 ```
 
 ---
 
-## 7. 其他加密工具补充
+## 7. Additional Encryption Utilities
 
 ### DESUtils / DESedeUtils
 
@@ -431,7 +431,7 @@ CodecData sig = ECDSAUtils.sign(CodecData.utf8("data"), keyPair.getEncodedPrivat
 boolean valid = ECDSAUtils.verify(CodecData.utf8("data"), keyPair.getEncodedPublicKey(), sig, ECDSASignAlgorithm.SHA256withECDSA);
 ```
 
-### SM3Utils（国密哈希）
+### SM3Utils (GM Hash)
 
 ```java
 import io.github.lujiafa.houtu.util.crypto.SM3Utils;
@@ -456,37 +456,37 @@ CodecData hmac = HMacSHAUtils.hash(CodecData.utf8("data"), key, HmacSHAAlgorithm
 
 ---
 
-## 8. Web 工具 — WebUtils
+## 8. Web Utility — WebUtils
 
-**包路径**：`io.github.lujiafa.houtu.util.web.WebUtils`
+**Package**: `io.github.lujiafa.houtu.util.web.WebUtils`
 
-在非 Controller 层（如 Service、Filter）中获取当前 HTTP 请求/响应对象。
+Provides access to the current HTTP request/response objects outside the Controller layer (e.g., in Service, Filter).
 
-| 方法 | 返回值 | 说明 |
+| Method | Return type | Description |
 |------|--------|------|
-| `getRequest()` | `HttpServletRequest` | 获取当前线程绑定的 HttpServletRequest |
-| `getResponse()` | `HttpServletResponse` | 获取当前线程绑定的 HttpServletResponse |
-| `isHttpPost(request)` | `boolean` | 判断是否 POST 请求 |
-| `isHttpGet(request)` | `boolean` | 判断是否 GET 请求 |
-| `isHttpMultipart(request)` | `boolean` | 判断是否 Multipart 请求 |
-| `getRequestMethod(request)` | `RequestMethod` | 获取请求方法枚举 |
-| `getUrlEncodedParams(request)` | `Map<String, String>` | 获取 URL 编码的表单参数 |
-| `getRequestBodyStream(request)` | `byte[]` | 读取请求体字节流 |
+| `getRequest()` | `HttpServletRequest` | Get the HttpServletRequest bound to the current thread |
+| `getResponse()` | `HttpServletResponse` | Get the HttpServletResponse bound to the current thread |
+| `isHttpPost(request)` | `boolean` | Check if it is a POST request |
+| `isHttpGet(request)` | `boolean` | Check if it is a GET request |
+| `isHttpMultipart(request)` | `boolean` | Check if it is a Multipart request |
+| `getRequestMethod(request)` | `RequestMethod` | Get the request method enum |
+| `getUrlEncodedParams(request)` | `Map<String, String>` | Get URL-encoded form parameters |
+| `getRequestBodyStream(request)` | `byte[]` | Read the request body byte stream |
 
 ```java
 import io.github.lujiafa.houtu.util.web.WebUtils;
 
-// 在 Service 层获取客户端 IP
+// Get client IP in the Service layer
 HttpServletRequest request = WebUtils.getRequest();
 String clientIp = request.getRemoteAddr();
 ```
 
 ---
 
-## 默认避免（用户明确要求时除外）
+## Avoid by default (follow user if explicitly requested)
 
-1. **默认避免** 自行创建 `ObjectMapper` 实例 — 使用 `JsonUtils`
-2. **默认避免** 自行创建 `RestTemplate` / `HttpClient` — 使用 `HttpClients`
-3. **默认避免** 自行引入 BouncyCastle 依赖 — houtu-utils 已包含
-4. **默认避免** 自行实现 MD5/SHA/AES/SM4 等加密算法 — 使用对应的 `*Utils` 工具类
-5. **默认避免** 使用 Spring 的 `org.springframework.beans.BeanUtils` — 使用 houtu 的 `BeanUtils`（支持批量转换和泛型）
+1. **Avoid by default** creating custom `ObjectMapper` instances — use `JsonUtils`
+2. **Avoid by default** creating custom `RestTemplate` / `HttpClient` — use `HttpClients`
+3. **Avoid by default** importing BouncyCastle dependency manually — houtu-utils already includes it
+4. **Avoid by default** implementing MD5/SHA/AES/SM4 and other encryption algorithms manually — use the corresponding `*Utils` utility classes
+5. **Avoid by default** using Spring's `org.springframework.beans.BeanUtils` — use houtu's `BeanUtils` (supports batch conversion and generics)

@@ -1,54 +1,54 @@
-# houtu-core 并发 — 跨线程上下文自动传播
+# houtu-core Concurrency — Cross-thread Context Auto-propagation
 
-## Maven 依赖
+## Maven Dependency
 
-`houtu-core` 已被其他模块传递依赖，无需单独引入。
+`houtu-core` is already a transitive dependency of other modules; no need to import separately.
 
-## 自动配置
+## Auto-configuration
 
-houtu-core 通过 `CoreTaskExecutionAutoConfiguration` 自动替换 Spring 默认的 `ThreadPoolTaskExecutor` 和 `ThreadPoolTaskScheduler` 为框架增强版本：
+houtu-core automatically replaces Spring's default `ThreadPoolTaskExecutor` and `ThreadPoolTaskScheduler` with framework-enhanced versions via `CoreTaskExecutionAutoConfiguration`:
 
-| Spring 默认 | 框架替换为 | 增强能力 |
+| Spring default | Framework replacement | Enhanced capability |
 |------------|-----------|---------|
-| `ThreadPoolTaskExecutor` | `TransferThreadPoolTaskExecutor` | 提交任务时自动捕获父线程上下文，子线程执行前自动注入、执行后自动清理 |
-| `ThreadPoolTaskScheduler` | `TransferThreadPoolTaskScheduler` | 同上，覆盖 `@Scheduled` 场景 |
+| `ThreadPoolTaskExecutor` | `TransferThreadPoolTaskExecutor` | Automatically captures parent thread context on task submission; auto-injects before child thread execution and auto-cleans after |
+| `ThreadPoolTaskScheduler` | `TransferThreadPoolTaskScheduler` | Same as above, covers `@Scheduled` scenarios |
 
-**引入即生效**，无需配置。线程池参数仍通过标准 Spring `spring.task.execution.*` 和 `spring.task.scheduling.*` 配置。
+**Works out-of-the-box**, no configuration needed. Thread pool parameters are still configured via standard Spring `spring.task.execution.*` and `spring.task.scheduling.*` properties.
 
 ---
 
-## 自动传播的上下文
+## Auto-propagated Contexts
 
-以下框架上下文在 `@Async`、`CompletableFuture`、`@Scheduled` 中自动可用：
+The following framework contexts are automatically available in `@Async`, `CompletableFuture`, and `@Scheduled`:
 
-| 上下文 | 来源模块 | 传播机制 |
+| Context | Source module | Propagation mechanism |
 |--------|---------|---------|
-| `SessionContext`（当前登录用户会话） | houtu-web-security | 框架内置，通过 `@CachingParam` + ThreadLocal |
-| `HintContext`（灰度路由标签） | spring-cloud-houtu-loadbalancer | SPI 注册 `HintRequestAcrossThreadProcessor` |
+| `SessionContext` (current logged-in user session) | houtu-web-security | Built into framework, via `@CachingParam` + ThreadLocal |
+| `HintContext` (canary routing labels) | spring-cloud-houtu-loadbalancer | SPI-registered `HintRequestAcrossThreadProcessor` |
 
 ```java
-// 父线程（Controller）
+// Parent thread (Controller)
 @CheckSession
 @PostMapping("/order")
 public ResponseData<Void> createOrder(OrderForm form) {
-    orderService.createAsync(form);  // 异步方法
+    orderService.createAsync(form);  // Async method
     return ResponseData.success();
 }
 
-// 子线程（@Async 方法）— SessionContext 自动可用
+// Child thread (@Async method) — SessionContext automatically available
 @Async
 public void createAsync(OrderForm form) {
-    Session session = SessionContext.get();  // 自动从父线程传播，无需手动传递
+    Session session = SessionContext.get();  // Auto-propagated from parent thread, no manual passing needed
     Long userId = (Long) session.getAttribute("userId");
-    // ... 业务逻辑
+    // ... business logic
 }
 ```
 
 ---
 
-## AcrossThreadProcessor — SPI 扩展点
+## AcrossThreadProcessor — SPI Extension Point
 
-如需传播自定义上下文（如 MDC、租户 ID），实现 `AcrossThreadProcessor` 接口并通过 Java SPI 注册。
+To propagate custom contexts (e.g., MDC, tenant ID), implement the `AcrossThreadProcessor` interface and register via Java SPI.
 
 ```java
 import io.github.lujiafa.houtu.core.concurrent.AcrossThreadProcessor;
@@ -57,52 +57,52 @@ public class MdcAcrossThreadProcessor implements AcrossThreadProcessor<Map<Strin
 
     @Override
     public boolean available() {
-        return true;  // 返回 false 则此 processor 不生效
+        return true;  // Return false to disable this processor
     }
 
     @Override
     public Map<String, String> parentGet() {
-        return MDC.getCopyOfContextMap();  // 父线程中执行：捕获上下文
+        return MDC.getCopyOfContextMap();  // Executed in parent thread: capture context
     }
 
     @Override
     public void childExecuteBefore(Thread parentThread, Map<String, String> context) {
-        if (context != null) MDC.setContextMap(context);  // 子线程执行前：注入上下文
+        if (context != null) MDC.setContextMap(context);  // Before child thread execution: inject context
     }
 
     @Override
     public void childExecuteAfter(Thread parentThread, Map<String, String> context) {
-        MDC.clear();  // 子线程执行后：清理上下文
+        MDC.clear();  // After child thread execution: clean up context
     }
 }
 ```
 
-**SPI 注册**：在 `src/main/resources/META-INF/services/io.github.lujiafa.houtu.core.concurrent.AcrossThreadProcessor` 文件中写入实现类全限定名。
+**SPI registration**: Add the fully qualified class name of the implementation to `src/main/resources/META-INF/services/io.github.lujiafa.houtu.core.concurrent.AcrossThreadProcessor`.
 
-**AcrossThreadProcessor\<T\> 接口方法：**
+**AcrossThreadProcessor\<T\> interface methods:**
 
-| 方法 | 执行线程 | 说明 |
+| Method | Execution thread | Description |
 |------|---------|------|
-| `available()` | 加载时 | 返回 false 跳过此 processor，默认 true |
-| `parentGet()` | 父线程 | 捕获需要传递的上下文数据 |
-| `childExecuteBefore(Thread parent, T data)` | 子线程 | 任务执行前注入上下文 |
-| `childExecuteAfter(Thread parent, T data)` | 子线程 | 任务执行后清理上下文 |
+| `available()` | At load time | Return false to skip this processor, default true |
+| `parentGet()` | Parent thread | Capture context data to be propagated |
+| `childExecuteBefore(Thread parent, T data)` | Child thread | Inject context before task execution |
+| `childExecuteAfter(Thread parent, T data)` | Child thread | Clean up context after task execution |
 
 ---
 
-## 关键源文件
+## Key Source Files
 
-| 类 | 说明 |
+| Class | Description |
 |----|------|
-| `TransferThreadPoolTaskExecutor` | 替换 Spring 默认线程池，任务提交时触发 AcrossThreadProcessor 链 |
-| `TransferThreadPoolTaskScheduler` | 替换 Spring 默认调度器 |
-| `TransferThreadPoolExecutor` | 底层 ThreadPoolExecutor 增强 |
-| `DelegatingRunnable` | 包装 Runnable，携带父线程上下文 |
-| `AcrossThreadProcessorSupport` | SPI 加载器，通过 `ServiceLoader` 发现所有 processor |
-| `CoreTaskExecutionAutoConfiguration` | 自动配置入口，`@AutoConfigureBefore(TaskExecutionAutoConfiguration.class)` |
+| `TransferThreadPoolTaskExecutor` | Replaces Spring default thread pool; triggers AcrossThreadProcessor chain on task submission |
+| `TransferThreadPoolTaskScheduler` | Replaces Spring default scheduler |
+| `TransferThreadPoolExecutor` | Underlying ThreadPoolExecutor enhancement |
+| `DelegatingRunnable` | Wraps Runnable, carrying parent thread context |
+| `AcrossThreadProcessorSupport` | SPI loader, discovers all processors via `ServiceLoader` |
+| `CoreTaskExecutionAutoConfiguration` | Auto-configuration entry point, `@AutoConfigureBefore(TaskExecutionAutoConfiguration.class)` |
 
-## 默认避免（用户明确要求时除外）
+## Avoid by default (follow user if explicitly requested)
 
-1. **默认避免** 手写 `TaskDecorator` 传播上下文 — 框架已自动处理
-2. **默认避免** 在 `@Async` 方法签名中手动传递 userId/sessionId 等上下文参数 — 直接用 `SessionContext.get()`
-3. **默认避免** 自行创建 `ThreadPoolTaskExecutor` Bean 覆盖框架默认 — 如需调整参数，使用 `spring.task.execution.*` 配置
+1. **Avoid by default** writing custom `TaskDecorator` to propagate context — the framework already handles this automatically
+2. **Avoid by default** manually passing userId/sessionId and other context parameters in `@Async` method signatures — use `SessionContext.get()` directly
+3. **Avoid by default** creating custom `ThreadPoolTaskExecutor` Bean to override the framework default — if you need to adjust parameters, use `spring.task.execution.*` configuration

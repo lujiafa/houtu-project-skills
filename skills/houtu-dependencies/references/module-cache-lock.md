@@ -54,7 +54,7 @@ public boolean pay(String paymentId) {
 
 **Annotation attributes:**
 - `prefix` — prepended to lock key (default: `""`)
-- `key` — parameter name to use as key. If empty, uses `className.methodName`. v3.5.2 和 v2.7.3 起支持 `#` 前缀 SpEL 表达式（如 `#user.id`），详见版本参考文件
+- `key` — parameter name to use as key. If empty, uses `className.methodName`. Starting from v3.5.2 and v2.7.3, supports `#` prefix SpEL expressions (e.g., `#user.id`), see version reference file for details
 - `leaseTime` — max lock hold time in `unit` (-1 = indefinite, default)
 - `waitTime` — max wait to acquire (-1 = block forever, default)
 - `unit` — TimeUnit (default: SECONDS)
@@ -99,7 +99,7 @@ static BLock getLock(String lockKey, long leaseTime, TimeUnit unit)
 
 **BLock methods:** `lock()`, `tryLock()` (3s default wait), `tryLock(waitTime, unit)`, `unlock()`, `close()`
 
-> **注意**：`BLock` 实现了 `AutoCloseable`，`close()` 内部调用 `unlock()`。使用 try-with-resources 时，`getLock()` 仅创建锁对象，不自动加锁，需手动调用 `lock()` 或 `tryLock()`。
+> **Note**: `BLock` implements `AutoCloseable`, and `close()` internally calls `unlock()`. When using try-with-resources, `getLock()` only creates the lock object without auto-acquiring the lock; you must manually call `lock()` or `tryLock()`.
 
 ---
 
@@ -140,7 +140,7 @@ limiter.acquire();
 ## Common Mistakes
 
 - **@Lock requires Redisson on classpath** — without it, the aspect bean won't register, annotation silently ignored
-- **@Lock key resolution** — 基础模式为参数名精确匹配（`key = "orderId"`），v3.5.2 和 v2.7.3 起支持 SpEL 表达式（`key = "#user.id"`），详见版本参考文件
+- **@Lock key resolution** — basic mode uses exact parameter name matching (`key = "orderId"`); starting from v3.5.2 and v2.7.3, supports SpEL expressions (`key = "#user.id"`), see version reference file for details
 - **@Lock throws RuntimeException when tryLock fails** — if `waitTime` is set and lock acquisition times out, a RuntimeException is thrown (not silently ignored)
 - **Lock key = `redis:distributed:lock:` + prefix + key** — be aware of the auto prefix when debugging
 - **RateLimiter needs RedisTemplate** — inject it, not create manually

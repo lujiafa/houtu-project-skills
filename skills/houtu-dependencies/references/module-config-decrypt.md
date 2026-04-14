@@ -1,33 +1,33 @@
-# houtu-core 配置解密 — Complete Guide
+# houtu-core Configuration Decryption — Complete Guide
 
-## 能力说明
+## Feature description
 
-houtu-core 提供配置文件中敏感值（如数据库密码、Redis 密码）的自动解密能力，通过 `EnvironmentPostProcessor` 在应用启动时自动处理。
+houtu-core provides automatic decryption of sensitive values in configuration files (such as database passwords, Redis passwords) via `EnvironmentPostProcessor`, which processes them automatically at application startup.
 
-## Maven 依赖
+## Maven Dependency
 
-`houtu-core` 已被其他模块传递依赖，通常无需单独引入。
+`houtu-core` is already a transitive dependency of other modules; no need to import separately.
 
-## 配置
+## Configuration
 
-配置前缀：`houtu.core.decrypt`
+Config prefix: `houtu.core.decrypt`
 
-| 属性 | 类型 | 默认值 | 说明 |
+| Property | Type | Default | Description |
 |------|------|--------|------|
-| `encrypt-keys` | `List<String>` | 空 | 需要解密的配置项 key 列表 |
-| `decrypt-processor-class` | `Class` | — | 自定义解密处理器类（全限定名） |
+| `encrypt-keys` | `List<String>` | empty | List of configuration keys that need decryption |
+| `decrypt-processor-class` | `Class` | — | Custom decryption processor class (fully qualified name) |
 
 ```yaml
 houtu:
   core:
     decrypt:
-      encrypt-keys:                                    # 需要解密的配置项列表
+      encrypt-keys:                                    # List of configuration keys to decrypt
         - spring.datasource.password
-        - spring.data.redis.password                   # Redis 配置路径因版本而异，详见版本参考文件
-      decrypt-processor-class: com.example.MyDecryptProcessor  # 自定义解密处理器类（全限定名）
+        - spring.data.redis.password                   # Redis config path varies by version, see version reference file for details
+      decrypt-processor-class: com.example.MyDecryptProcessor  # Custom decryption processor class (fully qualified name)
 ```
 
-## 自定义解密处理器
+## Custom Decryption Processor
 
 ```java
 import io.github.lujiafa.houtu.core.env.DecryptProcessor;
@@ -35,20 +35,20 @@ import io.github.lujiafa.houtu.core.env.DecryptProcessor;
 public class MyDecryptProcessor implements DecryptProcessor {
     @Override
     public String decrypt(ConfigurableEnvironment environment, String encrypted) {
-        // 实现解密逻辑，如 AES/SM4 解密
-        // environment 可用于读取其他配置（如解密密钥）
+        // Implement decryption logic, e.g. AES/SM4 decryption
+        // environment can be used to read other configs (e.g. decryption key)
         return AESUtils.decrypt(encrypted);
     }
 }
 ```
 
-## 使用示例
+## Usage example
 
 ```yaml
-# application.yml — 密码字段存储密文
+# application.yml — Password fields store ciphertext
 spring:
   datasource:
-    password: "U2FsdGVkX1+abc123..."    # 加密后的密文
+    password: "U2FsdGVkX1+abc123..."    # Encrypted ciphertext
 
 houtu:
   core:
@@ -58,15 +58,15 @@ houtu:
       decrypt-processor-class: com.example.AESDecryptProcessor
 ```
 
-框架启动时自动将 `spring.datasource.password` 的密文解密为明文，应用层无感知。
+At startup, the framework automatically decrypts the ciphertext of `spring.datasource.password` into plaintext, transparent to the application layer.
 
-## 内部行为
+## Internal behavior
 
-- 通过 `DecryptEnvPostProcessor`（实现 `EnvironmentPostProcessor`）在 Spring 环境准备阶段执行
-- 在所有 Bean 初始化之前完成，确保 DataSource 等组件获取到明文密码
-- 仅处理 `encrypt-keys` 列表中指定的配置项
+- Executed during the Spring environment preparation phase via `DecryptEnvPostProcessor` (implements `EnvironmentPostProcessor`)
+- Completed before all Bean initialization, ensuring components like DataSource receive the plaintext password
+- Only processes configuration keys specified in the `encrypt-keys` list
 
-## 默认避免（用户明确要求时除外）
+## Avoid by default (follow user if explicitly requested)
 
-- 默认不自写 `EnvironmentPostProcessor` 或 `PropertySource` 做配置解密
-- 默认不在代码中手动解密配置值
+- Do not write custom `EnvironmentPostProcessor` or `PropertySource` for configuration decryption by default
+- Do not manually decrypt configuration values in code by default

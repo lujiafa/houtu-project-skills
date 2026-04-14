@@ -1,6 +1,6 @@
 # Spring Cloud Houtu Modules — Complete Guide
 
-> **前置条件**：使用 Spring Cloud 模块前，`<dependencyManagement>` 中必须同时引入 `houtu-dependencies` 和 `spring-cloud-houtu` 两个 BOM（版本号一致）。详见 `quick-start.md`。
+> **Prerequisites**: Before using Spring Cloud modules, `<dependencyManagement>` must include both the `houtu-dependencies` and `spring-cloud-houtu` BOMs (with matching version numbers). See `quick-start.md` for details.
 
 ## spring-cloud-houtu-loadbalancer — Intelligent Routing
 
@@ -15,13 +15,13 @@
 
 ### Configuration
 
-配置前缀：`spring.cloud.loadbalancer`
+Config prefix: `spring.cloud.loadbalancer`
 
-| 属性 | 类型 | 默认值 | 说明 |
+| Property | Type | Default | Description |
 |------|------|--------|------|
-| `weight` | boolean | true | 启用权重路由 |
-| `hint` | boolean | true | 启用 hint/灰度路由 |
-| `disable-gateway-request-hint` | boolean | false | Gateway 场景中去除请求头 X-Hint，防止干扰链路 |
+| `weight` | boolean | true | Enable weight routing |
+| `hint` | boolean | true | Enable hint / canary routing |
+| `disable-gateway-request-hint` | boolean | false | Remove X-Hint request header in Gateway scenarios to prevent interference with the call chain |
 
 ```yaml
 spring:
@@ -60,7 +60,7 @@ static void setX(String value)  // Chain-propagated hint (equivalent to get().se
 static void remove()            // Clear ThreadLocal — ALWAYS call in finally block
 ```
 
-**InnerHintData** 是内部数据类，通常无需直接操作，使用 `HintContext.set()`/`setX()` 即可。
+**InnerHintData** is an internal data class; usually no need to operate on it directly — use `HintContext.set()`/`setX()` instead.
 
 ### Weight Routing
 
@@ -114,12 +114,12 @@ public interface UserApi {
 
 ### Exception Propagation
 
-Upstream `BusinessException` automatically propagates to downstream via `FeignDelegateDecoder`：
-- Provider 抛出 `BusinessException` → 框架将 ErrorCode 序列化到响应头 `ExceptionHeader.RESPONSE_EXCEPTION_HEADER_NAME`
-- Consumer 的 `FeignDelegateDecoder` 检测到该响应头 → 抛出 `FeignThroughBusinessException`（继承 BusinessException）
-- Consumer 侧的 `UnifiedHandlerExceptionResolver` 自动处理，返回相同 `{code, message}`
+Upstream `BusinessException` automatically propagates to downstream via `FeignDelegateDecoder`:
+- Provider throws `BusinessException` -> Framework serializes ErrorCode to response header `ExceptionHeader.RESPONSE_EXCEPTION_HEADER_NAME`
+- Consumer's `FeignDelegateDecoder` detects the response header -> Throws `FeignThroughBusinessException` (extends BusinessException)
+- Consumer-side `UnifiedHandlerExceptionResolver` handles it automatically, returning the same `{code, message}`
 
-> **注意**：如果 Feign 接口返回类型是 `ResponseData` 或 `Map`，则不触发异常传播（直接返回 JSON）。
+> **Note**: If the Feign interface return type is `ResponseData` or `Map`, exception propagation is not triggered (JSON is returned directly).
 
 ---
 

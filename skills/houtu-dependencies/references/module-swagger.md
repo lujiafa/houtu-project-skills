@@ -1,6 +1,6 @@
 # houtu-web-swagger — Complete Guide
 
-## Maven 依赖
+## Maven Dependency
 
 ```xml
 <dependency>
@@ -9,23 +9,23 @@
 </dependency>
 ```
 
-Transitively includes SpringDoc OpenAPI（具体 artifact 和版本因框架版本而异，详见版本参考文件）。
+Transitively includes SpringDoc OpenAPI (specific artifact and version vary by framework version; see version reference file for details).
 
-## 自动能力
+## Auto Capabilities
 
-引入依赖后自动：
-- 注册 Swagger UI（默认 `/swagger-ui.html`）
-- 扫描 Controller 生成 OpenAPI 文档
-- **仅在 `dev` 或 `test` profile 激活**（`@Profile({"dev", "test"})`）
-- 默认注册 `OpenAPI` bean（title: "API Docs", version: "1.0.0"）
+Works out-of-the-box after importing the dependency:
+- Registers Swagger UI (default `/swagger-ui.html`)
+- Scans Controllers to generate OpenAPI documentation
+- **Only active when `dev` or `test` profile is active** (`@Profile({"dev", "test"})`)
+- Registers a default `OpenAPI` bean (title: "API Docs", version: "1.0.0")
 
-## 无需额外配置
+## No Additional Configuration Needed
 
-框架通过 `SwaggerConfiguration`（标注 `@ConditionalOnMissingBean`）自动注册 `OpenAPI` bean。
+The framework automatically registers the `OpenAPI` bean via `SwaggerConfiguration` (annotated with `@ConditionalOnMissingBean`).
 
-## 自定义 OpenAPI 信息
+## Custom OpenAPI Information
 
-如需自定义标题、描述、版本等，注册自己的 `OpenAPI` bean 即可覆盖框架默认：
+To customize the title, description, version, etc., register your own `OpenAPI` bean to override the framework default:
 
 ```java
 @Configuration
@@ -35,16 +35,16 @@ public class MyApiDocConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
             .info(new Info()
-                .title("订单服务 API")
-                .description("订单管理相关接口")
+                .title("Order Service API")
+                .description("Order management related endpoints")
                 .version("2.0.0"));
     }
 }
 ```
 
-> 框架使用 `@ConditionalOnMissingBean`，你的 Bean 会自动覆盖默认配置。
+> The framework uses `@ConditionalOnMissingBean`, so your Bean will automatically override the default configuration.
 
-## 在 Controller 上使用 SpringDoc 注解
+## Using SpringDoc Annotations on Controllers
 
 ```java
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,31 +59,31 @@ public class OrderController {
     @Operation(summary = "查询订单详情")
     @GetMapping("/{id}")
     public ResponseData<OrderVO> getOrder(
-        @Parameter(description = "订单 ID") @PathVariable Long id) {
+        @Parameter(description = "Order ID") @PathVariable Long id) {
         // ...
     }
 }
 ```
 
-## 排除 Swagger（生产环境）
+## Excluding Swagger (Production Environment)
 
-确保生产环境不使用 `dev` 或 `test` profile：
+Ensure the production environment does not use the `dev` or `test` profile:
 
 ```yaml
 spring:
   profiles:
-    active: prod    # SwaggerConfiguration 不会激活
+    active: prod    # SwaggerConfiguration will not activate
 ```
 
-## 默认避免（用户明确要求时除外）
+## Avoid by default (follow user if explicitly requested)
 
 ```xml
-<!-- ⚠️ 默认不自己引入 springdoc -->
+<!-- ⚠️ Do not import springdoc manually by default -->
 <dependency>
     <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>  <!-- 默认避免，框架已包含 -->
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>  <!-- Avoid by default, framework already includes it -->
 </dependency>
 ```
 
-- 默认不自己引入 `springdoc-openapi-*` 依赖 — 版本由框架 BOM 管理
-- 不要写 `@EnableSwagger2` 或 `@EnableOpenApi` — 框架已自动配置
+- Do not import `springdoc-openapi-*` dependencies manually by default — version is managed by the framework BOM
+- Do not write `@EnableSwagger2` or `@EnableOpenApi` — the framework already provides auto-configuration
