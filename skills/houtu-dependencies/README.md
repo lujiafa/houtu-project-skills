@@ -32,7 +32,7 @@ houtu-dependencies/
 │   ├── module-actuator.md               # Prometheus metrics auto-config
 │   ├── module-concurrent.md            # Cross-thread context propagation
 │   ├── v3.5.2.md / v3.5.1.md / v3.5.0.md  # Version-specific diffs
-│   └── v2.7.2.md / v2.7.1.md            # Version-specific diffs
+│   └── v2.7.3.md / v2.7.2.md / v2.7.1.md  # Version-specific diffs
 └── evals/
-    └── evals.json                       # 18 test scenarios for validation
+    └── evals.json                       # 27 test scenarios for validation
 ```

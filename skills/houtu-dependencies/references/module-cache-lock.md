@@ -54,7 +54,7 @@ public boolean pay(String paymentId) {
 
 **Annotation attributes:**
 - `prefix` — prepended to lock key (default: `""`)
-- `key` — parameter name to use as key. If empty, uses `className.methodName`. Key resolution 在不同版本有增强，详见版本参考文件
+- `key` — parameter name to use as key. If empty, uses `className.methodName`. v3.5.2 和 v2.7.3 起支持 `#` 前缀 SpEL 表达式（如 `#user.id`），详见版本参考文件
 - `leaseTime` — max lock hold time in `unit` (-1 = indefinite, default)
 - `waitTime` — max wait to acquire (-1 = block forever, default)
 - `unit` — TimeUnit (default: SECONDS)
@@ -140,7 +140,7 @@ limiter.acquire();
 ## Common Mistakes
 
 - **@Lock requires Redisson on classpath** — without it, the aspect bean won't register, annotation silently ignored
-- **@Lock key resolution** — 基础模式为参数名精确匹配（`key = "orderId"`），部分版本有增强，详见版本参考文件
+- **@Lock key resolution** — 基础模式为参数名精确匹配（`key = "orderId"`），v3.5.2 和 v2.7.3 起支持 SpEL 表达式（`key = "#user.id"`），详见版本参考文件
 - **@Lock throws RuntimeException when tryLock fails** — if `waitTime` is set and lock acquisition times out, a RuntimeException is thrown (not silently ignored)
 - **Lock key = `redis:distributed:lock:` + prefix + key** — be aware of the auto prefix when debugging
 - **RateLimiter needs RedisTemplate** — inject it, not create manually
