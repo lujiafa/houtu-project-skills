@@ -1,99 +1,99 @@
-# 模块注册表（Module Registry）
+# Module Registry
 
-> 本文件记录系统所有服务模块的职责与 API 用途。
-> AI 在编码、修改或调试时，先查阅本文件定位目标模块与接口。
-> 维护规则：新增/删除/修改模块或接口时，必须同步更新本文件。
+> This file records the responsibilities and API purposes of all service modules in the system.
+> AI consults this file first when coding, modifying, or debugging to locate target modules and interfaces.
+> Maintenance rule: Must be updated whenever modules or interfaces are added, removed, or modified.
 
 ---
 
-<!-- 如无后端服务，可删除本段 -->
-## 后端服务
-<!-- 每个服务按以下模板填写，按实际服务数量复制 -->
+<!-- If no backend services, this section can be removed -->
+## Backend Services
+<!-- Fill in each service using the template below; duplicate as needed for each service -->
 
-### [service-name] — [中文名称]
+### [service-name] — [Service Title]
 
-[职责描述]
-[不负责什么（明确边界）]
+[Responsibility description]
+[What it is NOT responsible for (explicit boundary)]
 
-- 技术：[主要框架/技术]
-- 服务名：`[注册名]`
-- 核心包：`[包路径]`
-- 数据表：`[表名1]`, `[表名2]`
+- Technology: [Primary framework / technology]
+- Service name: `[registered name]`
+- Core package: `[package path]`
+- Database tables: `[table1]`, `[table2]`
 
-##### 接口与功能
+##### Interfaces & Features
 
-<!-- 每个接口按以下格式描述：方法 路径 — 用途，然后换行写处理逻辑 -->
-- [模块文件名]（`[路径]`）— 文件描述
-  - [METHOD] [路径] — [处理逻辑与用途]
-- [模块文件名]— 文件描述
-    - [METHOD] [路径] — [处理逻辑与用途]
+<!-- Describe each interface in the format: METHOD path — purpose, then describe processing logic on the next line -->
+- [Module filename] (`[path]`) — File description
+  - [METHOD] [path] — [Processing logic & purpose]
+- [Module filename] — File description
+    - [METHOD] [path] — [Processing logic & purpose]
 
 
-<!-- 如无 RPC 调用，可删除本段 -->
+<!-- If no RPC calls, this section can be removed -->
 ##### RPC
-- [类名].[方法名]([参数]) - [用途]
+- [ClassName].[methodName]([params]) - [Purpose]
 
-<!-- 如无消息队列，可删除 MQ 生产与 MQ 消费两段 -->
-##### MQ 生产
-- [TOPIC 名]
-  - [消息内容]
-  - [谁消费]
-  - [触发时机]
+<!-- If no message queue, both MQ Production and MQ Consumption sections can be removed -->
+##### MQ Production
+- [TOPIC name]
+  - [Message content]
+  - [Who consumes it]
+  - [Trigger timing]
 
-##### MQ 消费
-- [TOPIC 名]
-  - [消费后做什么]
-  - [消息来源]
+##### MQ Consumption
+- [TOPIC name]
+  - [What happens after consumption]
+  - [Message source]
 
-<!-- 如无定时任务，可删除本段 -->
-##### 定时任务
-| 任务名 | Cron 表达式 | 职责 | 依赖模块 |
-|-------|------------|------|---------|
-| [任务名] | [表达式] | [做什么] | [依赖哪些模块/数据] |
+<!-- If no scheduled tasks, this section can be removed -->
+##### Scheduled Tasks
+| Task Name | Cron Expression | Responsibility | Dependencies |
+|-----------|----------------|----------------|-------------|
+| [task name] | [expression] | [what it does] | [dependent modules / data] |
 
-<!-- 如无业务状态流转，可删除本段 -->
-##### 状态枚举与状态机
-| 枚举/状态机 | 值 | 含义 | 允许的流转 |
-|------------|-----|------|-----------|
-| [枚举名].[值] | [数字/字符串] | [业务含义] | → [下一状态1], [下一状态2] |
-
----
-
-<!-- 如无前端应用，可删除本段 -->
-## 前端模块
-
-<!-- 每个前端应用按以下模板填写 -->
-
-### [app-name] — [中文名称]
-[描述]
-
-技术：[框架 + 状态管理 + UI 库]
-
-#### 页面与调用关系
-| 页面 | 路径 | 功能 | 调用后端 API |
-|------|------|------|-------------|
-| [页面名] | `[路径]` | [功能] | `[API1]`, `[API2]` |
-| [页面名] | `[路径]` | [功能] | `[API1]` |
-
-#### 状态管理
-| Store | 职责 | 核心状态 |
-|-------|------|---------|
-| `[storeName]` | [职责] | [关键字段] |
-| `[storeName]` | [职责] | [关键字段] |
+<!-- If no business state transitions, this section can be removed -->
+##### Status Enums & State Machines
+| Enum / State Machine | Value | Meaning | Allowed Transitions |
+|---------------------|-------|---------|-------------------|
+| [EnumName].[value] | [number/string] | [Business meaning] | → [next state 1], [next state 2] |
 
 ---
 
-## 依赖拓扑
-<!-- 描述服务间调用关系 -->
+<!-- If no frontend applications, this section can be removed -->
+## Frontend Modules
+
+<!-- Fill in each frontend application using the template below -->
+
+### [app-name] — [App Title]
+[Description]
+
+Technology: [Framework + State Management + UI Library]
+
+#### Pages & API Relationships
+| Page | Path | Function | Backend APIs Called |
+|------|------|----------|-------------------|
+| [page name] | `[path]` | [function] | `[API1]`, `[API2]` |
+| [page name] | `[path]` | [function] | `[API1]` |
+
+#### State Management
+| Store | Responsibility | Core State |
+|-------|---------------|------------|
+| `[storeName]` | [responsibility] | [key fields] |
+| `[storeName]` | [responsibility] | [key fields] |
 
 ---
 
-## 修改影响速查表
+## Dependency Topology
+<!-- Describe inter-service call relationships -->
 
-> 修改某个模块时，快速查看可能受影响的上下游。
+---
 
-| 被修改模块 | 直接影响 | 重点检查 |
-|-----------|---------|---------|
-| [模块A] | [受影响模块列表] | [最需要关注的风险点] |
-| [模块B] | [受影响模块列表] | [最需要关注的风险点] |
-| [模块C] | [受影响模块列表] | [最需要关注的风险点] |
+## Change Impact Quick-Reference Table
+
+> When modifying a module, quickly check which upstream and downstream modules may be affected.
+
+| Modified Module | Direct Impact | Key Checkpoints |
+|----------------|---------------|----------------|
+| [Module A] | [affected module list] | [most critical risk points] |
+| [Module B] | [affected module list] | [most critical risk points] |
+| [Module C] | [affected module list] | [most critical risk points] |

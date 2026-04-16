@@ -1,105 +1,105 @@
-# 技术栈与版本规范
-> 本文件记录项目使用的所有技术栈、版本约束与 AI 代码生成限制。
-> AI 在新增功能、技术选型、依赖变更时加载本文件确认约束。
-> 维护规则：引入/升级/移除框架或库时必须同步更新。
+# Technology Stack & Version Specification
+> This file records all technologies, version constraints, and AI code generation limits used in the project.
+> AI loads this file when adding features, making technology selections, or changing dependencies to confirm constraints.
+> Maintenance rule: Must be updated whenever a framework or library is introduced, upgraded, or removed.
 
 ---
 
-<!-- 如无后端服务，可删除本段 -->
-## 后端技术栈
+<!-- If no backend services, this section can be removed -->
+## Backend Technology Stack
 
-### 核心框架
-| 技术 | 版本 | 用途 | 备注 |
-|------|------|------|------|
-| [语言] | [版本] | 开发语言 | |
-| [框架] | [版本] | 核心框架 | |
-| [构建工具] | [版本] | 项目构建 | |
+### Core Framework
+| Technology | Version | Purpose | Notes |
+|------------|---------|---------|-------|
+| [Language] | [version] | Development language | |
+| [Framework] | [version] | Core framework | |
+| [Build Tool] | [version] | Project build | |
 
-### 数据与存储
-| 技术 | 版本 | 用途 | 备注 |
-|------|------|------|------|
-| [数据库] | [版本] | 主存储 | [特殊限制，如：禁用某些语法] |
-| [缓存] | [版本] | 缓存/会话 | |
-| [ORM/数据框架] | [版本] | 数据访问 | |
+### Data & Storage
+| Technology | Version | Purpose | Notes |
+|------------|---------|---------|-------|
+| [Database] | [version] | Primary storage | [Special restrictions, e.g.: certain syntax prohibited] |
+| [Cache] | [version] | Cache / sessions | |
+| [ORM/Data Framework] | [version] | Data access | |
 
-### 中间件
-| 技术 | 版本 | 用途 | 备注 |
-|------|------|------|------|
-| [消息队列] | [版本] | 异步消息 | |
-| [注册中心] | [版本] | 服务发现与配置 | |
-| [任务调度] | [版本] | 定时任务 | |
+### Middleware
+| Technology | Version | Purpose | Notes |
+|------------|---------|---------|-------|
+| [Message Queue] | [version] | Async messaging | |
+| [Registry] | [version] | Service discovery & config | |
+| [Task Scheduler] | [version] | Scheduled tasks | |
 
-### 安全与认证
-| 技术 | 版本 | 用途 | 备注 |
-|------|------|------|------|
-| [认证框架] | [版本] | Token/权限管理 | |
-
----
-
-<!-- 如无前端应用，可删除本段 -->
-## 前端技术栈
-
-### 前端应用 A：[应用名]
-| 技术 | 版本 | 用途 | 备注 |
-|------|------|------|------|
-| [框架] | [版本] | UI 框架 | |
-| [状态管理] | [版本] | 全局状态 | |
-| [UI 组件库] | [版本] | 组件库 | |
-| [构建工具] | [版本] | 打包 | |
-| [语言] | [版本] | 开发语言 | [如 TypeScript] |
-
-### 前端应用 B：[应用名]（如有）
-| 技术 | 版本 | 用途 | 备注 |
-|------|------|------|------|
-| [框架] | [版本] | UI 框架 | |
+### Security & Authentication
+| Technology | Version | Purpose | Notes |
+|------------|---------|---------|-------|
+| [Auth Framework] | [version] | Token / permission management | |
 
 ---
 
-## 开发工具
-| 工具 | 版本 | 用途 |
-|------|------|------|
-| [容器] | [版本] | 本地开发/部署 |
-| [API 测试] | [版本] | 接口调试 |
-| [监控] | [版本] | 链路追踪/监控 |
+<!-- If no frontend applications, this section can be removed -->
+## Frontend Technology Stack
+
+### Frontend App A: [App Name]
+| Technology | Version | Purpose | Notes |
+|------------|---------|---------|-------|
+| [Framework] | [version] | UI framework | |
+| [State Management] | [version] | Global state | |
+| [UI Component Library] | [version] | Component library | |
+| [Build Tool] | [version] | Bundling | |
+| [Language] | [version] | Development language | [e.g. TypeScript] |
+
+### Frontend App B: [App Name] (if applicable)
+| Technology | Version | Purpose | Notes |
+|------------|---------|---------|-------|
+| [Framework] | [version] | UI framework | |
 
 ---
 
-## 版本约束与限制
-<!-- 重要：明确记录因版本导致的功能限制，防止 AI 生成不兼容代码 -->
-
-### [技术名] [版本] 限制
-
-<!-- 示例：MySQL 5.7 限制 -->
-<!-- 以下为示例格式，请替换为项目实际约束 -->
-
-- **禁止使用**：[功能1，如：窗口函数 ROW_NUMBER()]
-- **禁止使用**：[功能2，如：JSON_TABLE()]
-- **替代方案**：[用什么替代，如：子查询 + 变量模拟行号]
-
-### [技术名] [版本] 限制
-
-- **禁止使用**：[功能]
-- **替代方案**：[替代方式]
+## Development Tools
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [Container] | [version] | Local development / deployment |
+| [API Testing] | [version] | API debugging |
+| [Monitoring] | [version] | Tracing / monitoring |
 
 ---
 
-## AI 代码生成约束
-<!-- 针对 AI 辅助编码的特殊限制，确保生成的代码符合项目实际环境 -->
+## Version Constraints & Limits
+<!-- Important: Explicitly document feature limitations caused by versions to prevent AI from generating incompatible code -->
 
-### 类型与精度
+### [Technology Name] [Version] Limits
 
-<!-- 示例，替换为实际约束 -->
-- [约束1，如：金额字段必须使用 Long 类型（单位：分），禁止 BigDecimal/Double]
-- [约束2，如：费率字段使用 Long 类型（单位：万分之一）]
-- [约束3，如：时间字段使用 LocalDateTime，禁止 Date]
+<!-- Example: MySQL 5.7 limits -->
+<!-- The following is an example format; replace with actual project constraints -->
 
-### 依赖引入规则
+- **Prohibited**: [Feature 1, e.g.: Window function ROW_NUMBER()]
+- **Prohibited**: [Feature 2, e.g.: JSON_TABLE()]
+- **Alternative**: [What to use instead, e.g.: Subquery + variable to simulate row numbers]
 
-- 引入新依赖前必须确认与现有版本兼容
-- 优先使用项目已有的工具类，禁止重复造轮子
-- [其他约束]
+### [Technology Name] [Version] Limits
 
-### 代码风格
+- **Prohibited**: [Feature]
+- **Alternative**: [Alternative approach]
 
-- 必须遵循 `docs/coding.md` 中的编码规范
-- [其他约束]
+---
+
+## AI Code Generation Constraints
+<!-- Special restrictions for AI-assisted coding to ensure generated code matches the actual project environment -->
+
+### Types & Precision
+
+<!-- Example; replace with actual constraints -->
+- [Constraint 1, e.g.: Amount fields must use Long type (unit: cents), BigDecimal/Double prohibited]
+- [Constraint 2, e.g.: Rate fields use Long type (unit: basis points)]
+- [Constraint 3, e.g.: Time fields use LocalDateTime, Date prohibited]
+
+### Dependency Introduction Rules
+
+- New dependencies must be confirmed compatible with existing versions before introduction
+- Prefer existing project utility classes; reinventing the wheel is prohibited
+- [Other constraints]
+
+### Code Style
+
+- Must follow the coding standards in `docs/coding.md`
+- [Other constraints]

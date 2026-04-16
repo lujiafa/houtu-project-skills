@@ -1,93 +1,93 @@
-# 代码设计与生成规范
-> 本文件定义项目的编码规范、命名约定、API 设计规范与错误处理规范。
-> AI 在任何代码生成或修改任务中必须加载并遵循本文件。
-> 维护规则：规范变更时必须同步更新，保持文档与团队共识一致。
+# Code Design & Generation Standards
+> This file defines the project's coding standards, naming conventions, API design standards, and error handling standards.
+> AI must load and follow this file for any code generation or modification task.
+> Maintenance rule: Must be updated whenever standards change, keeping documentation consistent with team consensus.
 
 ---
 
-## 编码规范
+## Coding Standards
 
-### 后端编码规范
-#### 基本原则
-- [原则1，如：单一职责——每个类/方法只做一件事]
-- [原则2，如：不要重复自己（DRY）——公共逻辑抽取为工具类或基类]
-- [原则3，如：最小知识原则——模块之间通过接口通信，不依赖实现细节]
+### Backend Coding Standards
+#### Basic Principles
+- [Principle 1, e.g.: Single Responsibility — each class/method does only one thing]
+- [Principle 2, e.g.: Don't Repeat Yourself (DRY) — extract common logic into utility classes or base classes]
+- [Principle 3, e.g.: Least Knowledge Principle — modules communicate through interfaces, not implementation details]
 
-#### 分层规范
-<!-- 描述项目的分层结构和各层的职责边界 -->
+#### Layering Standards
+<!-- Describe the project's layered architecture and the responsibility boundaries of each layer -->
 
-#### 代码风格
+#### Code Style
 
-- 缩进：[空格数/Tab]
-- 最大行长：[字符数]
-- 文件编码：UTF-8
-- [其他风格约定]
+- Indentation: [spaces/Tab]
+- Max line length: [characters]
+- File encoding: UTF-8
+- [Other style conventions]
 
-#### 注释规范
-所有接口方法和业务方法必须包含注释：方法级注释说明业务意图（做什么），行内注释说明关键逻辑决策（为什么这样做），使 AI 仅通过扫描代码和注释即可重建业务上下文。禁止无意义注释（如 `// 设置名称` `setName(name)`），注释必须传递代码本身无法表达的业务语义。
+#### Comment Standards
+All interface methods and business methods must include comments: method-level comments explain business intent (what it does), inline comments explain key logic decisions (why it's done this way), enabling AI to reconstruct business context by scanning code and comments alone. Meaningless comments are prohibited (e.g., `// set name` `setName(name)`); comments must convey business semantics that the code itself cannot express.
 
-<!-- 如无数据库，可删除本段 -->
-#### 数据库设计规范
+<!-- If no database, this section can be removed -->
+#### Database Design Standards
 
-### 前端编码规范
-#### 基本原则
-<!-- 描述前端编码基本原则 -->
+### Frontend Coding Standards
+#### Basic Principles
+<!-- Describe frontend coding basic principles -->
 
-#### 组件设计规范
-<!-- 描述组件粒度、命名、Props 设计、组合 vs 继承等 -->
+#### Component Design Standards
+<!-- Describe component granularity, naming, Props design, composition vs inheritance, etc. -->
 
-#### 状态管理规范
-<!-- 描述全局状态 vs 局部状态的边界、Store 设计原则 -->
+#### State Management Standards
+<!-- Describe global state vs local state boundaries, Store design principles -->
 
-#### 样式规范
-<!-- 描述 CSS 方案选择（CSS Modules/Tailwind/CSS-in-JS 等）、命名规则、响应式策略 -->
+#### Style Standards
+<!-- Describe CSS approach (CSS Modules/Tailwind/CSS-in-JS, etc.), naming rules, responsive strategy -->
 
-#### 注释规范
-<!-- 描述前端编码注释规范 -->
+#### Comment Standards
+<!-- Describe frontend comment standards -->
 
 ---
 
-## 命名规范
+## Naming Conventions
 
-### 后端命名规范
-<!-- 描述后端命名规范 -->
+### Backend Naming Conventions
+<!-- Describe backend naming conventions -->
 
-<!-- 如无数据库，可删除本段 -->
-### 数据库命名规范
-<!-- 描述数据库命名规范 -->
+<!-- If no database, this section can be removed -->
+### Database Naming Conventions
+<!-- Describe database naming conventions -->
 
-### 前端命名规范
-<!-- 描述前端命名规范 -->
+### Frontend Naming Conventions
+<!-- Describe frontend naming conventions -->
 
-### 业务命名约定
-<!-- 统一易混淆的业务术语命名 -->
+### Business Naming Conventions
+<!-- Unify naming for easily confused business terms -->
 
-| 业务概念 | 统一命名 | 禁止用法 |
-|---------|---------|---------|
-| [概念1] | [统一名] | [禁止的别名] |
-| [概念2] | [统一名] | [禁止的别名] |
+| Business Concept | Standard Name | Prohibited Usage |
+|-----------------|---------------|-----------------|
+| [Concept 1] | [standard name] | [prohibited aliases] |
+| [Concept 2] | [standard name] | [prohibited aliases] |
 
-<!-- 示例：
-| 商户编号 | merchantNo | mchId, mchNo, merchantId（当表示编号时） |
-| 订单编号 | orderNo | orderId（当表示编号时）, orderNum |
-| 支付金额 | amount | money, price, fee（当表示支付总额时） |
+<!-- Example:
+| Merchant Number | merchantNo | mchId, mchNo, merchantId (when representing a number) |
+| Order Number | orderNo | orderId (when representing a number), orderNum |
+| Payment Amount | amount | money, price, fee (when representing total payment) |
 -->
 
 ---
 
-<!-- 如项目无 HTTP API（如纯前端/纯工具库），可删除本段 -->
-## API 设计规范
+<!-- If the project has no HTTP APIs (e.g., pure frontend / pure utility library), this section can be removed -->
+## API Design Standards
 
-### 请求规范
+### Request Standards
 
-- HTTP 方法语义：GET 查询、POST 创建/操作、PUT 全量更新、PATCH 部分更新、DELETE 删除
-- 路径格式：`/api/{模块}/{资源}`，复数名词，如 `/api/orders`, `/api/merchants/{id}`
-- 请求参数：查询用 Query，创建/修改用 JSON Body
-- 分页参数：`pageNum`（从 1 开始）、`pageSize`（默认 [N]，最大 [N]）
+- HTTP method semantics: GET for queries, POST for creation/operations, PUT for full updates, PATCH for partial updates, DELETE for deletion
+- Path format: `/api/{module}/{resource}`, plural nouns, e.g., `/api/orders`, `/api/merchants/{id}`
+- Request parameters: Query for lookups, JSON Body for creation/modification
+- Pagination parameters: `pageNum` (starting from 1), `pageSize` (default [N], max [N])
 
-### 响应规范
+### Response Standards
 
-**统一响应结构**：
+**Unified Response Structure**:
 
 ```json
 {
@@ -97,7 +97,7 @@
 }
 ```
 
-**分页响应结构**：
+**Paginated Response Structure**:
 
 ```json
 {
@@ -112,99 +112,99 @@
 }
 ```
 
-### 状态码规范
+### Status Code Standards
 
-| code | 含义 | 使用场景 |
-|------|------|---------|
-| 200 | 成功 | 请求正常处理 |
-| 400 | 参数错误 | 请求参数校验不通过 |
-| 401 | 未认证 | 未登录或 Token 过期 |
-| 403 | 无权限 | 已登录但权限不足 |
-| 500 | 系统异常 | 服务器内部错误 |
-| [自定义] | [含义] | [场景] |
-
----
-
-<!-- 如无后端服务，可删除本段 -->
-## 错误处理规范
-
-### 异常分类
-
-| 异常类型 | 类名 | 说明 | HTTP 状态码 |
-|---------|------|------|------------|
-| 业务异常 | `BizException` | 可预期的业务错误（参数非法、状态不允许） | 200（code 非 200） |
-| 系统异常 | `SystemException` | 不可预期的系统错误（DB 连接失败、NPE） | 500 |
-| 认证异常 | `AuthException` | 认证授权相关错误 | 401 / 403 |
-
-### 错误码规范
-
-<!-- 定义错误码的编号规则和分段 -->
-
-| 范围 | 模块 | 示例 |
-|------|------|------|
-| 10000-10999 | 通用错误 | 10001 = 参数校验失败 |
-| 11000-11999 | [模块A] | 11001 = [具体错误] |
-| 12000-12999 | [模块B] | 12001 = [具体错误] |
-
-### 异常处理规则
-
-1. **禁止吞异常**：catch 块中必须记录日志或重新抛出，禁止空 catch
-2. **禁止裸 throw**：必须使用项目定义的异常类，禁止 `throw new RuntimeException()`
-3. **Service 层抛业务异常**：业务校验不通过时抛 `BizException`
-4. **Controller 层不处理异常**：由全局异常处理器统一处理
-5. **日志级别**：业务异常 WARN，系统异常 ERROR
+| code | Meaning | Usage Scenario |
+|------|---------|---------------|
+| 200 | Success | Request processed normally |
+| 400 | Bad Request | Request parameter validation failed |
+| 401 | Unauthorized | Not logged in or token expired |
+| 403 | Forbidden | Logged in but insufficient permissions |
+| 500 | Internal Error | Server internal error |
+| [custom] | [meaning] | [scenario] |
 
 ---
 
-<!-- 如无后端服务或无日志要求，可删除本段 -->
-## 日志规范
+<!-- If no backend services, this section can be removed -->
+## Error Handling Standards
 
-### 日志级别
-| 级别 | 使用场景 | 示例 |
-|------|---------|------|
-| ERROR | 系统异常、不可恢复的错误 | 数据库连接失败、NPE |
-| WARN | 可恢复的异常、业务规则违规 | 业务异常、参数校验失败 |
-| INFO | 关键业务节点、状态变更 | 订单创建、支付完成 |
-| DEBUG | 调试信息，生产环境关闭 | 方法入参出参 |
+### Exception Classification
 
-### 日志规则
-- [规则1，如：禁止输出敏感信息（密码、密钥、完整手机号/身份证号）]
-- [规则2，如：日志必须包含 traceId，便于链路追踪]
-- [规则3，如：日志格式统一为 JSON/Pattern]
+| Exception Type | Class Name | Description | HTTP Status Code |
+|---------------|------------|-------------|-----------------|
+| Business Exception | `BizException` | Predictable business errors (invalid params, disallowed state) | 200 (code ≠ 200) |
+| System Exception | `SystemException` | Unpredictable system errors (DB connection failure, NPE) | 500 |
+| Auth Exception | `AuthException` | Authentication and authorization errors | 401 / 403 |
 
----
+### Error Code Standards
 
-<!-- 如项目无测试要求，可删除本段 -->
-## 测试规范
+<!-- Define error code numbering rules and segments -->
 
-### 测试要求
-- [要求1，如：核心业务逻辑必须有单元测试]
-- [要求2，如：API 接口必须有集成测试]
-- [要求3，如：测试覆盖率目标 ≥ N%]
+| Range | Module | Example |
+|-------|--------|---------|
+| 10000-10999 | Common Errors | 10001 = Parameter validation failed |
+| 11000-11999 | [Module A] | 11001 = [specific error] |
+| 12000-12999 | [Module B] | 12001 = [specific error] |
 
-### 测试命名
-- 测试类命名：`[被测类名]Test`
-- 测试方法命名：`[方法名]_[场景]_[预期结果]`（如 `createOrder_insufficientBalance_throwsBizException`）
+### Exception Handling Rules
 
-### Mock 规则
-- [规则1，如：仅 Mock 外部依赖（HTTP 调用、MQ 发送），不 Mock 数据库]
-- [规则2，如：禁止 Mock static 方法]
+1. **No swallowing exceptions**: catch blocks must log or re-throw; empty catch blocks are prohibited
+2. **No bare throws**: Must use project-defined exception classes; `throw new RuntimeException()` is prohibited
+3. **Service layer throws business exceptions**: Throw `BizException` when business validation fails
+4. **Controller layer does not handle exceptions**: Handled uniformly by the global exception handler
+5. **Log levels**: Business exceptions at WARN, system exceptions at ERROR
 
 ---
 
-## 安全规范
+<!-- If no backend services or no logging requirements, this section can be removed -->
+## Logging Standards
 
-<!-- 可选，根据项目需要添加 -->
+### Log Levels
+| Level | Usage Scenario | Example |
+|-------|---------------|---------|
+| ERROR | System exceptions, unrecoverable errors | Database connection failure, NPE |
+| WARN | Recoverable exceptions, business rule violations | Business exceptions, parameter validation failures |
+| INFO | Key business milestones, state changes | Order created, payment completed |
+| DEBUG | Debug information, disabled in production | Method input/output parameters |
 
-- [规范1，如：敏感数据（密码、密钥）禁止明文存储和日志输出]
-- [规范2，如：SQL 参数必须使用参数化查询，禁止拼接]
-- [规范3，如：接口必须做权限校验，禁止裸露接口]
+### Logging Rules
+- [Rule 1, e.g.: Sensitive information must not be logged (passwords, keys, full phone numbers / ID numbers)]
+- [Rule 2, e.g.: Logs must include traceId for distributed tracing]
+- [Rule 3, e.g.: Log format standardized as JSON/Pattern]
 
 ---
 
-## 其他约定
+<!-- If the project has no testing requirements, this section can be removed -->
+## Testing Standards
 
-<!-- 放不属于以上分类但团队必须遵循的约定 -->
+### Testing Requirements
+- [Requirement 1, e.g.: Core business logic must have unit tests]
+- [Requirement 2, e.g.: API endpoints must have integration tests]
+- [Requirement 3, e.g.: Test coverage target ≥ N%]
 
-- [约定1，如：Git 提交信息格式 `type(scope): description`]
-- [约定2，如：分支命名 `feature/xxx`, `fix/xxx`, `hotfix/xxx`]
+### Test Naming
+- Test class naming: `[TestedClassName]Test`
+- Test method naming: `[methodName]_[scenario]_[expectedResult]` (e.g., `createOrder_insufficientBalance_throwsBizException`)
+
+### Mock Rules
+- [Rule 1, e.g.: Only mock external dependencies (HTTP calls, MQ sends), do not mock the database]
+- [Rule 2, e.g.: Mocking static methods is prohibited]
+
+---
+
+## Security Standards
+
+<!-- Optional; add as needed for the project -->
+
+- [Standard 1, e.g.: Sensitive data (passwords, keys) must not be stored in plaintext or logged]
+- [Standard 2, e.g.: SQL parameters must use parameterized queries; concatenation is prohibited]
+- [Standard 3, e.g.: Endpoints must have permission checks; unprotected endpoints are prohibited]
+
+---
+
+## Other Conventions
+
+<!-- Place conventions that don't fit the above categories but the team must follow -->
+
+- [Convention 1, e.g.: Git commit message format `type(scope): description`]
+- [Convention 2, e.g.: Branch naming `feature/xxx`, `fix/xxx`, `hotfix/xxx`]

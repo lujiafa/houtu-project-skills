@@ -1,98 +1,98 @@
-# 系统架构文档
-> 本文件描述项目的整体架构、目录结构与未来规划。
-> AI 在新增功能、修改架构、设计评审时加载本文件获取全局认知。
-> 维护规则：服务拓扑、目录结构、基础设施变更时必须同步更新。
+# System Architecture Document
+> This file describes the project's overall architecture, directory structure, and future plans.
+> AI loads this file when adding features, modifying architecture, or conducting design reviews to gain global awareness.
+> Maintenance rule: Must be updated whenever service topology, directory structure, or infrastructure changes.
 
 ---
 
-## 项目背景
-<!-- 用 2-3 句话说清项目做什么、服务谁 -->
+## Project Background
+<!-- Describe in 2-3 sentences what the project does and who it serves -->
 
 ---
 
-## 工作空间目录结构
+## Workspace Directory Structure
 
-<!-- 只列核心目录，不列具体文件。保持 2-3 层深度。 -->
+<!-- List only core directories, not individual files. Keep 2-3 levels deep. -->
 
 ```
 [workspace]/
-├── docs/                    # 项目上下文文档
-│   ├── architecture.md      # 系统架构文档
-│   ├── decisions.md         # 决策记录文档
-│   ├── tech-stack.md        # 技术栈文档
-│   ├── coding.md            # 编码规范
-│   └── modules.md           # 模块描述文档
-├── [service-a]/             # 服务A
+├── docs/                    # Project context documents
+│   ├── architecture.md      # System architecture document
+│   ├── decisions.md         # Decision records
+│   ├── tech-stack.md        # Technology stack document
+│   ├── coding.md            # Coding standards
+│   └── modules.md           # Module registry
+├── [service-a]/             # Service A
 │   └── ...
-├── [service-b]/             # 服务B
+├── [service-b]/             # Service B
 │   └── ...
-├── [frontend-a]/            # 前端A
+├── [frontend-a]/            # Frontend A
 │   └── ...
 └── ...
 ```
 
 ---
 
-## 系统架构
+## System Architecture
 
-### 架构概述
+### Architecture Overview
 
-<!-- 用文字描述整体架构风格：单体/微服务/前后端分离等 -->
+<!-- Describe the overall architecture style in text: monolithic / microservices / frontend-backend separation, etc. -->
 
-[项目名] 采用 [架构风格] 架构，包含 [N] 个后端服务和 [N] 个前端应用。
+[Project Name] uses [architecture style] architecture, consisting of [N] backend services and [N] frontend applications.
 
-<!-- 如无后端服务或仅单体应用，可删除本段 -->
-### 服务拓扑
+<!-- If no backend services or only a monolithic application, this section can be removed -->
+### Service Topology
 
-<!-- 用 ASCII 图或文字描述服务间关系 -->
+<!-- Describe inter-service relationships using ASCII diagrams or text -->
 
 ```
                     ┌──────────┐
-                    │ [网关]    │
+                    │ [Gateway] │
                     └────┬─────┘
                          │
           ┌──────┬───────┼───────┬──────┐
           ▼      ▼       ▼       ▼      ▼
-      [服务A] [服务B] [服务C] [服务D] [服务E]
+      [Svc A] [Svc B] [Svc C] [Svc D] [Svc E]
 ```
 
-<!-- 如无后端服务或仅单体应用，可删除本段 -->
-### 核心流程
-<!-- 描述核心业务的数据流向，如：用户请求 → 网关 → 服务A → 数据库 → 返回 -->
+<!-- If no backend services or only a monolithic application, this section can be removed -->
+### Core Flows
+<!-- Describe the data flow of core business processes, e.g.: user request → gateway → Service A → database → response -->
 
-**核心流程：[流程名]**
+**Core Flow: [Flow Name]**
 ```
-[客户端] → [网关] → [服务A] → [服务B] → [数据库]
+[Client] → [Gateway] → [Service A] → [Service B] → [Database]
                                   ↓
-                              [消息队列] → [服务C]
+                              [Message Queue] → [Service C]
 ```
 
 ---
 
-## 架构约束
-<!-- 全局性的强制规则，所有服务必须遵守 -->
+## Architecture Constraints
+<!-- Global mandatory rules that all services must follow -->
 
-1. [约束1，如：所有 API 必须经过网关鉴权]
-2. [约束2，如：数据库操作仅通过 Service 层]
-3. [约束3，如：服务间通信使用 RPC/HTTP]
-4. [约束4，如：配置统一通过配置中心管理]
-
----
-
-## 部署架构
-<!-- 可选：描述部署方式和环境 -->
-
-| 环境 | 用途 | 地址 |
-|------|------|------|
-| dev | 开发环境 | [地址] |
-| staging | 预发布环境 | [地址] |
-| production | 生产环境 | [地址] |
+1. [Constraint 1, e.g.: All APIs must be authenticated through the gateway]
+2. [Constraint 2, e.g.: Database operations only through the Service layer]
+3. [Constraint 3, e.g.: Inter-service communication uses RPC/HTTP]
+4. [Constraint 4, e.g.: Configuration managed centrally through a config center]
 
 ---
 
-## 未来规划
-<!-- 记录已明确的架构演进方向，帮助 AI 理解设计走向 -->
+## Deployment Architecture
+<!-- Optional: Describe deployment methods and environments -->
 
-- [ ] [规划1，如：引入分布式事务方案]
-- [ ] [规划2，如：前端迁移到 xxx 框架]
-- [ ] [规划3，如：数据库读写分离]
+| Environment | Purpose | Address |
+|-------------|---------|---------|
+| dev | Development environment | [address] |
+| staging | Pre-production environment | [address] |
+| production | Production environment | [address] |
+
+---
+
+## Future Plans
+<!-- Record confirmed architecture evolution directions to help AI understand the design trajectory -->
+
+- [ ] [Plan 1, e.g.: Introduce distributed transaction solution]
+- [ ] [Plan 2, e.g.: Migrate frontend to xxx framework]
+- [ ] [Plan 3, e.g.: Database read-write separation]
