@@ -66,4 +66,4 @@ docs-context 通过三大能力解决 Agent Coding 中项目上下文缺失和�
 
 ## 使用方式
 
-详见 Skill 定义文件：[SKILL-CN.md](SKILL-CN.md) | [SKILL.md](SKILL.md)
+详见 Skill 定义文件：[SKILL.md](SKILL.md)

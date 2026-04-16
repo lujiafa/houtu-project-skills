@@ -66,4 +66,4 @@ All documents come with initialization templates for first-time setup. Templates
 
 ## Usage
 
-See the skill definition files: [SKILL.md](SKILL.md) | [SKILL-CN.md](SKILL-CN.md)
+See the skill definition file: [SKILL.md](SKILL.md)
