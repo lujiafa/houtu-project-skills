@@ -1,9 +1,15 @@
 ---
 name: docs-context
-description: >
+description: |
   Super Base Context — project context loader and documentation synchronizer for Agent Coding.
-  Read mode loads project standards before coding (trigger: write/modify/add/fix/refactor/optimize/design/implement/develop/code/build/create/update/spec/plan/test/migration/performance/security).
-  Write mode syncs docs after coding (trigger: sync docs/update docs/done/completed/ready to commit/feature done/pre-commit check).
+
+  Read mode loads project standards before coding (trigger: write/modify/add/remove/delete/deprecate/fix/refactor/optimize/design/implement/develop/code/build/create/update/spec/plan/test/migration/performance/security).
+
+  Write mode syncs docs after coding. Trigger criterion: **current code state has a net delta vs. the last-synced doc state**.
+  - **User triggers**: sync docs/update docs/done/completed/ready to commit/feature done/pre-commit check.
+  - **Agent auto-trigger**: MUST fire right before the final task-completion reply; do not wait for user.
+  - **Net delta**: additions/modifications/removals of landed content (code, config, SQL, build scripts), AND rollbacks of previously synced content (docs reverted accordingly).
+  - **Does NOT fire on**: partial edits while task in progress, progress updates, read-only tasks, pure design/spec/plan authoring, try-and-undo with no net change, already-synced-this-round.
 metadata:
   author: jonlu
   version: "1.1"
@@ -33,9 +39,9 @@ All documents are located under the workspace `docs/` directory:
 |----------|------|---------|
 | Architecture | `docs/architecture.md` | Workspace directory structure, project background, architecture, future plans |
 | Tech Stack | `docs/tech-stack.md` | Framework versions, dependency constraints, environment requirements, AI code generation limits |
-| Coding Standards | `docs/coding.md` | Coding standards, naming conventions, API design standards, error handling standards |
-| Module Registry | `docs/modules.md` | Module responsibilities, boundaries, API purposes, dependencies, impact scope |
-| Decision Records | `docs/decisions.md` | Architecture and core decision records (ADR) |
+| Coding Standards | `docs/coding.md` | Coding standards, naming conventions, API design standards, error handling, logging standards, testing standards |
+| Module Registry | `docs/modules.md` | Module responsibilities, boundaries, API purposes, dependencies, impact scope, scheduled tasks, state enums |
+| Decision Records | `docs/decisions.md` | Architecture and core module decision records (ADR) |
 
 > When a document becomes very large, it can be split into subdirectories under `docs/` (e.g., `docs/modules/payment.md`), but this requires approval from the doc owner. The main document must index and reference the split files for progressive loading.
 
@@ -50,13 +56,14 @@ This skill has two modes, determined by the current task phase:
 Decision rules:
 - User wants to "do something" (write code, modify feature, fix bug, design solution) → **Read Mode**
 - User says "done" (sync docs, pre-commit check, feature complete) → **Write Mode**
+- Current code state has a net delta vs. the last-synced doc state (landed additions/modifications/removals, or rollbacks of previously synced content) → **Write Mode** (fire right before the final task-completion reply; skip if task was read-only / pure design / spec or plan authoring / in-task try-and-undo leaving no net change / already synced this round with no new changes after)
 - When uncertain → default to **Read Mode**
 
 ## Trigger Rules
 | Mode | Trigger Words | Notes |
 |------|--------------|-------|
-| **Read Mode** | write code, modify code, add feature, modify feature, fix bug, refactor, optimize, design, design solution, tech selection, implement, develop, code, build, create, add, modify, update, fix, spec, plan, test, write test, unit test, integration test, migration, schema, DDL, performance, optimize query, security, vulnerability | Any task involving code generation, modification, or design |
-| **Write Mode** | update docs, sync docs, code done, feature done, pre-commit check, development complete, done, completed, ready to commit | After code changes are complete |
+| **Read Mode** | write code, modify code, add feature, modify feature, remove/delete/deprecate feature, fix bug, refactor, optimize, design, design solution, tech selection, implement, develop, code, build, create, add, modify, update, remove, delete, deprecate, fix, spec, plan, test, write test, unit test, integration test, migration, schema, DDL, performance, optimize query, security, vulnerability | Any task involving code generation, modification, removal, or design |
+| **Write Mode** | update docs, sync docs, code done, feature done, pre-commit check, development complete, done, completed, ready to commit, **[auto]** current code state has a net delta vs. last sync | Fires only when the current code state has a net delta vs. the last-synced doc state (including additions/modifications/removals, including rollbacks of previously synced content — docs must be reverted accordingly). On user completion signal, or agent self-triggers right before the final task-completion reply (not on partial edits while task is in progress, not on progress updates, not on read-only, not on pure design / spec / plan authoring, not on try-and-undo that left no net change). |
 
 > When uncertain which mode applies, default to Read Mode.
 
@@ -139,12 +146,13 @@ Check each item against the current code changes. Only update affected docs; ski
 - [ ] Overturned previous decision → Mark old ADR as "superseded", add new replacement ADR
 
 ## Sync Execution Steps
-1. Review the scope of all code changes in this session
-2. Check against the above checklist item by item
-3. For matched items, read the current content of the corresponding doc
-4. Execute updates following existing doc format and style (maintain consistency)
-5. Cross-document consistency check: verify that updates to one document are consistent with related content in other documents (e.g., a new service in modules.md should also appear in architecture.md service topology)
-6. Output a sync summary to inform the user
+1. Identify the scope of code changes to sync: inspect this-session edits plus, when needed, `git diff` / file state to detect prior unsynced landed changes
+2. Filter to net delta: exclude changes that were tried and then reverted within this session (no net delta → skip to avoid false reporting)
+3. Check against the above checklist item by item
+4. For matched items, read the current content of the corresponding doc
+5. Execute updates following existing doc format and style (maintain consistency)
+6. Cross-document consistency check: verify that updates to one document are consistent with related content in other documents (e.g., a new service in modules.md should also appear in architecture.md service topology)
+7. Output a sync summary to inform the user
 
 ## Handling Missing Documents
 When a required document is missing, initiate the template-based creation and initialization flow. MUST confirm with user first; silent creation is forbidden.
