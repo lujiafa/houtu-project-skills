@@ -80,15 +80,19 @@ Two installation paths — pick whichever fits your workflow.
 
 ### Option A — Claude Code native plugin marketplace
 
-Subscribe the repo as a marketplace, then install the plugin. All skills inside are loaded automatically.
+Subscribe the repo as a marketplace, then install the individual skills you need.
 
 ```bash
 /plugin marketplace add lujiafa/houtu-project-skills
-/plugin install houtu-project-skills@houtu-skills
+
+# Install on demand
+/plugin install docs-context@houtu-project-skills
+/plugin install houtu-dependencies@houtu-project-skills
+
 /reload-plugins
 ```
 
-Plugin skills are namespaced, e.g. `/houtu-project-skills:docs-context`.
+Plugin skills are namespaced as `/<plugin>:<skill>`, e.g. `/docs-context:docs-context`, `/houtu-dependencies:houtu-dependencies`.
 
 ### Option B — npx CLI (works across every supported tool)
 

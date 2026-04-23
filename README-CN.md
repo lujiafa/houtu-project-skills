@@ -80,15 +80,19 @@
 
 ### 方式 A —— Claude Code 原生插件市场
 
-订阅本仓库为插件市场，再安装插件，内含全部 Skills 自动生效。
+订阅本仓库为插件市场，再按需安装你想要的 skill。
 
 ```bash
 /plugin marketplace add lujiafa/houtu-project-skills
-/plugin install houtu-project-skills@houtu-skills
+
+# 按需单装
+/plugin install docs-context@houtu-project-skills
+/plugin install houtu-dependencies@houtu-project-skills
+
 /reload-plugins
 ```
 
-插件内的 skill 带命名空间，例如 `/houtu-project-skills:docs-context`。
+插件内的 skill 带命名空间 `/<plugin>:<skill>`，例如 `/docs-context:docs-context`、`/houtu-dependencies:houtu-dependencies`。
 
 ### 方式 B —— npx CLI（覆盖所有受支持工具）
 

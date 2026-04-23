@@ -1,20 +1,53 @@
 {
-  "name": "houtu-skills",
+  "name": "houtu-project-skills",
   "owner": {
     "name": "jonlu",
     "url": "https://github.com/lujiafa"
   },
   "metadata": {
     "description": "Houtu — AI coding skills for the full project lifecycle (development, testing, deployment, maintenance).",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
-      "name": "houtu-project-skills",
-      "source": "./",
-      "description": "Project context loader (docs-context) + Houtu enterprise Java framework guide (houtu-dependencies) for Claude Code, Codex, Cursor, OpenCode, Antigravity, Trae and Qoder.",
+      "name": "docs-context",
+      "source": "./skills/docs-context",
+      "skills": ["./"],
+      "description": "Super Base Context — project context loader and documentation synchronizer for Agent Coding. Read mode loads standards before coding; write mode syncs docs after code lands.",
       "version": "1.1.0",
-      "homepage": "https://github.com/lujiafa/houtu-project-skills",
+      "author": {
+        "name": "jonlu",
+        "url": "https://github.com/lujiafa"
+      },
+      "homepage": "https://github.com/lujiafa/houtu-project-skills/tree/main/skills/docs-context",
+      "repository": "https://github.com/lujiafa/houtu-project-skills",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "claude-code",
+        "claude-skills",
+        "agent-skills",
+        "skill-md",
+        "context-loader",
+        "documentation-sync"
+      ],
+      "tags": [
+        "context-management",
+        "documentation-sync",
+        "project-lifecycle"
+      ]
+    },
+    {
+      "name": "houtu-dependencies",
+      "source": "./skills/houtu-dependencies",
+      "skills": ["./"],
+      "description": "Houtu enterprise Spring Cloud framework usage guide (io.github.lujiafa) — session/auth, distributed lock, encryption, canary routing, Feign/Sentinel/Swagger, etc.",
+      "version": "1.1.0",
+      "author": {
+        "name": "jonlu",
+        "url": "https://github.com/lujiafa"
+      },
+      "homepage": "https://github.com/lujiafa/houtu-project-skills/tree/main/skills/houtu-dependencies",
       "repository": "https://github.com/lujiafa/houtu-project-skills",
       "license": "MIT",
       "category": "development",
@@ -26,13 +59,12 @@
         "houtu",
         "java",
         "spring-boot",
-        "docs-context"
+        "spring-cloud"
       ],
       "tags": [
-        "context-management",
-        "documentation-sync",
         "java-framework",
-        "project-lifecycle"
+        "spring-boot",
+        "microservice"
       ]
     }
   ]
