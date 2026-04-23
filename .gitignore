@@ -4,6 +4,8 @@
 !skills/**
 !cli/
 !cli/**
+!.claude-plugin/
+!.claude-plugin/**
 !package.json
 !LICENSE
 !README.md

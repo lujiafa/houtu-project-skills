@@ -1,0 +1,21 @@
+{
+  "name": "houtu-project-skills",
+  "description": "AI coding skills covering the full project lifecycle — context loading, documentation sync, and Houtu enterprise Java framework guidance.",
+  "author": {
+    "name": "jonlu",
+    "url": "https://github.com/lujiafa"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/lujiafa/houtu-project-skills",
+  "repository": "https://github.com/lujiafa/houtu-project-skills",
+  "keywords": [
+    "claude-code",
+    "claude-skills",
+    "agent-skills",
+    "skill-md",
+    "houtu",
+    "java",
+    "spring-boot",
+    "docs-context"
+  ]
+}

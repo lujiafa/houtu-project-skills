@@ -76,6 +76,22 @@
 
 ## 📥 安装
 
+两种安装方式 —— 按需选择。
+
+### 方式 A —— Claude Code 原生插件市场
+
+订阅本仓库为插件市场，再安装插件，内含全部 Skills 自动生效。
+
+```bash
+/plugin marketplace add lujiafa/houtu-project-skills
+/plugin install houtu-project-skills@houtu-skills
+/reload-plugins
+```
+
+插件内的 skill 带命名空间，例如 `/houtu-project-skills:docs-context`。
+
+### 方式 B —— npx CLI（覆盖所有受支持工具）
+
 通过 `npx` 安装 Skills。需要 **Node.js >= 18** 和 **git**。
 
 **查看可用 Skills：**

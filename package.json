@@ -11,7 +11,21 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["ai", "skills"],
+  "keywords": [
+    "ai",
+    "skills",
+    "claude-code",
+    "claude-skills",
+    "agent-skills",
+    "skill-md",
+    "skillsmp",
+    "codex",
+    "cursor",
+    "opencode",
+    "houtu",
+    "java",
+    "spring-boot"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

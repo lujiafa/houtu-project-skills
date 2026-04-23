@@ -1,0 +1,39 @@
+{
+  "name": "houtu-skills",
+  "owner": {
+    "name": "jonlu",
+    "url": "https://github.com/lujiafa"
+  },
+  "metadata": {
+    "description": "Houtu — AI coding skills for the full project lifecycle (development, testing, deployment, maintenance).",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "houtu-project-skills",
+      "source": "./",
+      "description": "Project context loader (docs-context) + Houtu enterprise Java framework guide (houtu-dependencies) for Claude Code, Codex, Cursor, OpenCode, Antigravity, Trae and Qoder.",
+      "version": "1.1.0",
+      "homepage": "https://github.com/lujiafa/houtu-project-skills",
+      "repository": "https://github.com/lujiafa/houtu-project-skills",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "claude-code",
+        "claude-skills",
+        "agent-skills",
+        "skill-md",
+        "houtu",
+        "java",
+        "spring-boot",
+        "docs-context"
+      ],
+      "tags": [
+        "context-management",
+        "documentation-sync",
+        "java-framework",
+        "project-lifecycle"
+      ]
+    }
+  ]
+}

@@ -76,6 +76,22 @@ The repository will continuously evolve and may include:
 
 ## 📥 Installation
 
+Two installation paths — pick whichever fits your workflow.
+
+### Option A — Claude Code native plugin marketplace
+
+Subscribe the repo as a marketplace, then install the plugin. All skills inside are loaded automatically.
+
+```bash
+/plugin marketplace add lujiafa/houtu-project-skills
+/plugin install houtu-project-skills@houtu-skills
+/reload-plugins
+```
+
+Plugin skills are namespaced, e.g. `/houtu-project-skills:docs-context`.
+
+### Option B — npx CLI (works across every supported tool)
+
 Install skills via `npx`. Requires **Node.js >= 18** and **git**.
 
 **List available skills:**
