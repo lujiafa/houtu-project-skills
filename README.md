@@ -67,7 +67,7 @@ The repository will continuously evolve and may include:
 
 ## 📚 Skills
 
-| Skill | Description | Languages |
+| Skill | Description | Skill File |
 |-------|-------------|-----------|
 | [docs-context](skills/docs-context/) | Project development context loader & documentation synchronizer. Automatically loads project standards before coding for context correction, completion, and reconstruction, then syncs documentation after code changes. [Details [EN](skills/docs-context/README.md)/[中文](skills/docs-context/README-CN.md)] | [SKILL.md](skills/docs-context/SKILL.md) |
 | [houtu-dependencies](skills/houtu-dependencies/) | Houtu enterprise Java framework usage guide. Helps select the correct module, annotation, and API for scenarios like session management, distributed locking, data encryption, gray routing, and more. [Details [EN](skills/houtu-dependencies/README.md)/[中文](skills/houtu-dependencies/README-CN.md)] | [SKILL.md](skills/houtu-dependencies/SKILL.md) |

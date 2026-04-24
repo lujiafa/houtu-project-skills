@@ -67,7 +67,7 @@
 
 ## 📚 Skills
 
-| Skill | 描述 | 语言 |
+| Skill | 描述 | Skill 文件 |
 |-------|------|------|
 | [docs-context](skills/docs-context/) | 项目开发上下文加载器与文档同步器。编码前自动加载项目规范，用于上下文修正、补全和重建，代码变更后同步更新文档。[详情 [EN](skills/docs-context/README.md)/[中文](skills/docs-context/README-CN.md)] | [SKILL.md](skills/docs-context/SKILL.md) |
 | [houtu-dependencies](skills/houtu-dependencies/) | Houtu 企业级 Java 框架使用指南。根据场景（会话管理、分布式锁、数据加密、灰度路由等）选择正确的模块、注解和 API。[详情 [EN](skills/houtu-dependencies/README.md)/[中文](skills/houtu-dependencies/README-CN.md)] | [SKILL.md](skills/houtu-dependencies/SKILL.md) |
