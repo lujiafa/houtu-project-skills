@@ -1,0 +1,192 @@
+{
+  "skill_name": "docs-context",
+  "notes": [
+    "Each test case simulates a realistic coding task to validate docs-context skill behavior.",
+    "Fixtures (files/) represent starting project state; the eval runner should copy them into the agent's workspace before each run.",
+    "The agent under test has access to Read/Write/Edit/Bash/Glob/Grep tools and the docs-context skill.",
+    "Observable signals per run: (1) transcript (Skill invocations, tool calls, replies); (2) filesystem diff of docs/; (3) sync summary text if written.",
+    "Run each test twice: with docs-context skill available / without it. Compare pass rates and token cost.",
+    "Priority 1 (P1) tests cover the NEW behaviors introduced by the 2026-04-17 optimization (net-delta trigger, reverse rollback sync, no-op on design). These are the highest-risk and highest-signal tests."
+  ],
+  "evals": [
+    {
+      "id": 1,
+      "priority": "P1",
+      "category": "auto-trigger",
+      "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}. Use the existing controller pattern.",
+      "expected_output": "A /ping endpoint is implemented in the pay service, AND the agent auto-invokes docs-context Write Mode to update docs/modules.md with the new endpoint, AND emits a Doc Sync Summary all BEFORE the final task-completion reply. No user prompt to sync was given.",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Fixture is a minimal pay service with existing docs/modules.md, docs/coding.md, and one controller. No /ping endpoint exists yet.",
+      "assertions": [
+        "A /ping endpoint implementation exists in the pay service source files after the run.",
+        "The agent invoked the docs-context skill's Write Mode (visible as Skill tool invocation in transcript).",
+        "docs/modules.md contains a new entry for the /ping endpoint under the pay service after the run.",
+        "The transcript contains a section labeled 'Doc Sync Summary' (or Chinese equivalent '文档同步摘要').",
+        "Write Mode was invoked before the agent's final task-completion reply, not after.",
+        "The final task-completion reply acknowledges docs were synced."
+      ]
+    },
+    {
+      "id": 2,
+      "priority": "P1",
+      "category": "auto-trigger",
+      "prompt": "给 pay 服务加个 /ping 接口吧，返回 {\"status\": \"ok\"} 就行",
+      "expected_output": "Same behavior as eval 1 but triggered via casual Chinese phrasing. The agent auto-invokes Write Mode without an explicit sync request.",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Same fixture as eval 1. This tests prompt-style robustness — the agent must trigger on informal CN request just as reliably as on formal EN request.",
+      "assertions": [
+        "A /ping endpoint implementation exists after the run.",
+        "The agent invoked docs-context Write Mode without being asked by the user.",
+        "docs/modules.md contains a new /ping entry.",
+        "Write Mode was invoked before the final reply."
+      ]
+    },
+    {
+      "id": 3,
+      "priority": "P1",
+      "category": "negative-trigger",
+      "prompt": "For rate limiting on our API gateway, compare approach A (token bucket in Redis) vs approach B (in-memory sliding window per-instance). Which do you recommend and why?",
+      "expected_output": "The agent provides a reasoned comparison and recommendation. NO code changes are made. NO docs are modified. Write Mode is NOT invoked (this is pure design discussion — syncing now would pollute docs if the design is later rejected).",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Any fixture with existing docs will do. The key test: does the agent refrain from syncing when only analysis occurred?",
+      "assertions": [
+        "The agent's reply contains a comparison of approach A vs B.",
+        "No files under docs/ were modified during the run.",
+        "No source code files were modified during the run.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 4,
+      "priority": "P1",
+      "category": "negative-trigger",
+      "prompt": "Explain how the pay service handles transaction rollbacks. I want to understand the flow.",
+      "expected_output": "The agent reads the code, explains the transaction rollback flow, and replies with a clear explanation. No files are modified. Write Mode is NOT invoked (read-only task).",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "assertions": [
+        "The agent's reply contains an explanation of transaction rollback flow.",
+        "No files were modified during the run (neither source nor docs/).",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 5,
+      "priority": "P1",
+      "category": "rollback-reverse-sync",
+      "prompt": "Remove the /ping endpoint from the pay service — we're deprecating it. Clean up the code and any references.",
+      "expected_output": "The /ping endpoint code is removed, AND the agent auto-invokes Write Mode to REMOVE the /ping entry from docs/modules.md (reverse sync — docs must stay consistent with code). The Doc Sync Summary reports the removal under 'Updated'.",
+      "files": ["evals/files/fixture-synced-pay-with-ping/"],
+      "setup_note": "Fixture is pay service WITH /ping endpoint implemented AND documented in docs/modules.md. This is the critical rollback scenario: the entry was synced previously, and must now be removed to stay consistent.",
+      "assertions": [
+        "The /ping endpoint code no longer exists in the pay service after the run.",
+        "docs/modules.md no longer contains a /ping entry after the run.",
+        "The agent invoked docs-context Write Mode.",
+        "The Doc Sync Summary mentions removing the /ping entry from modules.md.",
+        "No orphan references to /ping remain in other docs (e.g., architecture.md if it previously mentioned /ping)."
+      ]
+    },
+    {
+      "id": 6,
+      "priority": "P1",
+      "category": "once-per-task",
+      "prompt": "Add a new notification module with: (1) a NotificationService class, (2) a REST controller with POST /notify, (3) a Kafka consumer for 'notification.events' topic, (4) a DB migration adding a notifications table, (5) a config entry for kafka topic name. Use the existing patterns.",
+      "expected_output": "All 5 changes are landed across 5+ files. Write Mode is invoked EXACTLY ONCE at the end of the task, producing a single Doc Sync Summary covering all 5 changes.",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Multi-file task. Critical assertion: Write Mode must not fire per file.",
+      "assertions": [
+        "All 5 code artifacts exist after the run (NotificationService, controller, Kafka consumer, migration, config).",
+        "The agent invoked docs-context Write Mode exactly 1 time during the run (count skill invocations in transcript).",
+        "The single Doc Sync Summary references all affected document types (modules.md, tech-stack.md or architecture.md as applicable).",
+        "Write Mode was invoked after all 5 file changes, not between them."
+      ]
+    },
+    {
+      "id": 7,
+      "priority": "P1",
+      "category": "negative-trigger",
+      "prompt": "Try adding a 'createdBy' field to the Order entity, then actually no — revert that, keep the entity unchanged. Instead, just add a log statement in OrderService.createOrder that logs the caller's IP.",
+      "expected_output": "The Order entity is unchanged at task end (net zero there). Only the log statement in OrderService is added. Write Mode fires once and reports only the log statement change — NOT any Order entity change (which was tried and reverted within the task).",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests that try-and-undo within a task leaves no net delta for that file. Only landed changes should appear in the sync summary.",
+      "assertions": [
+        "The Order entity source file has no 'createdBy' field after the run.",
+        "OrderService.createOrder contains a new log statement referencing the caller's IP.",
+        "The agent invoked docs-context Write Mode.",
+        "The Doc Sync Summary does NOT mention any Order entity field change.",
+        "The Doc Sync Summary either (a) reports no module change if log additions don't affect modules.md, or (b) reports only a logging-related note."
+      ]
+    },
+    {
+      "id": 8,
+      "priority": "P2",
+      "category": "user-triggered",
+      "prompt": "I've just added the /ping endpoint to pay service (files already written). Please do a pre-commit doc sync check.",
+      "expected_output": "The agent detects the already-made code changes (inspecting git diff or file state), invokes Write Mode based on the user's explicit signal, and updates docs accordingly.",
+      "files": ["evals/files/fixture-synced-pay-with-new-ping-code/"],
+      "setup_note": "Fixture: pay service has /ping code but docs/modules.md does NOT yet mention it. Simulates user coming back post-coding to sync.",
+      "assertions": [
+        "The agent invoked docs-context Write Mode in response to the user's sync request.",
+        "docs/modules.md now contains a /ping entry.",
+        "The Doc Sync Summary acknowledges the endpoint addition."
+      ]
+    },
+    {
+      "id": 9,
+      "priority": "P2",
+      "category": "read-mode",
+      "prompt": "Add an Order refund endpoint POST /orders/{id}/refund that calls the existing RefundService.",
+      "expected_output": "Before coding, the agent invokes docs-context Read Mode to load at least docs/coding.md (always-load rule) plus task-appropriate docs (architecture.md + modules.md + tech-stack.md for 'new feature' + API design task type).",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "assertions": [
+        "The agent invoked docs-context Read Mode before making code changes (Read Mode skill invocation or Read tool call targeting docs/coding.md appears in transcript).",
+        "The transcript shows docs/coding.md being read.",
+        "The transcript shows at least one of {docs/modules.md, docs/architecture.md} being read.",
+        "A /orders/{id}/refund endpoint implementation exists after the run."
+      ]
+    },
+    {
+      "id": 10,
+      "priority": "P2",
+      "category": "read-mode-scope",
+      "prompt": "There's a bug in OrderService.createOrder — when the order amount is zero, it throws a NullPointerException instead of a validation error. Fix it.",
+      "expected_output": "The agent invokes Read Mode for a bug-fix task, loading docs/coding.md (always) + docs/modules.md (per task type). It does NOT load architecture.md or tech-stack.md (not required for bug fix).",
+      "files": ["evals/files/fixture-synced-pay-with-bug/"],
+      "setup_note": "Fixture: OrderService has the described NPE bug.",
+      "assertions": [
+        "The agent read docs/coding.md during the run.",
+        "The agent read docs/modules.md during the run.",
+        "The agent did NOT read docs/architecture.md (per Read Mode scope rule for bug fixes).",
+        "The agent did NOT read docs/tech-stack.md.",
+        "The bug is fixed (the zero-amount case now throws a validation error, not NPE)."
+      ]
+    }
+  ],
+  "fixture_setup_instructions": {
+    "files_dir": "evals/files/",
+    "fixtures_needed": [
+      {
+        "name": "fixture-synced-pay",
+        "description": "Minimal pay microservice with src/ containing one controller and one service class, plus docs/ with architecture.md, coding.md, modules.md, tech-stack.md, decisions.md (all non-empty but minimal). No /ping endpoint.",
+        "purpose": "Baseline fixture for most tests."
+      },
+      {
+        "name": "fixture-synced-pay-with-ping",
+        "description": "Same as above, plus a /ping endpoint in source AND a /ping entry in docs/modules.md under pay service.",
+        "purpose": "Used for rollback reverse-sync test (eval 5). The /ping entry must be documented for the rollback scenario to be meaningful."
+      },
+      {
+        "name": "fixture-synced-pay-with-new-ping-code",
+        "description": "Same as fixture-synced-pay, plus /ping endpoint in source but NOT yet in docs/modules.md.",
+        "purpose": "Simulates post-coding pre-sync state for user-triggered sync test (eval 8)."
+      },
+      {
+        "name": "fixture-synced-pay-with-bug",
+        "description": "Same as fixture-synced-pay, but OrderService.createOrder contains the NPE bug when amount is zero.",
+        "purpose": "Used for bug-fix read-mode-scope test (eval 10)."
+      }
+    ],
+    "how_to_create": "Fixtures can be assembled as minimal Java/Go/Node projects. Suggested: copy a small real subproject, strip to 10-20 files, seed docs/ per templates in skills/docs-context/assets/templates/."
+  }
+}
