@@ -17,11 +17,14 @@
 ```
 [workspace]/
 ├── docs/                    # Project context documents
-│   ├── architecture.md      # System architecture document
-│   ├── decisions.md         # Decision records
+│   ├── architecture.md      # System architecture document (this file)
 │   ├── tech-stack.md        # Technology stack document
 │   ├── coding.md            # Coding standards
-│   └── modules.md           # Module registry
+│   ├── modules/             # One file per business module (vertical slice by capability)
+│   │   ├── [business-a].md
+│   │   └── [business-b].md
+│   └── decisions/           # One file per architecture decision (ADR)
+│       └── ADR-[slug].md
 ├── [service-a]/             # Service A
 │   └── ...
 ├── [service-b]/             # Service B
@@ -44,7 +47,11 @@
 <!-- If no backend services or only a monolithic application, this section can be removed -->
 ### Service Topology
 
-<!-- Describe inter-service relationships using ASCII diagrams or text -->
+<!--
+Service-level topology only (which service talks to which). Module-level and capability-level
+topology — interfaces, RPC, MQ topics, internal flows — lives in `docs/modules/<business>.md`
+under each `## Capability:` section. Do not duplicate that detail here.
+-->
 
 ```
                     ┌──────────┐
