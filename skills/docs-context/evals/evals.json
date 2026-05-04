@@ -528,6 +528,149 @@
         "The agent did NOT invoke docs-context Write Mode.",
         "No 'Doc Sync Summary' appears in the transcript."
       ]
+    },
+    {
+      "id": 32,
+      "priority": "P1",
+      "category": "missing-doc-creation-coding",
+      "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}. Use the existing controller pattern.",
+      "expected_output": "Read Mode requires docs/coding.md (always-load), but it is missing. Per the 'Handling Missing Documents' flow, the agent detects the absence, asks the user before creating, and only after user confirmation creates docs/coding.md from assets/templates/coding.md. After creation, normal Read Mode and Write Mode proceed: /ping is implemented and docs/modules/pay.md gets the new entry.",
+      "files": ["evals/files/fixture-no-coding/"],
+      "setup_note": "fixture-no-coding mirrors fixture-synced-pay but with docs/coding.md removed. Tests the missing-doc creation flow for the always-load file. The agent must NOT silently generate a coding.md (silent creation is forbidden per SKILL.md).",
+      "assertions": [
+        "The agent's transcript shows detection that docs/coding.md is missing (e.g., a Read attempt that returns not-found, or an explicit message naming the missing file).",
+        "The agent asked the user for confirmation before creating docs/coding.md (no silent creation).",
+        "After user confirmation, docs/coding.md exists and its structure matches assets/templates/coding.md (top-level sections from the template are present).",
+        "The /ping endpoint is implemented in the pay service source.",
+        "docs/modules/pay.md contains a new /ping entry under a Capability section's '### Implementation'.",
+        "The Doc Sync Summary mentions both the creation of docs/coding.md AND the /ping addition to pay.md."
+      ]
+    },
+    {
+      "id": 33,
+      "priority": "P1",
+      "category": "missing-doc-creation-architecture",
+      "prompt": "We're adding a new microservice called notification-service that the pay service will call via HTTP for sending payment notifications. Add a stub NotificationClient in pay-service that calls notification-service's POST /notify endpoint.",
+      "expected_output": "Adding a new service implies updating the architecture topology, but docs/architecture.md is missing. The agent detects the absence, asks before creating, then uses assets/templates/architecture.md to create docs/architecture.md and fills in the topology (pay-service + notification-service + their HTTP edge).",
+      "files": ["evals/files/fixture-no-architecture/"],
+      "setup_note": "fixture-no-architecture mirrors fixture-synced-pay but with docs/architecture.md removed. The prompt introduces a service-topology change so Write Mode must touch architecture.md.",
+      "assertions": [
+        "The agent's transcript shows detection that docs/architecture.md is missing.",
+        "The agent asked the user for confirmation before creating docs/architecture.md (no silent creation).",
+        "After user confirmation, docs/architecture.md exists and its structure follows assets/templates/architecture.md.",
+        "docs/architecture.md describes pay-service AND notification-service as separate services, AND the HTTP edge between them.",
+        "A NotificationClient implementation exists in the pay service source calling POST /notify.",
+        "The Doc Sync Summary mentions creation of docs/architecture.md."
+      ]
+    },
+    {
+      "id": 34,
+      "priority": "P1",
+      "category": "missing-doc-creation-tech-stack",
+      "prompt": "Add the Resilience4j circuit-breaker library (io.github.resilience4j:resilience4j-spring-boot3:2.2.0) to pay-service and wrap PayController.createOrder with a basic circuit breaker.",
+      "expected_output": "Adding a new dependency mandates updating docs/tech-stack.md, but it is missing. The agent detects, asks, and creates docs/tech-stack.md from assets/templates/tech-stack.md, populating it with the existing pom.xml dependencies AND the new Resilience4j entry.",
+      "files": ["evals/files/fixture-no-tech-stack/"],
+      "setup_note": "fixture-no-tech-stack mirrors fixture-synced-pay but with docs/tech-stack.md removed. The prompt introduces a new library so Write Mode must touch tech-stack.md.",
+      "assertions": [
+        "The agent's transcript shows detection that docs/tech-stack.md is missing.",
+        "The agent asked the user for confirmation before creating docs/tech-stack.md (no silent creation).",
+        "After user confirmation, docs/tech-stack.md exists and its structure follows assets/templates/tech-stack.md.",
+        "docs/tech-stack.md lists Resilience4j 2.2.0 with its purpose AND lists at least the pre-existing core deps (Spring Boot 3.2, JPA, h2) drawn from pom.xml.",
+        "pom.xml now contains the Resilience4j dependency entry.",
+        "The Doc Sync Summary mentions creation of docs/tech-stack.md."
+      ]
+    },
+    {
+      "id": 35,
+      "priority": "P1",
+      "category": "missing-doc-creation-modules-dir",
+      "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}.",
+      "expected_output": "docs/modules/ directory does not exist. Per the missing-doc flow, the agent (1) detects that the modules directory is missing, (2) asks the user before creating, (3) creates docs/modules/ AND docs/modules/pay.md from assets/templates/module.md, populating it with at least one Capability section that hosts /ping under '### Implementation'.",
+      "files": ["evals/files/fixture-no-modules-dir/"],
+      "setup_note": "fixture-no-modules-dir mirrors fixture-synced-pay but with docs/modules/ entirely removed. Tests directory creation (not just file creation) and first-module bootstrap. NO README/index file should appear inside docs/modules/.",
+      "assertions": [
+        "The agent's transcript shows detection that docs/modules/ is missing (e.g., a Glob returning empty or a stat on the directory failing).",
+        "The agent asked the user for confirmation before creating docs/modules/pay.md (no silent creation).",
+        "After user confirmation, docs/modules/ exists as a directory.",
+        "After user confirmation, docs/modules/pay.md exists and its structure follows assets/templates/module.md (frontmatter + at least one '## Capability:' section).",
+        "docs/modules/pay.md contains a /ping entry under a Capability section's '### Implementation'.",
+        "No README.md or index.md was created under docs/modules/.",
+        "The Doc Sync Summary mentions creation of docs/modules/pay.md."
+      ]
+    },
+    {
+      "id": 36,
+      "priority": "P1",
+      "category": "missing-doc-creation-decisions-dir",
+      "prompt": "We've decided to standardize on Adyen as our payment gateway provider. Record this decision: alternatives we considered were Stripe and Braintree, but Adyen wins on multi-region coverage and existing contracts. Document the rationale.",
+      "expected_output": "docs/decisions/ directory does not exist. The agent (1) detects the missing directory, (2) asks the user before creating, (3) creates docs/decisions/ AND a new ADR file using assets/templates/decision.md, with a user-confirmed slug, complete frontmatter, and full body sections (Background, Alternatives Considered, Decision, Consequences).",
+      "files": ["evals/files/fixture-no-decisions-dir/"],
+      "setup_note": "fixture-no-decisions-dir mirrors fixture-synced-pay but with docs/decisions/ entirely removed. Tests directory creation + first-ADR bootstrap. NO README/index file should appear inside docs/decisions/.",
+      "assertions": [
+        "The agent's transcript shows detection that docs/decisions/ is missing.",
+        "The agent proposed an ADR slug AND asked the user for confirmation before creating the file (slug-confirmation flow + missing-doc flow both apply).",
+        "After user confirmation, docs/decisions/ exists as a directory.",
+        "Exactly one new file matching docs/decisions/ADR-*.md exists; its filename has no numeric prefix and no date prefix.",
+        "The new ADR has frontmatter with at least: title, date, proposer fields populated.",
+        "The new ADR body includes '## Background', '## Alternatives Considered', '## Decision' (naming Adyen), '## Consequences'.",
+        "No README.md or index.md was created under docs/decisions/.",
+        "The Doc Sync Summary mentions creation of the new ADR file."
+      ]
+    },
+    {
+      "id": 37,
+      "priority": "P1",
+      "category": "missing-doc-creation-empty-workspace",
+      "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}.",
+      "expected_output": "The entire docs/ directory is missing. The agent (1) detects the absence, (2) asks the user before creating any docs, (3) creates docs/ + at minimum docs/coding.md (always-load) and docs/modules/pay.md (write target) from templates, AND only the docs needed for THIS task — does NOT preemptively create architecture.md / tech-stack.md / decisions/ if they aren't touched by this task.",
+      "files": ["evals/files/fixture-empty-workspace/"],
+      "setup_note": "fixture-empty-workspace mirrors fixture-synced-pay but with the entire docs/ directory removed. Tests root-level bootstrap. Critical: agent must scope creation to the docs THIS task actually needs — preemptively creating all 5 doc types would be over-eager and pollute the project.",
+      "assertions": [
+        "The agent's transcript shows detection that docs/ is missing.",
+        "The agent asked the user for confirmation at least once before creating any docs.",
+        "After user confirmation, docs/ exists as a directory.",
+        "After user confirmation, docs/coding.md exists and follows assets/templates/coding.md.",
+        "After user confirmation, docs/modules/pay.md exists and contains a Capability section with /ping under '### Implementation'.",
+        "docs/architecture.md was NOT created (this task did not change topology).",
+        "docs/tech-stack.md was NOT created (this task did not introduce a new dependency).",
+        "docs/decisions/ was NOT created (this task did not record a decision).",
+        "The /ping endpoint is implemented in the pay service source.",
+        "The Doc Sync Summary lists the docs that were created."
+      ]
+    },
+    {
+      "id": 38,
+      "priority": "P1",
+      "category": "missing-doc-creation-refused",
+      "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}. (When the agent asks to create any missing docs, decline politely — say you'd rather not create docs right now.)",
+      "expected_output": "Read Mode finds docs/coding.md missing and asks the user. The user (per the embedded instruction) declines. The agent honors the refusal: NO docs are created, the code change still proceeds (the user did not refuse the code work), and the Doc Sync Summary truthfully reports that creation was offered, declined, and therefore not synced.",
+      "files": ["evals/files/fixture-no-coding/"],
+      "setup_note": "Reuses fixture-no-coding. Tests the 'silent creation forbidden' guardrail end-to-end: the agent must respect refusal, not create anything, and report honestly. Critical: failure mode is silent creation OR proceeding without acknowledging the missing-doc state.",
+      "assertions": [
+        "The agent's transcript shows the agent asking to create docs/coding.md.",
+        "After the user's declination, docs/coding.md DOES NOT exist on disk.",
+        "No other docs files were silently created either (docs/architecture.md, docs/tech-stack.md, docs/modules/pay.md should match their pre-task state).",
+        "The /ping endpoint is implemented in the pay service source (the user only refused doc creation, not the code work).",
+        "The Doc Sync Summary explicitly notes that docs/coding.md creation was declined and not synced (transparency, not silence).",
+        "The Doc Sync Summary does NOT falsely report any doc as created or updated."
+      ]
+    },
+    {
+      "id": 39,
+      "priority": "P2",
+      "category": "missing-doc-creation-partial",
+      "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}.",
+      "expected_output": "docs/coding.md is missing but the rest of docs/ exists and is in sync. The agent must (1) detect ONLY the missing coding.md, (2) ask once for that one file, (3) leave the existing docs/architecture.md / tech-stack.md / modules/pay.md untouched (no re-prompt, no re-creation, no needless re-write), (4) sync only what truly changed.",
+      "files": ["evals/files/fixture-no-coding/"],
+      "setup_note": "Reuses fixture-no-coding. Tests that the missing-doc flow is targeted: only the missing file triggers the create-confirmation; existing files do NOT trigger redundant prompts. Critical: failure mode is asking to recreate already-existing docs or producing a noisy 'Created' list that includes untouched files.",
+      "assertions": [
+        "The agent asked to create docs/coding.md exactly ONCE (not multiple times, not for other doc types).",
+        "The agent did NOT ask to recreate docs/architecture.md, docs/tech-stack.md, or docs/modules/pay.md.",
+        "docs/architecture.md, docs/tech-stack.md byte content is unchanged from the fixture state.",
+        "docs/modules/pay.md gains the /ping entry but otherwise its other Capability sections are unchanged.",
+        "The Doc Sync Summary's 'Created' list contains only docs/coding.md (not the other doc files).",
+        "The /ping endpoint exists in the pay service source."
+      ]
     }
   ],
   "fixture_setup_instructions": {
@@ -577,6 +720,36 @@
         "name": "fixture-synced-pay-with-status",
         "description": "Same as fixture-synced-pay, plus the Order entity in src/ ALREADY has a `status` field (with a small enum: PENDING, PAID, CANCELLED) AND docs/modules/pay.md ALREADY documents the status field under the relevant Capability's '### Implementation' subsection (and any related state transitions). Represents the post-sync state from a 'previous session' that the user now wants to roll back.",
         "purpose": "Used for cross-session reverse-sync test (eval 22). The fixture must look like docs and code are already in sync regarding status; the test then verifies the agent reverse-syncs docs when the user asks to remove status."
+      },
+      {
+        "name": "fixture-no-coding",
+        "description": "Mirrors fixture-synced-pay but with docs/coding.md REMOVED. Other docs (architecture.md, tech-stack.md, modules/pay.md) and the empty decisions/ directory remain. src/ is identical to baseline.",
+        "purpose": "Used for missing-doc creation tests covering the always-load file (evals 32, 38, 39)."
+      },
+      {
+        "name": "fixture-no-architecture",
+        "description": "Mirrors fixture-synced-pay but with docs/architecture.md REMOVED. Other docs and the empty decisions/ directory remain. src/ is identical to baseline.",
+        "purpose": "Used for missing-doc creation test where the task introduces a service-topology change (eval 33)."
+      },
+      {
+        "name": "fixture-no-tech-stack",
+        "description": "Mirrors fixture-synced-pay but with docs/tech-stack.md REMOVED. Other docs and the empty decisions/ directory remain. src/ and pom.xml are identical to baseline.",
+        "purpose": "Used for missing-doc creation test where the task introduces a new dependency (eval 34)."
+      },
+      {
+        "name": "fixture-no-modules-dir",
+        "description": "Mirrors fixture-synced-pay but with the entire docs/modules/ directory REMOVED (no pay.md, no directory). docs/architecture.md, docs/coding.md, docs/tech-stack.md and empty decisions/ remain. src/ is identical to baseline.",
+        "purpose": "Used for missing-directory creation test — first business module bootstrap (eval 35). Validates that the agent creates the directory AND the first module file from template, with no README/index file."
+      },
+      {
+        "name": "fixture-no-decisions-dir",
+        "description": "Mirrors fixture-synced-pay but with the entire docs/decisions/ directory REMOVED (the baseline ships with an empty decisions/; this fixture removes even the directory). All other docs are present. src/ is identical to baseline.",
+        "purpose": "Used for missing-directory creation test — first ADR bootstrap (eval 36). Validates directory creation + first ADR from template + slug-confirmation flow + no README/index."
+      },
+      {
+        "name": "fixture-empty-workspace",
+        "description": "Mirrors fixture-synced-pay but with the entire docs/ directory REMOVED. Only src/ and pom.xml remain. Represents a project that has code but has never been documented under docs-context.",
+        "purpose": "Used for root-level bootstrap test (eval 37). Validates that the agent creates docs/ on demand AND scopes creation to ONLY the doc types this task actually needs (not preemptively all 5)."
       }
     ],
     "how_to_create": "Fixtures can be assembled as minimal Java/Go/Node projects. Suggested: copy a small real subproject, strip to 10-20 files, seed docs/ per templates in skills/docs-context/assets/templates/. For module files, follow the Capability-based template (assets/templates/module.md). For ADRs, follow the minimal-frontmatter template (assets/templates/decision.md). Do NOT create README files under docs/modules/ or docs/decisions/."

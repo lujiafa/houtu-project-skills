@@ -24,25 +24,14 @@ docs-context is the **Super Base Context** for Agent Coding — inheriting and e
 
 docs-context coexists with any AI tool's native project configuration files. Native configs handle tool-specific behavior and shortcuts; docs-context manages reusable project knowledge that persists across tools, sessions, and team members.
 
+**Conflict priority** (when this skill's guidance collides with other instructions in the same turn): explicit user instruction > docs-context.
+
 ### Context Correction, Completion, and Reconstruction
 The core goal of docs-context is to **correct, complete, and reconstruct** the AI agent's project context. Documents serve as the **backbone** — they capture the authoritative project knowledge (architecture, standards, modules, decisions, tech stack). However, documents alone cannot cover everything, especially in large-scale projects (large microservice + frontend systems). Therefore, docs-context works by combining **documents + code scanning + comment scanning**: documents provide the structural backbone, while code and comments fill in implementation-level details.
 
 - **Correction** — Not limited to enforcing constraints on generated code. When context degrades due to long-conversation attention decay, context compression inaccuracies, or accumulated drift, the agent can re-read the relevant documents and scan the actual codebase to restore an accurate understanding. Documents act as the ground truth that pulls distorted context back on track.
 - **Completion** — When the agent lacks context for the current task, documents provide the structural knowledge (architecture, module boundaries, dependencies, constraints), while code and comment scanning fills in the implementation specifics that documents may not cover.
 - **Reconstruction** — When starting a new session or opening a project for the first time, the agent has zero knowledge of the project. By triggering this skill, the agent loads the relevant documents (backbone) and combines them with code and comment scanning to reconstruct a complete understanding of the project from scratch.
-
-## Coordination with other skills
-docs-context is a foundational layer that **coexists with** task-specific skills. When multiple skills apply to the same turn:
-
-- **brainstorming** (creative / exploration phase) → docs-context typically skips; once brainstorming pivots to "evaluate this idea against current project state," Read Mode kicks in.
-- **writing-plans / writing-spec / writing-design** → triggers Read Mode to load relevant architecture / modules / coding-rules / decisions before drafting.
-- **test-driven-development** → Read Mode loads `coding.md` test conventions; once TDD lands code with net delta, Write Mode fires.
-- **systematic-debugging** → Read Mode loads relevant `modules/<x>.md` capabilities and `coding.md`; if the fix lands, Write Mode fires.
-- **executing-plans** → each plan step that touches code goes through Read Mode before writing and Write Mode after landing.
-- **code-review** → Read Mode loads `coding.md` + relevant `modules/*` as the ground truth for the review.
-
-**Conflict priority** (consistent with `superpowers:using-superpowers`):
-explicit user instruction > superpowers skills > docs-context.
 
 ## Document Paths
 All documents are located under the workspace `docs/` directory:
@@ -324,13 +313,19 @@ Before creating any new file under `docs/modules/` or `docs/decisions/`:
 8. Output a sync summary to inform the user
 
 ## Handling Missing Documents
-When a required document is missing, initiate the template-based creation and initialization flow. MUST confirm with user first; silent creation is forbidden.
+When a required document is missing, initiate the template-based creation flow. **Silent creation is forbidden** — always confirm with the user first.
+
+### Scope — only create what this task needs
+Do NOT preemptively create the full 5-doc set when only one is needed. Create only the files this task actually touches:
+- Read Mode finds `coding.md` missing → ask + create `coding.md` (it is the always-load gate).
+- Write Mode targets a specific doc that is missing → ask + create that doc only.
+- A task that does not change topology / dependencies / decisions → leave `architecture.md` / `tech-stack.md` / `decisions/` uncreated.
 
 ### Document Initialization Flow
-1. Ensure `docs/` directory exists; create if not
-2. Confirm with user whether to create the missing document
-3. After user approval, create UTF-8 document
-4. Read template file content, combine with pending updates, initialize and save
+1. Detect what is missing (file absent, directory absent, or both).
+2. For each missing file or directory **relevant to this task**, confirm with the user once. Do NOT re-prompt for docs that already exist.
+3. On approval: create directories as needed (`docs/`, `docs/modules/`, `docs/decisions/`), then create the UTF-8 file from the matching template populated with this task's content.
+4. On refusal: do NOT create the file. The Doc Sync Summary MUST explicitly record "creation declined" under `### Declined / Skipped` — silent omission is dishonest.
 
 ### Document-to-Template Mapping
 | File | Template |
@@ -361,6 +356,9 @@ Code changes: [brief description of changes]
 ### Created / Deleted
 - Created: docs/modules/<new-slug>.md (user-confirmed)
 - Deleted: docs/decisions/ADR-<old-slug>.md (replaced by ADR-<new-slug>.md)
+
+### Declined / Skipped
+- docs/coding.md: creation offered, user declined — not synced this round
 
 ### No Update Needed
 - tech-stack.md: Tech stack unchanged
