@@ -421,6 +421,113 @@
         "The agent did NOT invoke docs-context Write Mode.",
         "No 'Doc Sync Summary' appears in the transcript."
       ]
+    },
+    {
+      "id": 26,
+      "priority": "P2",
+      "category": "read-mode-tech-selection",
+      "prompt": "We're considering switching the order persistence from H2 to PostgreSQL for production. Walk me through the tradeoffs and recommend an approach, taking into account our current stack and any past tech decisions.",
+      "expected_output": "The agent loads docs/tech-stack.md (current DB, JPA version, dependencies), docs/architecture.md (where 'orders' table sits in topology), and globs docs/decisions/ to find any prior persistence decisions. It produces a tradeoff analysis citing concrete current dependencies. NO source files are modified. Write Mode is NOT invoked (decision not yet made).",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests TECH SELECTION triggers Read Mode loading of tech-stack.md + decisions/ + architecture.md. The agent should reference real existing dependencies (Spring Boot 3.2, JPA, h2 runtime) from tech-stack.md / pom.xml when reasoning. Write Mode must not fire because no decision has been recorded.",
+      "assertions": [
+        "The agent's transcript shows reading docs/tech-stack.md and at least globbing docs/decisions/.",
+        "The agent's reply mentions at least one concrete current-stack detail (Spring Boot version, JPA, or h2) that came from the loaded docs.",
+        "The agent's reply gives an explicit recommendation (or surfaces a clear decision criterion).",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 27,
+      "priority": "P2",
+      "category": "read-mode-architecture-inventory",
+      "prompt": "Take stock of the current cross-service dependencies between order-service and payment-service. List every call edge and its purpose, including direction (Upstream / Downstream).",
+      "expected_output": "The agent loads docs/architecture.md, docs/modules/order.md, and docs/modules/payment.md and produces an inventory of cross-service call edges. The Upstream / Downstream direction matches the convention enforced by docs-context (Upstream = this capability calls; Downstream = depends on this capability). NO files are modified. Write Mode is NOT invoked.",
+      "files": ["evals/files/fixture-synced-multi-module/"],
+      "setup_note": "Tests EXISTING ARCHITECTURE INVENTORY (current state-of-the-system audit) triggers Read Mode loading of architecture.md + modules/order.md + modules/payment.md. The output should respect the documented Upstream/Downstream convention. Write Mode must not fire (read-only inventory).",
+      "assertions": [
+        "The agent's transcript shows reading docs/architecture.md, docs/modules/order.md, AND docs/modules/payment.md.",
+        "The agent's reply lists at least one concrete cross-service call edge (e.g. order calls payment.preCharge or similar).",
+        "Edge directionality in the reply uses 'Upstream / Downstream' consistent with each module's documented convention (Upstream = outbound; Downstream = inbound).",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 28,
+      "priority": "P2",
+      "category": "read-mode-capacity-planning",
+      "prompt": "We're expecting 10x traffic on POST /pay/orders during the upcoming holiday sale. What capacity changes should we plan? Consider DB throughput, caching, and service instance count.",
+      "expected_output": "The agent loads docs/architecture.md (topology + scaling assumptions), docs/tech-stack.md (DB, framework versions), and docs/modules/pay.md (the affected capability). It produces a capacity plan referencing real current configuration. NO source files are modified. Write Mode is NOT invoked.",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests CAPACITY PLANNING triggers Read Mode loading of architecture.md + tech-stack.md + modules/pay.md. The plan should reference real existing facts (DB type, JPA, current instance count if documented) from loaded docs.",
+      "assertions": [
+        "The agent's transcript shows reading docs/architecture.md, docs/tech-stack.md, AND docs/modules/pay.md.",
+        "The agent's reply mentions at least one concrete current-stack detail (Spring Boot, JPA, h2, etc.) drawn from the loaded docs.",
+        "The agent's reply addresses DB, caching, AND instance count (the three topics the user asked about).",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 29,
+      "priority": "P2",
+      "category": "read-mode-security-design",
+      "prompt": "Do a basic threat model on the POST /pay/orders endpoint. What are the top 3 risks (e.g. injection, replay, IDOR) and what mitigations do you recommend?",
+      "expected_output": "The agent loads docs/coding.md (input validation / error handling rules), docs/tech-stack.md, and docs/modules/pay.md (endpoint behavior, idempotency key usage). It produces a threat model citing specific risks for this endpoint with mitigations grounded in the project's actual conventions. NO source files are modified. Write Mode is NOT invoked.",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests SECURITY DESIGN / THREAT MODELING triggers Read Mode loading of coding.md + tech-stack.md + modules/pay.md. The threat list should call out at least 3 distinct risks. Mitigations should reference real project conventions (e.g. merchantOrderNo idempotency key, Long amount validation rule).",
+      "assertions": [
+        "The agent's transcript shows reading docs/coding.md AND docs/modules/pay.md.",
+        "The agent's reply identifies at least 3 distinct risk categories.",
+        "Mitigations reference at least one concrete project convention (e.g. idempotency key, Long type rule, BizException pattern) drawn from the loaded docs.",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 30,
+      "priority": "P2",
+      "category": "read-mode-code-review",
+      "prompt": "Code-review my latest commit to OrderService — check for any violations of our coding standards, missing error handling, or inconsistencies with the documented Pay module conventions. Don't change the code; just report findings.",
+      "expected_output": "The agent loads docs/coding.md AND docs/modules/pay.md, then reads OrderService source and reports violations / inconsistencies / missing error handling. NO source files are modified. NO docs are modified. Write Mode is NOT invoked (review-only).",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests CODE REVIEW triggers Read Mode loading of coding.md (the conventions ground truth) AND the relevant modules/pay.md. The review must point out concrete observations grounded in those docs. Write Mode must not fire (review only — no code change yet).",
+      "assertions": [
+        "The agent's transcript shows reading docs/coding.md AND docs/modules/pay.md AND OrderService source.",
+        "The agent's reply contains at least one finding tied to a specific rule from coding.md or convention from pay.md.",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 31,
+      "priority": "P3",
+      "category": "long-session-correction",
+      "prompt": "Hold on — earlier you mentioned an OrderStatus convention but I'm not sure I have the latest. Please re-check what docs/coding.md and docs/modules/pay.md currently say about Order status and remind me of the rules.",
+      "expected_output": "Even though the agent may believe it already knows the conventions from earlier in the (simulated) session, it explicitly re-reads docs/coding.md AND docs/modules/pay.md before answering. The reply summarizes the documented status conventions (enum values, transitions, persistence type) accurately. NO files are modified. Write Mode is NOT invoked.",
+      "files": ["evals/files/fixture-synced-pay-with-status/"],
+      "setup_note": "Tests LONG-SESSION CORRECTION (Read Mode re-load) — when the user signals possible context drift ('not sure I have the latest'), the agent must re-read the authoritative docs rather than answer from stale memory. P3 priority because true validation requires multi-turn context simulation; this single-prompt eval only tests that the agent chooses to re-read on an explicit re-check signal.",
+      "assertions": [
+        "The agent's transcript shows reading BOTH docs/coding.md AND docs/modules/pay.md during this run (not skipped because 'I already know').",
+        "The agent's reply correctly summarizes documented status enum values (PENDING / PAID / CANCELLED / EXPIRED) AND the @Enumerated(EnumType.STRING) persistence convention from the loaded docs.",
+        "The agent's reply correctly summarizes at least one transition rule from the State Transitions table in pay.md.",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
     }
   ],
   "fixture_setup_instructions": {
