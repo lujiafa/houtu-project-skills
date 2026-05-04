@@ -301,6 +301,126 @@
         "The agent's reply or Sync Summary suggests updating modules/loan.md to align with coding.md (or actually performs the update as part of the sync, removing the BigDecimal mention).",
         "If modules/loan.md was edited to remove the BigDecimal mention, the change is correct and does not introduce new inconsistencies."
       ]
+    },
+    {
+      "id": 19,
+      "priority": "P1",
+      "category": "read-mode-spec-design",
+      "prompt": "Write a detailed spec for adding a `status` field to the Order entity. Include the migration DDL, valid status enum values, the state machine for status transitions, and any API contract changes.",
+      "expected_output": "The agent loads docs/modules/order.md, docs/coding.md (for naming/type conventions), and likely docs/architecture.md before authoring the spec. The produced spec references concrete columns/capabilities present in the loaded docs. NO source files are modified. NO docs are modified. Write Mode is NOT invoked (the spec is design output; no code landed).",
+      "files": ["evals/files/fixture-synced-multi-module/"],
+      "setup_note": "Tests that DETAILED spec authoring triggers Read Mode (must load real project state to write a spec that references the actual Order entity, naming conventions, and architecture topology) but does NOT trigger Write Mode (no code landed yet).",
+      "assertions": [
+        "The agent's transcript shows reading docs/coding.md AND at least docs/modules/order.md before producing the spec.",
+        "The produced spec references real existing fields/capabilities (e.g. existing Order columns or the 'Create Order' Capability) found in the loaded docs.",
+        "The produced spec respects coding.md naming/type conventions (e.g. enum/Long types as mandated).",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 20,
+      "priority": "P1",
+      "category": "read-mode-architecture-review",
+      "prompt": "Review the current microservice split between order-service and payment-service. Is the boundary correct? Are there any responsibilities that should move between them? Recommend changes if any.",
+      "expected_output": "The agent loads docs/architecture.md, docs/modules/order.md, docs/modules/payment.md, and any decisions/ ADRs that touch service boundaries. It produces a reasoned review that references the actual responsibilities documented. NO code is changed. NO docs are modified. Write Mode is NOT invoked.",
+      "files": ["evals/files/fixture-synced-multi-module/"],
+      "setup_note": "Tests that ARCHITECTURE REVIEW (a design-time activity) triggers Read Mode loading of architecture.md + modules/* + decisions/*, but does NOT trigger Write Mode.",
+      "assertions": [
+        "The agent's transcript shows reading docs/architecture.md, docs/modules/order.md, AND docs/modules/payment.md.",
+        "The agent's reply discusses the boundary between order-service and payment-service with reference to documented responsibilities.",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 21,
+      "priority": "P1",
+      "category": "read-mode-decision-research",
+      "prompt": "Why did we pick Adyen as our payment gateway? Find the relevant ADR and summarize the reasoning, including any alternatives that were considered and rejected.",
+      "expected_output": "The agent globs docs/decisions/, finds ADR-payment-gateway-selection.md, reads it, and replies with a summary including the reasoning and alternatives. NO files are modified. Write Mode is NOT invoked (research-only).",
+      "files": ["evals/files/fixture-synced-pay-with-adr/"],
+      "setup_note": "Tests that HISTORICAL DECISION RESEARCH triggers Read Mode loading of decisions/* but does NOT trigger Write Mode (the user is asking why, not changing anything).",
+      "assertions": [
+        "The agent's transcript shows reading docs/decisions/ADR-payment-gateway-selection.md (or globbing decisions/ first then reading the matching ADR).",
+        "The agent's reply summarizes the reasoning for choosing Adyen and mentions any rejected alternatives that the ADR documents.",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 22,
+      "priority": "P1",
+      "category": "rollback-reverse-sync-cross-session",
+      "prompt": "Remove the `status` field from the Order entity — we're rolling back this feature. Clean up the code, the migration script if any, and any docs references.",
+      "expected_output": "Code is removed: the `status` field disappears from the Order entity, related getters/setters/migration are removed. The agent auto-invokes Write Mode and REVERSE-SYNCS docs/modules/pay.md (or order.md) — the previously-synced 'status' entry is deleted from the relevant Capability's '### Implementation' subsection (and from any state-transition listing). The Doc Sync Summary explicitly notes the removal. Write Mode fires before the final reply.",
+      "files": ["evals/files/fixture-synced-pay-with-status/"],
+      "setup_note": "This is the CROSS-SESSION removal scenario: the fixture starts in a state where status was added and synced in a 'previous session' (the docs already mention status). Now the user wants to undo. The agent must reverse-sync the docs to match the new (status-free) code state.",
+      "assertions": [
+        "The `status` field no longer exists in the Order entity source after the run.",
+        "Any related migration script for adding status is removed (or a new rollback migration is added — fixture/policy decides).",
+        "docs/modules/pay.md (or order.md) no longer mentions 'status' under any Capability's '### Implementation' subsection after the run.",
+        "The agent invoked docs-context Write Mode (visible in transcript).",
+        "A 'Doc Sync Summary' (or '文档同步摘要') appears in the transcript and explicitly lists the status-related deletion.",
+        "Write Mode was invoked before the final task-completion reply."
+      ]
+    },
+    {
+      "id": 23,
+      "priority": "P1",
+      "category": "implicit-trigger",
+      "prompt": "Bump the request timeout in the pay service from 30s to 60s.",
+      "expected_output": "The agent reads docs/modules/pay.md and docs/coding.md (if relevant), changes the timeout config in src/, and auto-invokes Write Mode to update docs/modules/pay.md if the timeout is documented there. Doc Sync Summary appears before the final reply. The user did NOT explicitly say 'load docs' or 'sync docs' — both modes still trigger.",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests IMPLICIT triggering — the user gives a casual code-change request without any meta-instructions about docs. Both Read Mode (before code change) and Write Mode (after net delta) must trigger automatically.",
+      "assertions": [
+        "The timeout config in src/ has changed from 30s to 60s after the run.",
+        "The agent's transcript shows reading at least docs/modules/pay.md (or other relevant doc) before making the change.",
+        "If docs/modules/pay.md previously documented the timeout, it now reflects the new value (60s) after the run.",
+        "The agent invoked docs-context Write Mode without being explicitly asked.",
+        "A 'Doc Sync Summary' (or '文档同步摘要') appears in the transcript.",
+        "Write Mode was invoked before the final task-completion reply."
+      ]
+    },
+    {
+      "id": 24,
+      "priority": "P1",
+      "category": "negative-trigger-generic-knowledge",
+      "prompt": "How does Java's HashMap actually handle hash collisions internally? Give me a concise explanation of the data structure and the chaining/treeification behavior.",
+      "expected_output": "The agent answers from general Java knowledge. NO project docs are loaded (this is a generic-knowledge question with no project state reference). NO files are modified. Read Mode is NOT invoked (no project state needed). Write Mode is NOT invoked (no code landed).",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests that PURE GENERIC-KNOWLEDGE questions do not trigger docs-context. The fixture is irrelevant; we just need a workspace.",
+      "assertions": [
+        "The agent's reply explains HashMap collision handling correctly.",
+        "The agent did NOT read any files under docs/ during the run.",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Read Mode (no docs loaded).",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
+    },
+    {
+      "id": 25,
+      "priority": "P1",
+      "category": "negative-trigger-code-explanation",
+      "prompt": "Walk me through what the OrderService.createOrder method actually does. I just want to understand the flow line by line.",
+      "expected_output": "The agent reads the source for OrderService.createOrder and explains it. The agent MAY load docs/modules/order.md to enrich the explanation, but this is a read-only Q&A. NO files are modified. Write Mode is NOT invoked (no code landed; pure explanation).",
+      "files": ["evals/files/fixture-synced-multi-module/"],
+      "setup_note": "Tests that PURE CODE-EXPLANATION Q&A does not trigger Write Mode. Read Mode loading of relevant module docs is acceptable (they enrich the explanation), but there must be NO writes anywhere.",
+      "assertions": [
+        "The agent's reply contains a line-by-line or step-by-step walkthrough of OrderService.createOrder.",
+        "No source code files were modified.",
+        "No files under docs/ were modified.",
+        "The agent did NOT invoke docs-context Write Mode.",
+        "No 'Doc Sync Summary' appears in the transcript."
+      ]
     }
   ],
   "fixture_setup_instructions": {
@@ -345,6 +465,11 @@
         "name": "fixture-priority-conflict",
         "description": "A loan-service fixture. docs/coding.md mandates 'rate fields use Long basis points'. docs/modules/loan.md exists with an 'Issue Loan' Capability whose Implementation incorrectly notes 'rate stored as BigDecimal' (this inconsistency is intentional). src/ contains a Loan entity without an interest_rate field. docs/decisions/ is empty.",
         "purpose": "Used for priority-chain-conflict test (eval 18). Tests that the agent applies the document priority chain (coding.md > modules/*) when docs disagree, AND surfaces the inconsistency for cleanup."
+      },
+      {
+        "name": "fixture-synced-pay-with-status",
+        "description": "Same as fixture-synced-pay, plus the Order entity in src/ ALREADY has a `status` field (with a small enum: PENDING, PAID, CANCELLED) AND docs/modules/pay.md ALREADY documents the status field under the relevant Capability's '### Implementation' subsection (and any related state transitions). Represents the post-sync state from a 'previous session' that the user now wants to roll back.",
+        "purpose": "Used for cross-session reverse-sync test (eval 22). The fixture must look like docs and code are already in sync regarding status; the test then verifies the agent reverse-syncs docs when the user asks to remove status."
       }
     ],
     "how_to_create": "Fixtures can be assembled as minimal Java/Go/Node projects. Suggested: copy a small real subproject, strip to 10-20 files, seed docs/ per templates in skills/docs-context/assets/templates/. For module files, follow the Capability-based template (assets/templates/module.md). For ADRs, follow the minimal-frontmatter template (assets/templates/decision.md). Do NOT create README files under docs/modules/ or docs/decisions/."

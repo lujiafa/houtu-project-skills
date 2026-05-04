@@ -1,15 +1,13 @@
 ---
 name: docs-context
 description: |
-  Super Base Context — project context loader and documentation synchronizer for Agent Coding.
+  Super Base Context — project doc loader & synchronizer. Triggers even without explicit "load docs"/"sync docs."
 
-  Read mode loads project standards before coding (trigger: write/modify/add/remove/delete/deprecate/fix/refactor/optimize/design/implement/develop/code/build/create/update/spec/plan/test/migration/performance/security).
+  READ MODE — load architecture/modules/coding/decision docs when work references project state: code work (write/modify/remove); design (features/APIs/schemas/architecture); review (modules, past solutions); tech selection; ADR research; migration/refactor planning; performance/security analysis; tests; code reviews; any spec/plan/design/ADR referencing project.
 
-  Write mode syncs docs after coding. Trigger criterion: **current code state has a net delta vs. the last-synced doc state**.
-  - **User triggers**: sync docs/update docs/done/completed/ready to commit/feature done/pre-commit check.
-  - **Agent auto-trigger**: MUST fire right before the final task-completion reply; do not wait for user.
-  - **Net delta**: additions/modifications/removals of landed content (code, config, SQL, build scripts), AND rollbacks of previously synced content (docs reverted accordingly).
-  - **Does NOT fire on**: partial edits while task in progress, progress updates, read-only tasks, pure design/spec/plan authoring, try-and-undo with no net change, already-synced-this-round.
+  WRITE MODE — NET DELTA vs. last doc sync: additions/modifications/REMOVALS/deprecations of previously-synced code or decisions (docs revert: delete capability/module/ADR), AND rollbacks. User signals: sync docs/done/ready to commit/pre-commit/record decision. Auto-fires before final task-completion reply.
+
+  WRITE MODE does NOT fire on: brainstorming, generic/read-only Q&A, in-session try-and-undo with no net change, already-synced.
 metadata:
   author: jonlu
   version: "1.2"
@@ -33,6 +31,19 @@ The core goal of docs-context is to **correct, complete, and reconstruct** the A
 - **Completion** — When the agent lacks context for the current task, documents provide the structural knowledge (architecture, module boundaries, dependencies, constraints), while code and comment scanning fills in the implementation specifics that documents may not cover.
 - **Reconstruction** — When starting a new session or opening a project for the first time, the agent has zero knowledge of the project. By triggering this skill, the agent loads the relevant documents (backbone) and combines them with code and comment scanning to reconstruct a complete understanding of the project from scratch.
 
+## Coordination with other skills
+docs-context is a foundational layer that **coexists with** task-specific skills. When multiple skills apply to the same turn:
+
+- **brainstorming** (creative / exploration phase) → docs-context typically skips; once brainstorming pivots to "evaluate this idea against current project state," Read Mode kicks in.
+- **writing-plans / writing-spec / writing-design** → triggers Read Mode to load relevant architecture / modules / coding-rules / decisions before drafting.
+- **test-driven-development** → Read Mode loads `coding.md` test conventions; once TDD lands code with net delta, Write Mode fires.
+- **systematic-debugging** → Read Mode loads relevant `modules/<x>.md` capabilities and `coding.md`; if the fix lands, Write Mode fires.
+- **executing-plans** → each plan step that touches code goes through Read Mode before writing and Write Mode after landing.
+- **code-review** → Read Mode loads `coding.md` + relevant `modules/*` as the ground truth for the review.
+
+**Conflict priority** (consistent with `superpowers:using-superpowers`):
+explicit user instruction > superpowers skills > docs-context.
+
 ## Document Paths
 All documents are located under the workspace `docs/` directory:
 | Document | Path | Content |
@@ -47,27 +58,80 @@ All documents are located under the workspace `docs/` directory:
 >
 > **No README / index files** under `docs/modules/` or `docs/decisions/`. The agent uses `Glob` to enumerate the directory and reads frontmatter / first-line responsibility on demand. This keeps the layout 100% conflict-free for additions and removals.
 
-## Operating Modes
-This skill has two modes, determined by the current task phase:
+## Modes & Triggers
 
-| Mode | Trigger | Responsibility |
-|------|---------|----------------|
-| **Read Mode** | Before coding / during design | Load relevant docs by task type, establish context awareness |
-| **Write Mode** | After coding / before commit | Check code changes, sync affected documentation |
+### Two modes
+| Mode | When | Responsibility |
+|------|------|----------------|
+| **Read** | Before any project-related work | Load relevant docs, establish constraints |
+| **Write** | After code/decisions land / before commit | Sync affected docs (forward AND reverse) |
 
-Decision rules:
-- User wants to "do something" (write code, modify feature, fix bug, design solution) → **Read Mode**
-- User says "done" (sync docs, pre-commit check, feature complete) → **Write Mode**
-- Current code state has a net delta vs. the last-synced doc state (landed additions/modifications/removals, or rollbacks of previously synced content) → **Write Mode** (fire right before the final task-completion reply; skip if task was read-only / pure design / spec or plan authoring / in-task try-and-undo leaving no net change / already synced this round with no new changes after)
-- When uncertain → default to **Read Mode**
+### Read Mode triggers
+**Root criterion**: does the task need to reference how the project actually works today? If yes, trigger Read Mode.
 
-## Trigger Rules
-| Mode | Trigger Words | Notes |
-|------|--------------|-------|
-| **Read Mode** | write code, modify code, add feature, modify feature, remove/delete/deprecate feature, fix bug, refactor, optimize, design, design solution, tech selection, implement, develop, code, build, create, add, modify, update, remove, delete, deprecate, fix, spec, plan, test, write test, unit test, integration test, migration, schema, DDL, performance, optimize query, security, vulnerability | Any task involving code generation, modification, removal, or design |
-| **Write Mode** | update docs, sync docs, code done, feature done, pre-commit check, development complete, done, completed, ready to commit, **[auto]** current code state has a net delta vs. last sync | Fires only when the current code state has a net delta vs. the last-synced doc state (including additions/modifications/removals, including rollbacks of previously synced content — docs must be reverted accordingly). On user completion signal, or agent self-triggers right before the final task-completion reply (not on partial edits while task is in progress, not on progress updates, not on read-only, not on pure design / spec / plan authoring, not on try-and-undo that left no net change). |
+Triggers on any of:
+- **Code work**: write/modify/add/remove/delete/deprecate code, implement, develop, integrate
+- **Bugfix / refactor**: fix bug, debug, refactor, optimize, improvement plan
+- **Tests**: write tests, unit/integration tests, test strategy / plan
+- **Database**: migration, schema, DDL, add/drop column, add/drop table
+- **Design / review**: architecture design / review, microservice split, module boundary discussion, detailed spec, state-machine design, business-flow mapping, data-flow design
+- **Selection / decisions**: tech selection, dependency choice, upgrade evaluation, ADR authoring, decision comparison
+- **Research / inventory**: historical decision research ("why did we choose X"), past-solution analysis, current architecture inventory, current dependency inventory, code review
+- **Performance / security**: performance design, capacity planning, security design, threat modeling, vulnerability fix
+- **API / integration**: API design, integration, contract negotiation
+- **Any spec / plan / design / ADR that references current project state** — regardless of detail level
 
-> When uncertain which mode applies, default to Read Mode.
+English keyword set (for matching): write/modify/add/remove/delete/deprecate/fix/debug/refactor/optimize/design/implement/develop/integrate/code/build/create/update/spec/plan/test/migration/schema/DDL/performance/capacity/security/vulnerability/architecture/review/select/research/audit/analyze/inventory.
+
+> **Does NOT trigger Read Mode**: brainstorming with no project reference, generic-knowledge questions (e.g. "how does HashMap work in Java"), pure read-only code explanations.
+> **When uncertain, default to Read Mode** (defensive).
+
+### Write Mode triggers
+**Single criterion**: current code/decision state has a **net delta** vs. the last-synced doc state.
+
+**Net delta scope** (bidirectional):
+- **Forward**: additions / modifications of landed content (code, config, SQL, build scripts, ADR decisions)
+- **Reverse**: removals / deprecations of previously-synced code or decisions (docs must shrink to match)
+- **Rollback**: rollbacks of previously-synced content (docs revert accordingly)
+
+**When it fires**:
+- **User signals**: sync docs / update docs / done / completed / ready to commit / feature done / pre-commit check / record this decision
+- **`[auto]` Agent self-trigger**: MUST fire right before the agent's final task-completion reply — do not wait for the user
+
+**Does NOT fire on** (any one match → skip):
+1. Partial edits while the task is still in progress
+2. Mid-task progress updates
+3. Read-only / Q&A tasks
+4. Brainstorming or generic-knowledge questions with no project state referenced
+5. High-level plan with no code/decision landed (note: detailed spec still triggers Read Mode; this only excludes Write Mode)
+6. In-session try-and-undo that left no net change
+7. Already synced this round with no new changes after
+
+### Removal & Rollback Sync (a first-class concept)
+
+**docs-context syncs in both directions**: when code is added, docs grow; when code or decisions are **removed / rolled back**, docs **shrink** to match.
+
+| Code or decision change | Doc action |
+|------------|-----------|
+| Delete a business module's code | Delete `docs/modules/<slug>.md` |
+| Delete a business capability's code | Delete the `## Capability: <name>` section |
+| Delete a single HTTP API / RPC / MQ producer-consumer / scheduled task | Update the owning capability's `### Implementation` sub-section |
+| Drop a database table or column | Update `## Module Overview` table list + affected capability's `### Implementation` |
+| Overturn a previously-merged decision | Delete `docs/decisions/ADR-<old>.md` (history lives in git) |
+| Roll back a previously-recorded refactor | Restore the affected sections to the rolled-back state |
+| Remove a cross-module dependency | Bidirectional sync: delete this capability's `### Upstream / Downstream` AND the other module's affected capability's `### Upstream / Downstream` |
+
+**Distinguishing removal from in-session try-and-undo**:
+
+| Scenario | Net delta | Write Mode |
+|------|-------|----------|
+| Code was synced → now removed | Yes | **Triggers** (reverse sync) |
+| In-session add → in-session delete → net delta zero | No | **Skips** |
+| In-session add → in-session delete, but other parts still have net delta | Yes | **Triggers** (only for landed parts) |
+
+**Detection method**: `git diff` against the last-synced commit; or working tree vs HEAD.
+
+> **Do not maintain Deprecated / Superseded states.** Removal means the doc section is deleted (ADR file deleted, capability section deleted). History is recoverable via `git log -- docs/`.
 
 # Read Mode: Context Loading
 
@@ -199,17 +263,17 @@ The unit of edit is **one capability section in one module file**. Never dump ch
 - **Multiple existing capabilities are involved** → edit each affected section; do not collapse them into one.
 - **No existing capability matches** (the change supports a brand-new business operation) → ask the user whether to append a new `## Capability: <name>` section, and only proceed after confirmation. Never silently bury new business behavior inside an unrelated capability.
 
+> **Forward sync bullets only below.** Removals / rollbacks are covered in the **Removal & Rollback Sync** section earlier — do not duplicate here.
+
 - [ ] Added a new business module → create `docs/modules/<slug>.md` from `assets/templates/module.md` (slug must be Glob-deduplicated and user-confirmed first; see "Slug Selection" below)
-- [ ] Removed a business module → delete `docs/modules/<slug>.md`
 - [ ] Added a new business capability inside an existing module → first Grep the module file for capabilities marked `Status: planned` whose name/scope matches the new code. If a planned capability is being made real, **promote it to `Status: live`** (in place) instead of appending a duplicate. Otherwise append a new `## Capability: <name>` section using the template's capability skeleton.
-- [ ] Removed a business capability → delete the corresponding `## Capability:` section
-- [ ] Added/modified/removed an HTTP API, RPC, MQ producer/consumer, or scheduled task → update the `### Implementation` sub-section of the owning capability (NOT a module-level interface list)
+- [ ] Added or modified an HTTP API, RPC, MQ producer/consumer, or scheduled task → update the `### Implementation` sub-section of the owning capability (NOT a module-level interface list)
 - [ ] Changed a business flow → update the `### Flow` sub-section of the owning capability
 - [ ] Changed status enums or state machines → update the `### State Transitions` sub-section of the owning capability
-- [ ] Added/modified frontend pages or stores → update the `### Implementation` sub-section of the capability the page serves
-- [ ] Added/modified database tables or fields → (1) update the `## Module Overview` table list (2) note the table under `### Implementation` of the affected capability
+- [ ] Added or modified frontend pages or stores → update the `### Implementation` sub-section of the capability the page serves
+- [ ] Added or modified database tables or fields → (1) update the `## Module Overview` table list (2) note the table under `### Implementation` of the affected capability
 - [ ] Changed module-level facts (technology, service name, core package) → update `## Module Overview`
-- [ ] Changed dependency between capabilities or modules → bidirectional sync: update **this** capability's `### Upstream / Downstream` AND the affected capability's `### Upstream / Downstream` in the other module file
+- [ ] Added or modified a dependency between capabilities or modules → bidirectional sync: update **this** capability's `### Upstream / Downstream` AND the affected capability's `### Upstream / Downstream` in the other module file
 
 > When a single code change spans multiple capabilities, **iterate per capability section** — read the existing content, find the minimal change point, then write. Avoid wholesale rewrites of the module file, which would re-introduce the conflict surface that splitting was meant to eliminate.
 
