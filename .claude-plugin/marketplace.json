@@ -13,7 +13,7 @@
       "name": "docs-context",
       "source": "./skills/docs-context",
       "skills": ["./"],
-      "description": "Super Base Context — project context loader and documentation synchronizer for Agent Coding. Read mode loads standards before coding; write mode syncs docs after code lands.",
+      "description": "Super Base Context — project doc loader & synchronizer. Read Mode loads architecture / modules / coding rules / decision records before any project-related work (coding, design, spec, plan, review, ADR research, performance / security analysis). Write Mode syncs docs after code / config / SQL / decisions land — including reverse sync when code is removed or rolled back.",
       "version": "1.2.0",
       "author": {
         "name": "jonlu",

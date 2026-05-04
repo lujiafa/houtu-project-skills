@@ -192,6 +192,67 @@ for ok, msg in results:
         print(msg)
 results.clear()
 
+# 7. Eval-prompt-level consistency
+section('7. Eval-prompt-level consistency (new evals 19-31)')
+if evals_data:
+    by_id = {e['id']: e for e in evals_data['evals']}
+
+    # Implicit-trigger eval: prompt must NOT contain "load docs" or "sync docs"
+    e23 = by_id.get(23)
+    if e23:
+        check('eval-23 (implicit-trigger) prompt does not say "load docs"',
+              'load docs' not in e23['prompt'].lower())
+        check('eval-23 (implicit-trigger) prompt does not say "sync docs"',
+              'sync docs' not in e23['prompt'].lower())
+
+    # Negative-trigger evals: assertions must include "did NOT invoke ... Write Mode"
+    for nid in [3, 4, 24, 25]:
+        ev = by_id.get(nid)
+        if ev:
+            asserts_text = ' '.join(ev.get('assertions', []))
+            check('eval-{} (negative-trigger) asserts no Write Mode'.format(nid),
+                  'did NOT invoke' in asserts_text and 'Write Mode' in asserts_text)
+
+    # Reverse-sync eval (22) must use fixture-synced-pay-with-status
+    e22 = by_id.get(22)
+    if e22:
+        check('eval-22 (reverse-sync) uses fixture-synced-pay-with-status',
+              any('fixture-synced-pay-with-status' in f for f in e22.get('files', [])))
+
+    # Long-session correction eval (31) must use fixture-synced-pay-with-status
+    e31 = by_id.get(31)
+    if e31:
+        check('eval-31 (long-session-correction) uses fixture-synced-pay-with-status',
+              any('fixture-synced-pay-with-status' in f for f in e31.get('files', [])))
+
+    # ADR research (21) must use fixture-synced-pay-with-adr
+    e21 = by_id.get(21)
+    if e21:
+        check('eval-21 (decision-research) uses fixture-synced-pay-with-adr',
+              any('fixture-synced-pay-with-adr' in f for f in e21.get('files', [])))
+
+    # Architecture review / inventory must use multi-module fixture
+    for nid in [20, 27]:
+        ev = by_id.get(nid)
+        if ev:
+            check('eval-{} uses multi-module fixture'.format(nid),
+                  any('fixture-synced-multi-module' in f for f in ev.get('files', [])))
+
+    # Each new eval (19-31) must have priority and category fields
+    for nid in range(19, 32):
+        ev = by_id.get(nid)
+        if ev:
+            check('eval-{} has priority field'.format(nid), 'priority' in ev)
+            check('eval-{} has category field'.format(nid), 'category' in ev)
+            check('eval-{} has at least 3 assertions'.format(nid), len(ev.get('assertions', [])) >= 3)
+
+fail = sum(1 for ok, _ in results if not ok)
+print('  Total: {}/{} passed'.format(len(results) - fail, len(results)))
+for ok, msg in results:
+    if not ok:
+        print(msg)
+total_results = list(results)
+results.clear()
+
 print('\n=== SUMMARY ===')
-all_results = []
 print('Validation complete.')
