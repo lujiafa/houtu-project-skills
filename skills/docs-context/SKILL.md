@@ -16,18 +16,22 @@ metadata:
 # docs-context — Context Loader & Doc Synchronizer
 Manages reading and writing of project documentation, ensuring correct contextual constraints during development and keeping docs in sync with code afterward.
 
-### Positioning: Super Base Context
-docs-context is the **Super Base Context** for Agent Coding — inheriting and extending the base context concept with three key capabilities:
-1. **Structured separation** — 5 documents with distinct responsibilities replace a single monolithic context file, enabling selective loading and reducing context noise.
-2. **Task-aware loading** — Read mode dynamically loads only the documents relevant to the current task type, combating long-context attention degradation.
-3. **Bidirectional sync** — Write mode keeps documentation synchronized with code changes, preventing context drift over time.
+## Contents
+- Positioning, conflict priority, context correction taxonomy
+- Document Paths (5 doc types under `docs/`)
+- Modes & Triggers (Read / Write criteria, Removal & Rollback Sync)
+- Read Mode: always-load, task-type loading, Module / ADR resolution, three context scenarios, post-load behavior
+- Write Mode: doc sync checklist, slug selection, ADR write flow, sync execution steps
+- Handling Missing Documents (scope, init flow, template mapping)
+- Sync Summary Format (Updated / Created / Deleted / Declined / Skipped / No Update / Shared / Needs Confirmation)
 
-docs-context coexists with any AI tool's native project configuration files. Native configs handle tool-specific behavior and shortcuts; docs-context manages reusable project knowledge that persists across tools, sessions, and team members.
+### Positioning: Super Base Context
+docs-context is the **Super Base Context** for Agent Coding — structured project docs, task-aware Read Mode, bidirectional Write Mode. The remainder of this file specifies each.
 
 **Conflict priority** (when this skill's guidance collides with other instructions in the same turn): explicit user instruction > docs-context.
 
 ### Context Correction, Completion, and Reconstruction
-The core goal of docs-context is to **correct, complete, and reconstruct** the AI agent's project context. Documents serve as the **backbone** — they capture the authoritative project knowledge (architecture, standards, modules, decisions, tech stack). However, documents alone cannot cover everything, especially in large-scale projects (large microservice + frontend systems). Therefore, docs-context works by combining **documents + code scanning + comment scanning**: documents provide the structural backbone, while code and comments fill in implementation-level details.
+Three scenarios in which docs-context restores the agent's project context — combined documents + code/comment scanning fills the gap when docs alone are insufficient.
 
 - **Correction** — Not limited to enforcing constraints on generated code. When context degrades due to long-conversation attention decay, context compression inaccuracies, or accumulated drift, the agent can re-read the relevant documents and scan the actual codebase to restore an accurate understanding. Documents act as the ground truth that pulls distorted context back on track.
 - **Completion** — When the agent lacks context for the current task, documents provide the structural knowledge (architecture, module boundaries, dependencies, constraints), while code and comment scanning fills in the implementation specifics that documents may not cover.
@@ -43,9 +47,7 @@ All documents are located under the workspace `docs/` directory:
 | Module Registry | `docs/modules/<business>.md` | One file per business module. Each file is split internally by `## Capability:` sections; each capability holds its own implementation list (HTTP / RPC / MQ / scheduled tasks / DB tables / frontend pages), flow, state transitions, and local upstream/downstream |
 | Decision Records | `docs/decisions/ADR-<slug>.md` | One file per architecture decision (ADR). Slug-only filenames (no numeric prefix, no date prefix). Date lives in frontmatter |
 
-> **Why split into directories**: single monolithic `modules.md` / `decisions.md` files become git conflict hotspots in multi-window or multi-developer workflows. Per-business-module files and per-decision files isolate concurrent edits to different physical files.
->
-> **No README / index files** under `docs/modules/` or `docs/decisions/`. The agent uses `Glob` to enumerate the directory and reads frontmatter / first-line responsibility on demand. This keeps the layout 100% conflict-free for additions and removals.
+> **No README / index files** under `docs/modules/` or `docs/decisions/`. Use `Glob` to enumerate; read frontmatter / first-line responsibility on demand.
 
 ## Modes & Triggers
 
@@ -69,8 +71,6 @@ Triggers on any of:
 - **Performance / security**: performance design, capacity planning, security design, threat modeling, vulnerability fix
 - **API / integration**: API design, integration, contract negotiation
 - **Any spec / plan / design / ADR that references current project state** — regardless of detail level
-
-English keyword set (for matching): write/modify/add/remove/delete/deprecate/fix/debug/refactor/optimize/design/implement/develop/integrate/code/build/create/update/spec/plan/test/migration/schema/DDL/performance/capacity/security/vulnerability/architecture/review/select/research/audit/analyze/inventory.
 
 > **Does NOT trigger Read Mode**: brainstorming with no project reference, generic-knowledge questions (e.g. "how does HashMap work in Java"), pure read-only code explanations.
 > **When uncertain, default to Read Mode** (defensive).
@@ -131,7 +131,7 @@ Every time read mode is triggered, MUST load:
 
 ### Additional Loading by Task Type
 
-In the table below, **`modules/*`** means: `Glob docs/modules/*.md` for the file list, then load 1–3 relevant `docs/modules/<x>.md` and Grep `## Capability:` inside them to focus on the matching capability section. **`decisions/*`** means: `Glob docs/decisions/ADR-*.md`, match by slug + frontmatter `tags` + `title`, load 0–2 most relevant ADR files in full. See the next section for the precise resolution algorithm.
+`modules/*` and `decisions/*` shortcuts are resolved per the algorithms in §Module / ADR Resolution Strategy below.
 
 | Task Type | Additional Docs | Trigger Criteria |
 |-----------|----------------|-----------------|

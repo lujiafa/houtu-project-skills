@@ -1,0 +1,50 @@
+{
+  "skill_under_test": "docs-context",
+  "purpose": "Trigger-rate evals: measure whether the SKILL.md frontmatter description correctly induces Claude to load docs-context for relevant prompts AND to skip loading for off-topic prompts. Complements evals.json (which tests behavior given the skill is loaded). Refs: agentskills.io optimizing-descriptions.",
+  "expectations": {
+    "should_trigger_rate": ">=80%",
+    "should_not_trigger_rate": "<=20%",
+    "min_runs_per_prompt": 3,
+    "decision_signal": "agent invokes Skill tool with name=='docs-context' (run.sh --trigger-only checks transcript for this); detection matches the rule used by run.sh main eval mode."
+  },
+  "notes": [
+    "Each prompt is paired with a near-miss counterpart in the opposite list to stress the description's discrimination boundary.",
+    "Prompts mix EN and zh-CN to verify both description blocks (SKILL.md + SKILL-CN.md mirror) trigger consistently.",
+    "Prompts intentionally DO NOT include the phrases 'load docs' / 'sync docs' / '加载文档' / '同步文档' — those would be explicit triggers, not the implicit-trigger behavior we want to validate.",
+    "Should-not-trigger prompts deliberately use overlap keywords (refactor in a generic sense, design in the abstract, etc.) to test discrimination, not pure topical disjointness."
+  ],
+  "should_trigger": [
+    {"id": "T01", "lang": "en", "category": "code-work",          "prompt": "Add a /health endpoint to the user-service that returns service status. Use the existing controller pattern."},
+    {"id": "T02", "lang": "zh", "category": "code-work",          "prompt": "给订单服务加一个状态查询接口，返回订单当前状态"},
+    {"id": "T03", "lang": "en", "category": "migration",          "prompt": "We need to migrate from MySQL 5.7 to PostgreSQL. Write a migration plan covering schema, data, and downtime."},
+    {"id": "T04", "lang": "en", "category": "refactor",           "prompt": "Refactor PaymentController.processPayment to extract the validation logic into a separate service."},
+    {"id": "T05", "lang": "en", "category": "architecture-review","prompt": "Review the current microservice split between order-service and payment-service. Should any responsibility move between them?"},
+    {"id": "T06", "lang": "en", "category": "bug-fix",            "prompt": "Fix the NullPointerException in OrderService.createOrder when the amount is null."},
+    {"id": "T07", "lang": "en", "category": "tech-selection",     "prompt": "Should we use Redis or Memcached for our session store? Decide based on our existing stack."},
+    {"id": "T08", "lang": "en", "category": "spec-design",        "prompt": "Write a detailed spec for adding a Refund flow to our existing payment system: API contract, state machine, DB changes."},
+    {"id": "T09", "lang": "en", "category": "security-audit",     "prompt": "Audit the security of our /login endpoint. Report the top 3 risks and recommended mitigations."},
+    {"id": "T10", "lang": "zh", "category": "adr-writing",        "prompt": "记录一下我们决定用 PostgreSQL 替代 MySQL 的原因，写成 ADR"},
+    {"id": "T11", "lang": "en", "category": "tests",              "prompt": "Write a unit test for OrderService.createOrder covering the zero-amount edge case."},
+    {"id": "T12", "lang": "zh", "category": "db-migration",       "prompt": "给 orders 表加一个 discount_amount Long 类型字段，写迁移脚本"},
+    {"id": "T13", "lang": "en", "category": "performance",        "prompt": "The /pay/list endpoint is slow under 10x load. Profile bottlenecks and propose optimizations."},
+    {"id": "T14", "lang": "zh", "category": "api-design",         "prompt": "为 /orders/{id}/cancel 接口设计 API 契约，包括请求体、响应体、状态码"},
+    {"id": "T15", "lang": "en", "category": "research",           "prompt": "Why did we decide to use Adyen instead of Stripe? Find and summarize the rationale."}
+  ],
+  "should_not_trigger": [
+    {"id": "N01", "lang": "en", "category": "generic-cs",         "prompt": "What's the time complexity of merge sort?"},
+    {"id": "N02", "lang": "zh", "category": "generic-language",   "prompt": "Java 21 有什么新特性？"},
+    {"id": "N03", "lang": "en", "category": "abstract-design",    "prompt": "Compare REST vs GraphQL purely in the abstract — when would you pick each, ignoring any specific project?"},
+    {"id": "N04", "lang": "en", "category": "greeting",           "prompt": "Hi! How are you doing today?"},
+    {"id": "N05", "lang": "en", "category": "vocabulary",         "prompt": "What does 'idempotent' mean in API design?"},
+    {"id": "N06", "lang": "en", "category": "code-tutorial",      "prompt": "Show me an example of a Python decorator with multiple arguments."},
+    {"id": "N07", "lang": "en", "category": "creative",           "prompt": "Brainstorm names for a new pet project that does AI-powered email triage."},
+    {"id": "N08", "lang": "en", "category": "tutorial-howto",     "prompt": "How do I write Hello World in Rust? Just the basic syntax."},
+    {"id": "N09", "lang": "en", "category": "theory",             "prompt": "Explain the SOLID principles."},
+    {"id": "N10", "lang": "en", "category": "off-topic",          "prompt": "I'm hungry — any lunch suggestions?"},
+    {"id": "N11", "lang": "en", "category": "off-project-review", "prompt": "Review this Stack Overflow answer about Java generics: https://stackoverflow.com/a/12345"},
+    {"id": "N12", "lang": "zh", "category": "generic-pattern",    "prompt": "解释一下责任链模式"},
+    {"id": "N13", "lang": "en", "category": "hr-admin",           "prompt": "How do I request time off in our HR system?"},
+    {"id": "N14", "lang": "en", "category": "ai-concept",         "prompt": "What's the difference between RAG and fine-tuning for LLMs?"},
+    {"id": "N15", "lang": "en", "category": "tool-comparison",    "prompt": "Compare PyTorch and TensorFlow for general ML use, no specific project context."}
+  ]
+}

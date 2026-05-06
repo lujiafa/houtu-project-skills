@@ -10,13 +10,17 @@
 !LICENSE
 !README.md
 !README-CN.md
-!skills/docs-context/evals/evals.json
 !skills/houtu-dependencies/evals/evals.json
 !.gitignore
 
 
 skills/docs-context/SKILL-CN.md
-skills/docs-context/evals
-skills/docs-context/evals/**
+skills/docs-context/evals/files
+skills/docs-context/evals/files/**
+skills/docs-context/evals/run.sh
+skills/docs-context/evals/validate.py
+skills/docs-context/evals/__pycache__
+skills/docs-context-workspace
+skills/docs-context-workspace/**
 skills/houtu-dependencies/evals
 skills/houtu-dependencies/evals/**

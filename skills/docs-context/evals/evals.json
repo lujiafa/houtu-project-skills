@@ -671,6 +671,74 @@
         "The Doc Sync Summary's 'Created' list contains only docs/coding.md (not the other doc files).",
         "The /ping endpoint exists in the pay service source."
       ]
+    },
+    {
+      "id": 40,
+      "priority": "P1",
+      "category": "write-mode-timing",
+      "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}.",
+      "expected_output": "Write Mode auto-fires BEFORE the agent's final task-completion reply (per SKILL.md: '[auto] Agent self-trigger: MUST fire right before the agent's final task-completion reply — do not wait for the user'). The Doc Sync Summary appears earlier in the transcript than the final natural-language closing reply that summarizes what was done for the user.",
+      "files": ["evals/files/fixture-synced-pay/"],
+      "setup_note": "Tests Write Mode TIMING explicitly. Failure modes: (a) Sync Summary appears AFTER the final user-facing reply, (b) agent waits for the user to ask for sync, (c) agent emits the final reply without ever syncing. Distinct from eval 1 which tests trigger but not strict ordering.",
+      "assertions": [
+        "The /ping endpoint is implemented in the pay service source after the run.",
+        "docs/modules/pay.md contains a new /ping entry under a Capability section's '### Implementation'.",
+        "A 'Doc Sync Summary' (or '文档同步摘要') appears in the transcript.",
+        "The byte offset of the 'Doc Sync Summary' line in the transcript is BEFORE the byte offset of the agent's final closing reply paragraph (the one that wraps up the task for the user). If the transcript is structured (stream-json), the assistant message containing the summary precedes the assistant message containing the final wrap-up.",
+        "The agent did NOT wait for the user to say 'sync docs' before emitting the summary."
+      ]
+    },
+    {
+      "id": 41,
+      "priority": "P2",
+      "category": "deprecate-not-delete-distinction",
+      "prompt": "We're deprecating the /ping endpoint but keeping the code for one more release for backward compatibility. Mark it as deprecated everywhere, but do NOT remove it from the codebase or docs.",
+      "expected_output": "The agent recognizes that 'deprecate but keep' is NOT the same as 'remove'. It (1) adds @Deprecated annotation (or equivalent) to the /ping handler, (2) does NOT delete the /ping entry from docs/modules/pay.md but instead annotates it (e.g. '(deprecated, scheduled for removal in v2.0)'), (3) does NOT trigger the Removal & Rollback Sync flow because the code is not removed.",
+      "files": ["evals/files/fixture-synced-pay-with-ping/"],
+      "setup_note": "Tests that the agent distinguishes between 'remove' (which triggers reverse sync per Removal & Rollback Sync section) and 'deprecate' (which is a forward annotation on still-living code). Failure modes: (a) agent deletes /ping from docs/modules/pay.md (treating deprecate as remove), (b) agent removes the source code, (c) agent silently does both.",
+      "assertions": [
+        "The /ping endpoint code STILL EXISTS in the pay service source after the run (not deleted).",
+        "The /ping handler is annotated @Deprecated (or equivalent language idiom).",
+        "docs/modules/pay.md STILL contains a /ping entry under a Capability section (NOT deleted).",
+        "The /ping entry in docs/modules/pay.md is annotated with deprecation language (e.g. 'deprecated', '将废弃', 'scheduled for removal').",
+        "The Doc Sync Summary describes the change as a deprecation note, NOT a removal.",
+        "The Doc Sync Summary's 'Updated' or 'Deleted' fields do NOT list /ping under deletions."
+      ]
+    },
+    {
+      "id": 42,
+      "priority": "P2",
+      "category": "legacy-monolith-migration",
+      "prompt": "Our docs are in the legacy single-file format (docs/modules.md, docs/decisions.md). Migrate them to the new per-business-module / per-decision layout: split docs/modules.md into docs/modules/<slug>.md files (one per business module) and split docs/decisions.md into docs/decisions/ADR-<slug>.md files. Then add a /ping endpoint to the pay service.",
+      "expected_output": "The agent (1) reads the legacy docs/modules.md and docs/decisions.md, (2) proposes a slug list for the split with user-confirmable mapping, (3) on confirmation, creates per-module / per-decision files preserving content fidelity, (4) deletes the old monolithic files (docs/modules.md, docs/decisions.md) since they no longer match the new layout, (5) THEN proceeds with the /ping addition under the migrated docs/modules/pay.md.",
+      "files": ["evals/files/fixture-legacy-monolith/"],
+      "setup_note": "fixture-legacy-monolith has docs/modules.md (single file with pay + order modules inline) and docs/decisions.md (single file with 2 ADRs inline). NO docs/modules/ or docs/decisions/ directories exist. Tests the upgrade path from v1.0 to v1.2 schema.",
+      "assertions": [
+        "After the run, docs/modules/ directory exists and contains AT LEAST docs/modules/pay.md.",
+        "After the run, docs/decisions/ directory exists and contains AT LEAST one ADR-*.md file.",
+        "After the run, the legacy docs/modules.md file no longer exists (migration cleanup).",
+        "After the run, the legacy docs/decisions.md file no longer exists (migration cleanup).",
+        "The agent presented the slug split to the user for confirmation BEFORE creating files (no silent migration).",
+        "The /ping endpoint is implemented in the pay service source.",
+        "docs/modules/pay.md contains a /ping entry AND retains the pay module content from the original docs/modules.md.",
+        "Content fidelity: information from docs/modules.md (capability descriptions, upstream/downstream notes) is preserved in the new per-module files (no silent loss)."
+      ]
+    },
+    {
+      "id": 43,
+      "priority": "P1",
+      "category": "merge-conflict-guardrail",
+      "prompt": "Add a /ping endpoint to the pay service.",
+      "expected_output": "The agent attempts Read Mode and discovers that docs/modules/pay.md has unresolved git merge conflict markers (<<<<<<<, =======, >>>>>>>). It HALTS and asks the user to resolve the conflict before proceeding. It does NOT silently overwrite the file or pick one side. The /ping code change MAY proceed if it doesn't depend on the unresolved doc state, but Write Mode does NOT touch pay.md while conflicts remain.",
+      "files": ["evals/files/fixture-merge-conflict/"],
+      "setup_note": "fixture-merge-conflict has docs/modules/pay.md with literal git conflict markers in the middle of a Capability section. Tests the agent's safety guardrail against blindly overwriting unresolved conflicts. Critical: failure mode is silent overwrite that destroys one branch's work.",
+      "assertions": [
+        "The agent's transcript explicitly mentions detecting git merge conflict markers in docs/modules/pay.md (search for 'conflict' or 'merge' or '<<<<<<<' references).",
+        "The agent asked the user to resolve the conflict before proceeding (HALT signal).",
+        "After the run, docs/modules/pay.md STILL contains the conflict markers if the user did not resolve them in this turn (no silent overwrite).",
+        "The Doc Sync Summary mentions the conflict and explicitly skips pay.md sync, OR the summary is not emitted at all because Write Mode was blocked.",
+        "If the agent did proceed with the /ping code change, the source file change is conservative (no docs touch)."
+      ]
     }
   ],
   "fixture_setup_instructions": {
@@ -750,6 +818,16 @@
         "name": "fixture-empty-workspace",
         "description": "Mirrors fixture-synced-pay but with the entire docs/ directory REMOVED. Only src/ and pom.xml remain. Represents a project that has code but has never been documented under docs-context.",
         "purpose": "Used for root-level bootstrap test (eval 37). Validates that the agent creates docs/ on demand AND scopes creation to ONLY the doc types this task actually needs (not preemptively all 5)."
+      },
+      {
+        "name": "fixture-legacy-monolith",
+        "description": "Mirrors fixture-synced-pay but with LEGACY v1.0-style docs: docs/modules.md (single file containing both pay + order module sections inline) and docs/decisions.md (single file containing 2 ADRs inline). NO docs/modules/ or docs/decisions/ directories exist. Other docs (architecture.md, coding.md, tech-stack.md) are normal.",
+        "purpose": "Used for legacy-monolith migration test (eval 42). Validates the v1.0 → v1.2 upgrade path: split monolithic files into per-module / per-decision files with user confirmation."
+      },
+      {
+        "name": "fixture-merge-conflict",
+        "description": "Mirrors fixture-synced-pay but with docs/modules/pay.md containing UNRESOLVED git merge conflict markers ('<<<<<<<', '=======', '>>>>>>>') in the middle of a Capability section's '### Implementation' subsection. Other docs and src/ are clean.",
+        "purpose": "Used for merge-conflict guardrail test (eval 43). Validates that the agent halts on conflict markers rather than silently overwriting one side."
       }
     ],
     "how_to_create": "Fixtures can be assembled as minimal Java/Go/Node projects. Suggested: copy a small real subproject, strip to 10-20 files, seed docs/ per templates in skills/docs-context/assets/templates/. For module files, follow the Capability-based template (assets/templates/module.md). For ADRs, follow the minimal-frontmatter template (assets/templates/decision.md). Do NOT create README files under docs/modules/ or docs/decisions/."
