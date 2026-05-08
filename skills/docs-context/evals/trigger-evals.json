@@ -14,21 +14,21 @@
     "Should-not-trigger prompts deliberately use overlap keywords (refactor in a generic sense, design in the abstract, etc.) to test discrimination, not pure topical disjointness."
   ],
   "should_trigger": [
-    {"id": "T01", "lang": "en", "category": "code-work",          "prompt": "Add a /health endpoint to the user-service that returns service status. Use the existing controller pattern."},
-    {"id": "T02", "lang": "zh", "category": "code-work",          "prompt": "给订单服务加一个状态查询接口，返回订单当前状态"},
-    {"id": "T03", "lang": "en", "category": "migration",          "prompt": "We need to migrate from MySQL 5.7 to PostgreSQL. Write a migration plan covering schema, data, and downtime."},
-    {"id": "T04", "lang": "en", "category": "refactor",           "prompt": "Refactor PaymentController.processPayment to extract the validation logic into a separate service."},
-    {"id": "T05", "lang": "en", "category": "architecture-review","prompt": "Review the current microservice split between order-service and payment-service. Should any responsibility move between them?"},
+    {"id": "T01", "lang": "en", "category": "code-work",          "prompt": "Add a /health endpoint to the pay-service that returns service status. Use the existing controller pattern."},
+    {"id": "T02", "lang": "zh", "category": "code-work",          "prompt": "给 pay-service 加一个订单状态查询接口，返回当前订单状态"},
+    {"id": "T03", "lang": "en", "category": "migration",          "prompt": "We need to migrate from H2 to PostgreSQL for production. Write a migration plan covering schema, data, and downtime."},
+    {"id": "T04", "lang": "en", "category": "refactor",           "prompt": "Refactor PayController.createOrder to extract the validation logic into a separate service class."},
+    {"id": "T05", "lang": "en", "category": "architecture-review","prompt": "Review the current pay-service architecture for scalability. Identify boundary issues and propose improvements."},
     {"id": "T06", "lang": "en", "category": "bug-fix",            "prompt": "Fix the NullPointerException in OrderService.createOrder when the amount is null."},
     {"id": "T07", "lang": "en", "category": "tech-selection",     "prompt": "Should we use Redis or Memcached for our session store? Decide based on our existing stack."},
-    {"id": "T08", "lang": "en", "category": "spec-design",        "prompt": "Write a detailed spec for adding a Refund flow to our existing payment system: API contract, state machine, DB changes."},
-    {"id": "T09", "lang": "en", "category": "security-audit",     "prompt": "Audit the security of our /login endpoint. Report the top 3 risks and recommended mitigations."},
+    {"id": "T08", "lang": "en", "category": "spec-design",        "prompt": "Write a detailed spec for adding a Refund flow to the pay-service: API contract, state machine, DB changes."},
+    {"id": "T09", "lang": "en", "category": "security-audit",     "prompt": "Audit the security of the /pay/orders endpoint. Report the top 3 risks and recommended mitigations."},
     {"id": "T10", "lang": "zh", "category": "adr-writing",        "prompt": "记录一下我们决定用 PostgreSQL 替代 MySQL 的原因，写成 ADR"},
     {"id": "T11", "lang": "en", "category": "tests",              "prompt": "Write a unit test for OrderService.createOrder covering the zero-amount edge case."},
     {"id": "T12", "lang": "zh", "category": "db-migration",       "prompt": "给 orders 表加一个 discount_amount Long 类型字段，写迁移脚本"},
-    {"id": "T13", "lang": "en", "category": "performance",        "prompt": "The /pay/list endpoint is slow under 10x load. Profile bottlenecks and propose optimizations."},
-    {"id": "T14", "lang": "zh", "category": "api-design",         "prompt": "为 /orders/{id}/cancel 接口设计 API 契约，包括请求体、响应体、状态码"},
-    {"id": "T15", "lang": "en", "category": "research",           "prompt": "Why did we decide to use Adyen instead of Stripe? Find and summarize the rationale."}
+    {"id": "T13", "lang": "en", "category": "performance",        "prompt": "The POST /pay/orders endpoint is slow under 10x load. Profile bottlenecks and propose optimizations."},
+    {"id": "T14", "lang": "zh", "category": "api-design",         "prompt": "为 /pay/orders/{id}/cancel 接口设计 API 契约，包括请求体、响应体、状态码"},
+    {"id": "T15", "lang": "en", "category": "code-review",        "prompt": "Code-review the latest commit to PayController for any violations of our coding standards or missing error handling."}
   ],
   "should_not_trigger": [
     {"id": "N01", "lang": "en", "category": "generic-cs",         "prompt": "What's the time complexity of merge sort?"},
@@ -45,6 +45,7 @@
     {"id": "N12", "lang": "zh", "category": "generic-pattern",    "prompt": "解释一下责任链模式"},
     {"id": "N13", "lang": "en", "category": "hr-admin",           "prompt": "How do I request time off in our HR system?"},
     {"id": "N14", "lang": "en", "category": "ai-concept",         "prompt": "What's the difference between RAG and fine-tuning for LLMs?"},
-    {"id": "N15", "lang": "en", "category": "tool-comparison",    "prompt": "Compare PyTorch and TensorFlow for general ML use, no specific project context."}
+    {"id": "N15", "lang": "en", "category": "tool-comparison",    "prompt": "Compare PyTorch and TensorFlow for general ML use, no specific project context."},
+    {"id": "N16", "lang": "en", "category": "human-rationale-recall", "prompt": "Why did we decide to use Adyen instead of Stripe? Tell me the reasoning behind that choice."}
   ]
 }

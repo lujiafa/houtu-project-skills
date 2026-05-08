@@ -8,9 +8,6 @@ description: |
   WRITE MODE — NET DELTA vs. last doc sync: additions/modifications/REMOVALS/deprecations of previously-synced code or decisions (docs revert: delete capability/module/ADR), AND rollbacks. User signals: sync docs/done/ready to commit/pre-commit/record decision. Auto-fires before final task-completion reply.
 
   WRITE MODE does NOT fire on: brainstorming, generic/read-only Q&A, in-session try-and-undo with no net change, already-synced.
-metadata:
-  author: jonlu
-  version: "1.2"
 ---
 
 # docs-context — Context Loader & Doc Synchronizer
@@ -285,8 +282,13 @@ The unit of edit is **one capability section in one module file**. Never dump ch
 - [ ] Added/modified naming conventions → Update naming section
 
 ### decisions/*
-- [ ] Made an important architecture or technical decision → create `docs/decisions/ADR-<slug>.md` from `assets/templates/decision.md` (slug user-confirmed; see "ADR Write Flow")
-- [ ] Overturned a previous decision → **delete the old ADR file** AND create a new ADR file. Do not keep `Superseded` / `Deprecated` states. History remains accessible via `git log -- docs/decisions/`.
+
+> **ADR sync follows the CODE, not the moment of decision.**
+> A decision being made (in chat, doc, or planning) does NOT trigger ADR creation on its own. The ADR is recorded only when the decision **lands in code and changes behavior** — same threshold as a capability or module entry. This keeps `docs/decisions/` consistent with `docs/modules/` and the codebase. Pure planning / brainstorming about a future decision belongs in a plan or spec, not in `decisions/`.
+
+- [ ] An important architecture/technical decision **lands in code** → create `docs/decisions/ADR-<slug>.md` from `assets/templates/decision.md` (slug user-confirmed; see "ADR Write Flow")
+- [ ] A previous decision is **overturned in code** (the new approach is implemented) → **delete the old ADR file** AND create a new ADR file. Do not keep `Superseded` / `Deprecated` states. History remains accessible via `git log -- docs/decisions/`.
+- [ ] A decision was discussed but NOT yet implemented → **do not write an ADR yet**. Note the decision in the relevant plan/spec and let Write Mode skip `decisions/` this round.
 
 ### Slug Selection (modules and ADRs)
 Before creating any new file under `docs/modules/` or `docs/decisions/`:

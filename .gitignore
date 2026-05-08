@@ -18,6 +18,7 @@ skills/docs-context/SKILL-CN.md
 skills/docs-context/evals/files
 skills/docs-context/evals/files/**
 skills/docs-context/evals/run.sh
+skills/docs-context/evals/trigger-rerun.sh
 skills/docs-context/evals/validate.py
 skills/docs-context/evals/__pycache__
 skills/docs-context-workspace
