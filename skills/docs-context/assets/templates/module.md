@@ -20,51 +20,69 @@
 
 List **every** technical artifact this BCU uses. A BCU often spans multiple layers — keep them together so the end-to-end picture is in one place. Only list sub-bullets that actually exist; delete the ones that do not apply.
 
-> **Per-entry tracing diagrams (optional, but complete-when-present)**: each *entry-point* bullet — HTTP API (inbound), MQ Consumption, Scheduled Task, Third-party Callback — MAY carry its own Mermaid `sequenceDiagram` tracing this entry's full call chain (services / RPC / MQ Production / external systems / resources / DB) end-to-end. Two rules apply together:
-> 1. **Optional** — skip the diagram when the entry is trivial (e.g. single read-and-return, no cross-service hops). Not every entry needs one.
-> 2. **Complete when present** — if a diagram is drawn, it MUST trace every real hop end-to-end. Half-drawn / placeholder / partial-chain diagrams are forbidden — they mislead more than they help. Either skip or finish.
+> **Per-entry tracing diagrams**: each *entry-point* bullet — HTTP API (inbound), MQ Consumption, Scheduled Task, Third-party Callback — MAY carry its own tracing diagram of this entry's full call chain (services / RPC / MQ Production / external systems / resources / DB).
+>
+> **Format — primary: ASCII span tree, supplementary: Mermaid `sequenceDiagram`**:
+> - **Primary (default)** — ASCII **span tree** of the factual call chain, mirroring the way SkyWalking / distributed-tracing UIs render a trace: hierarchical indentation showing parent → child calls. Compact, diff-friendly, human-readable in plain text.
+> - **Supplementary (optional)** — when the entry is async / multi-roundtrip / has callbacks that the tree shape can't naturally express, add a Mermaid `sequenceDiagram` AS A SECOND diagram for global overview. Don't replace the tree — add alongside it.
+> - **Trivial entries** — omit both. Single read-and-return / single SQL insert needs no diagram.
+>
+> **Two rules apply together**:
+> 1. **Optional** — skip diagrams when the entry is trivial.
+> 2. **Complete when present** — if a tree (or sequence) diagram is drawn, it MUST cover every real hop end-to-end. Half-drawn / partial-chain diagrams are forbidden.
 >
 > **Do NOT** attach diagrams to non-entry items: outbound RPC calls, MQ Production, Database tables, Frontend page, State management. These appear as nodes inside entry diagrams; a separate diagram would be redundant.
 
 - HTTP API: `[METHOD] [path]` — [purpose] (`[controller class#method]`)
 
-  ```mermaid
-  sequenceDiagram
-    participant Caller
-    participant ThisService
-    participant DB
-    participant ExternalGateway
-    Caller->>ThisService: [METHOD] [path]
-    ThisService->>DB: persist
-    ThisService->>ExternalGateway: invoke
-    ExternalGateway-->>ThisService: response
-    ThisService-->>Caller: result
+  ```
+  [METHOD] [path]
+  ├── [Service.method] (this service)
+  │   ├── DB.[table] insert/update/delete
+  │   └── [DownstreamService].[method] (RPC) → [result]
+  ├── [ExternalGateway].[op] (HTTP/SDK) → [result]
+  └── MQ produce [topic]
   ```
 
 - MQ Consumption: `[topic]` — [what happens after consuming]; producer: `[producer BCU slug]`
 
-  ```mermaid
-  sequenceDiagram
-    participant MQ
-    participant ThisService
-    participant DB
-    MQ->>ThisService: consume [topic]
-    ThisService->>DB: update
+  ```
+  consume [topic]
+  ├── [Handler.method]
+  │   ├── DB.[table] update
+  │   └── [Downstream].[method] (RPC) → [result]
+  └── (ack)
   ```
 
 - Scheduled Task: `[task-name]` cron `[expression]` — [what it does]
 
-  <!-- Attach a sequenceDiagram only if the task spans multiple services / resources. Trivial single-table scans can stay diagram-free. -->
+  ```
+  cron [task-name]
+  ├── DB.[table] scan PENDING > [threshold]
+  ├── for each row:
+  │   ├── [ExternalGateway].query → [actual state]
+  │   └── DB.[table] update [state]
+  └── (done)
+  ```
 
-- Third-party Callback: `[provider]` `[event]` → `[handler class#method]` — [what the callback signals]
+- Third-party Callback: `[provider]` `[event]` → `[handler class#method]`
 
-  <!-- Attach a sequenceDiagram if the callback triggers cross-service reactions. -->
+  ```
+  [provider].[event] → [handler]
+  ├── verify signature
+  ├── [Service].onCallback
+  │   ├── DB.[table] update
+  │   └── MQ produce [topic]
+  └── return ACK
+  ```
+
+  <!-- For complex async / multi-roundtrip callbacks, ADD a Mermaid sequenceDiagram BELOW the tree as a global overview — do not replace the tree. -->
 
 - RPC: `[ClassName.methodName(params)]` — [purpose / callers]
-  <!-- No separate diagram — appears as a node in the calling entry's diagram. -->
+  <!-- No separate diagram — appears as a node in the calling entry's tree. -->
 
 - MQ Production: `[topic]` — [message content]; consumers: `[consumer BCU slugs]`
-  <!-- No separate diagram — appears as a node in the producing entry's diagram. -->
+  <!-- No separate diagram — appears as a node in the producing entry's tree. -->
 
 - Database tables touched: `[table]` (insert / update / delete)
 - Frontend page: `[path]` (`[app-name]`) — calls `[API list]`
