@@ -5,7 +5,7 @@ description: |
 
   READ MODE — load architecture/modules/coding/decision docs when work references project state: code work (write/modify/remove); design (features/APIs/schemas/architecture); review (modules, past solutions); tech selection; ADR research; migration/refactor planning; performance/security analysis; tests; code reviews; any spec/plan/design/ADR referencing project.
 
-  WRITE MODE — NET DELTA vs. last doc sync: additions/modifications/REMOVALS/deprecations of previously-synced code or decisions (docs revert: delete capability/module/ADR), AND rollbacks. User signals: sync docs/done/ready to commit/pre-commit/record decision. Auto-fires before final task-completion reply.
+  WRITE MODE — NET DELTA vs. last doc sync: additions/modifications/REMOVALS/deprecations of previously-synced code or decisions (docs revert: delete BCU file/ADR), AND rollbacks. User signals: sync docs/done/ready to commit/pre-commit/record decision. Auto-fires before final task-completion reply.
 
   WRITE MODE does NOT fire on: brainstorming, generic/read-only Q&A, in-session try-and-undo with no net change, already-synced.
 ---
@@ -16,8 +16,9 @@ Manages reading and writing of project documentation, ensuring correct contextua
 ## Contents
 - Positioning, conflict priority, context correction taxonomy
 - Document Paths (5 doc types under `docs/`)
+- BCU Splitting Principle (decision flow + section-omission rule)
 - Modes & Triggers (Read / Write criteria, Removal & Rollback Sync)
-- Read Mode: always-load, task-type loading, Module / ADR resolution, three context scenarios, post-load behavior
+- Read Mode: always-load, task-type loading, BCU / ADR resolution, three context scenarios, post-load behavior
 - Write Mode: doc sync checklist, slug selection, ADR write flow, sync execution steps
 - Handling Missing Documents (scope, init flow, template mapping)
 - Sync Summary Format (Updated / Created / Deleted / Declined / Skipped / No Update / Shared / Needs Confirmation)
@@ -41,10 +42,62 @@ All documents are located under the workspace `docs/` directory:
 | Architecture | `docs/architecture.md` | Workspace directory structure, project background, system architecture, service-level topology, constraints, future plans |
 | Tech Stack | `docs/tech-stack.md` | Framework versions, dependency constraints, environment requirements, AI code generation limits |
 | Coding Standards | `docs/coding.md` | Coding standards, naming conventions, API design standards, error handling, logging standards, testing standards |
-| Module Registry | `docs/modules/<business>.md` | One file per business module. Each file is split internally by `## Capability:` sections; each capability holds its own implementation list (HTTP / RPC / MQ / scheduled tasks / DB tables / frontend pages), flow, state transitions, and local upstream/downstream |
+| Module Registry | `docs/modules/<bcu-slug>.md` | **One file per Business Capability Unit (BCU).** Each BCU file holds a single business capability's implementation list (HTTP / RPC / MQ / scheduled tasks / third-party callbacks / DB tables / frontend pages), flow, state transitions, local upstream/downstream, external dependencies, related business flows. Slug names a business capability (e.g. `create-order`, `refund`, `consumer-pay`), NOT a microservice / Controller / package / table |
 | Decision Records | `docs/decisions/ADR-<slug>.md` | One file per architecture decision (ADR). Slug-only filenames (no numeric prefix, no date prefix). Date lives in frontmatter |
 
 > **No README / index files** under `docs/modules/` or `docs/decisions/`. Use `Glob` to enumerate; read frontmatter / first-line responsibility on demand.
+
+## BCU Splitting Principle
+
+A `docs/modules/<bcu-slug>.md` file represents **one Business Capability Unit (BCU)**. A BCU must satisfy all 7 conditions:
+
+1. Has an explicit business goal
+2. Has an independent business flow
+3. Has a relatively stable context boundary
+4. Can be developed, modified, and tested independently
+5. Modifications primarily affect this single business chain
+6. Impact scope can be analyzed independently
+7. An independent development plan can be generated for it
+
+**Do NOT split by**: microservice · Controller · API · technical module · database table.
+**DO split by**: real business chain · actual development task boundary · parallel-development unit.
+
+### BCU Splitting Decision Flow
+
+When in doubt whether to merge or split, run this 3-question test:
+
+| Q | If answer is "no" → |
+|---|---------------------|
+| Q1: When modifying A, do you usually NOT need to touch B/C/D? | merge into one BCU |
+| Q2: Can A deliver business value standalone, decoupled from B/C/D? | merge |
+| Q3: Does A have a separate owner / schedule / test suite? | merge |
+
+**Any "no" → merge. All three "yes" → split.** Default to **conservative merging** — splitting later is cheap (BCU files are independent); splitting too early creates orphaned tiny files. Split only when independent-evolution signals show up: separate owner, separate schedule, separate test suite, modifications no longer cascade.
+
+**Worked example — consumer-side payment**: a typical "consumer pay" BCU bundles {payment initiation API + sync order query + upstream async callback + scheduled / MQ status reconciliation} into ONE file (e.g. `consumer-pay.md`) — they share one business goal and one state machine, and they are almost always modified together. Split out to a separate BCU only when "reconciliation crosses multiple BCUs", "order query is independently productized", or "callback routing is independently maintained" — i.e. when the merge condition stops holding.
+
+### Diagrams in BCU files
+
+The `## Flow` section, when present, is the BCU's **end-to-end execution path** — including every service / resource / external system this BCU traverses, traced like a distributed-tracing span tree. It is bounded to this BCU; the system's global service topology belongs in `docs/architecture.md`, not here.
+
+**Format by complexity** (apply the section-omission rule — never draw a diagram for its own sake):
+
+| BCU complexity | Format |
+|---|---|
+| ≤3 steps, single service, no async branches | ASCII arrows / numbered text |
+| Cross-service, multi-actor, async callback, multi-roundtrip, 4+ participants | Mermaid `sequenceDiagram` (one participant per service / external system / resource the BCU actually touches) |
+| Trivial flow already covered by `## Implementation` | **Omit the entire `## Flow` section.** Do not keep an empty heading or a one-line restatement of Implementation. |
+
+**Inclusion boundary** (what goes in vs out):
+- IN: services / RPC targets / MQ topics / DBs / third-party gateways that **this BCU itself** invokes or is invoked by during the chain
+- OUT: services / dependencies that have nothing to do with this BCU's chain
+- OUT: the system-wide service topology diagram (that belongs in `docs/architecture.md`)
+
+**Why this split**: each BCU file must be self-sufficient for impact analysis — an agent reading one BCU file should see every external touchpoint of that BCU. But a BCU file should not duplicate the global topology, which would re-introduce the conflict surface that splitting was meant to eliminate.
+
+### Section-Omission Rule (hard)
+
+Inside a BCU file, only the skeleton sections are mandatory: title (`# <Capability Name>`), header lines (Status / Owning service), `## Business Goal`, `## Implementation` (with at least one entry). **All other sections are conditional**: `## Flow`, `## State Transitions`, `## Upstream / Downstream`, `## External Dependencies`, `## Related Business Flows`, `## Risks / Constraints`, `## Notes / Gotchas` — **omit the entire section if the BCU has no relevant content**. Do NOT keep empty headings, do NOT write `N/A` / `TBD`, do NOT leave placeholder bullets. Same rule applies to `## Implementation` sub-bullets — list only what actually exists.
 
 ## Modes & Triggers
 
@@ -99,13 +152,12 @@ Triggers on any of:
 
 | Code or decision change | Doc action |
 |------------|-----------|
-| Delete a business module's code | Delete `docs/modules/<slug>.md` |
-| Delete a business capability's code | Delete the `## Capability: <name>` section |
-| Delete a single HTTP API / RPC / MQ producer-consumer / scheduled task | Update the owning capability's `### Implementation` sub-section |
-| Drop a database table or column | Update `## Module Overview` table list + affected capability's `### Implementation` |
+| Delete a BCU's code entirely | Delete `docs/modules/<bcu-slug>.md` |
+| Delete a single HTTP API / RPC / MQ producer-consumer / scheduled task / third-party callback inside a BCU | Update the BCU file's `## Implementation` section |
+| Drop a database table or column | Update affected BCU file's `## Implementation` (Database tables touched line) and the header `**Database tables touched**` line |
 | Overturn a previously-merged decision | Delete `docs/decisions/ADR-<old>.md` (history lives in git) |
-| Roll back a previously-recorded refactor | Restore the affected sections to the rolled-back state |
-| Remove a cross-module dependency | Bidirectional sync: delete this capability's `### Upstream / Downstream` AND the other module's affected capability's `### Upstream / Downstream` |
+| Roll back a previously-recorded refactor | Restore the affected sections (or whole BCU file) to the rolled-back state |
+| Remove a cross-BCU dependency | Bidirectional sync: delete this BCU file's `## Upstream / Downstream` entry AND the counterpart BCU file's `## Upstream / Downstream` entry |
 
 **Distinguishing removal from in-session try-and-undo**:
 
@@ -148,21 +200,21 @@ When a task spans multiple types (e.g., "add module and introduce new library"),
 
 ## Module / ADR Resolution Strategy
 
-Because `docs/modules/` and `docs/decisions/` have no README / index, the agent must resolve which files to load. Use the algorithms below to keep loads precise and bounded — the goal is to read the single capability that matters, not the whole module file.
+Because `docs/modules/` and `docs/decisions/` have no README / index, the agent must resolve which BCU files to load. Use the algorithms below to keep loads precise and bounded — one BCU per file means each load corresponds to one business capability.
 
 > **Upstream / Downstream Convention (mandatory, do not invert)**:
-> - **Upstream (this capability calls)** — outbound dependencies: APIs / RPCs / MQ topics this capability invokes.
-> - **Downstream (depends on this capability)** — inbound consumers: callers, MQ consumers, frontend pages that depend on this capability.
+> - **Upstream (this BCU calls)** — outbound dependencies: APIs / RPCs / MQ topics this BCU invokes.
+> - **Downstream (depends on this BCU)** — inbound consumers: callers, MQ consumers, frontend pages that depend on this BCU.
 >
-> When reading existing fixtures or projects, if a `### Upstream / Downstream` sub-section appears to use the inverse convention, halt and ask the user to confirm direction before bidirectional sync — do not silently re-invert.
+> When reading existing fixtures or projects, if a `## Upstream / Downstream` section appears to use the inverse convention, halt and ask the user to confirm direction before bidirectional sync — do not silently re-invert.
 
-### Resolving a module file and capability
+### Resolving a BCU file
 
-1. `Glob docs/modules/*.md` to get the slug list.
-2. Match the task's keywords (business term, slug, controller path, table name, endpoint path) against filenames first.
-3. If filename match is ambiguous or zero, Grep across `docs/modules/*.md` for those keywords (frontmatter / first responsibility line / `## Capability:` headings).
-4. Load 1–3 candidate `modules/<x>.md` files. Inside each, **Grep for `## Capability:` headings** and prefer reading the matched capability section over the whole file.
-5. If the task hits a module slug but no specific capability is identified, present the capability list back to the user: "This module exposes capabilities X / Y / Z — which one does this task target?"
+1. `Glob docs/modules/*.md` to get the BCU slug list.
+2. Match the task's keywords (business term, slug, trigger scenario, endpoint path, table name) against filenames first — BCU slug names should map naturally to business capabilities (`create-order`, `refund`, `consumer-pay`).
+3. If filename match is ambiguous or zero, Grep across `docs/modules/*.md` for those keywords (title line / Business Goal section / Implementation entries).
+4. Load 1–3 candidate BCU files **in full** — BCU files are intentionally bounded so reading the whole file is cheap.
+5. If the task hits multiple BCU candidates, present the candidate list back to the user: "This task could target BCU X / Y / Z — which one?"
 6. Last-resort fallback: read `docs/architecture.md` service topology to reverse-locate, then ask the user.
 
 ### Resolving an ADR
@@ -178,9 +230,9 @@ Because `docs/modules/` and `docs/decisions/` have no README / index, the agent 
 1. `docs/coding.md`
 2. `docs/architecture.md`
 3. `docs/tech-stack.md`
-4. `Glob docs/modules/*.md` (filename list only)
-5. `Glob docs/decisions/ADR-*.md` (filename list only)
-6. Match task keywords → load 1–2 `modules/<x>.md`, then Grep `## Capability:` to focus on the matched section
+4. `Glob docs/modules/*.md` (BCU slug list only)
+5. `Glob docs/decisions/ADR-*.md` (slug list only)
+6. Match task keywords → load 1–2 matched BCU files in full
 7. Match task keywords → load 0–1 most relevant `ADR-*.md`
 
 After loading, **emit a Reconstruction Summary table** so the user (and future sessions) can see exactly what was loaded and why:
@@ -192,27 +244,27 @@ After loading, **emit a Reconstruction Summary table** so the user (and future s
 | docs/coding.md | Mandatory standards |
 | docs/architecture.md | Service topology |
 | docs/tech-stack.md | Framework / version constraints |
-| docs/modules/order.md | Owning module for this task |
+| docs/modules/create-order.md | Owning BCU for this task |
 | docs/decisions/ (Glob, none read) | No ADRs matched task keywords |
 ```
 
 Keep the table compact (one row per file/Glob). If a Glob returned a list but no file was opened, state that explicitly — transparency about non-loads is as important as transparency about loads.
 
-**B — Completion (already in a capability, need upstream/downstream):**
-1. Read the current Capability section's `### Upstream / Downstream` (cheapest, most precise).
-2. Load 1–2 referenced upstream / downstream module files; navigate to their corresponding Capability section. **Do not recurse** beyond one hop — avoid context blowout.
+**B — Completion (already in a BCU, need upstream/downstream):**
+1. Read the current BCU file's `## Upstream / Downstream` section (cheapest, most precise).
+2. Load 1–2 referenced upstream / downstream BCU files in full. **Do not recurse** beyond one hop — avoid context blowout.
 3. If still insufficient, Grep `docs/modules/*.md` for the business keyword or endpoint path.
 
 **C — Correction (long-conversation attention drift):** Fastest restore path.
 1. Re-read `docs/coding.md` (standards drift the fastest).
-2. Re-read **only the current Capability section** of the active `docs/modules/<x>.md` (not the whole file).
+2. Re-read the active BCU file in full — BCU files are bounded, so a full re-read is cheap and complete.
 3. If the task involves a recorded decision, re-read the single most relevant `ADR-*.md`.
 4. **Do not** re-read `architecture.md` — it would re-blow the window.
 
 ## Post-load Behavior
 1. Before generating code, confirm compliance with all constraints in `coding.md`
-2. For modifications, combine the relevant `docs/modules/<x>.md` capability section (especially `### Upstream / Downstream`) with code scanning to confirm impact scope
-3. For additions, confirm no conflict with existing module boundaries — check the candidate module file's responsibility line and capability list, plus the slug list under `docs/modules/`
+2. For modifications, combine the relevant BCU file (especially `## Upstream / Downstream`) with code scanning to confirm impact scope
+3. For additions, confirm no conflict with existing BCU boundaries — check candidate BCU files' title + Business Goal sections, plus the slug list under `docs/modules/`
 4. If the current task may violate documented constraints, proactively alert the user.
 
    **When to HALT and present an A/B/C menu (must meet at least one trigger):**
@@ -241,27 +293,29 @@ When documents contain conflicting guidance, higher-priority documents take prec
 ## Doc Sync Checklist
 Check each item against the current code changes. Only update affected docs; skip unaffected ones.
 
-### modules/* — route every change to the right `<file> + Capability` section
-The unit of edit is **one capability section in one module file**. Never dump changes at the module top level — they belong inside the capability that owns the implementation.
+### modules/* — route every change to the right BCU file
+The unit of edit is **one BCU file**. Each BCU file represents one Business Capability Unit; one code change resolves to one or more BCU files (never to a sub-section of a multi-capability file, since each file is already one BCU).
 
-**Identifying the owning Capability**: For each change, ask "which user-visible business capability does this code change support?" and locate the matching `## Capability:` heading. Three cases:
-- **One existing capability matches** → edit that section's relevant subsection (Implementation / Flow / State Transitions / Upstream-Downstream).
-- **Multiple existing capabilities are involved** → edit each affected section; do not collapse them into one.
-- **No existing capability matches** (the change supports a brand-new business operation) → ask the user whether to append a new `## Capability: <name>` section, and only proceed after confirmation. Never silently bury new business behavior inside an unrelated capability.
+**Identifying the owning BCU**: For each change, ask "which user-visible business capability does this code change support?" and locate the matching `docs/modules/<bcu-slug>.md` file. Three cases:
+- **One existing BCU file matches** → edit that file's relevant section (Implementation / Flow / State Transitions / Upstream-Downstream / External Dependencies / Related Business Flows).
+- **Multiple existing BCU files are involved** → edit each affected file; bidirectional Upstream/Downstream sync between them.
+- **No existing BCU matches** (the change supports a brand-new business capability) → first run the **BCU Splitting Decision Flow** (3 questions above). If the answer is "merge into an existing BCU", confirm with the user and edit that file. If the answer is "split", ask the user to confirm a new slug and create a new BCU file from `assets/templates/module.md`. Never silently bury new business behavior inside an unrelated BCU.
 
 > **Forward sync bullets only below.** Removals / rollbacks are covered in the **Removal & Rollback Sync** section earlier — do not duplicate here.
 
-- [ ] Added a new business module → create `docs/modules/<slug>.md` from `assets/templates/module.md` (slug must be Glob-deduplicated and user-confirmed first; see "Slug Selection" below)
-- [ ] Added a new business capability inside an existing module → first Grep the module file for capabilities marked `Status: planned` whose name/scope matches the new code. If a planned capability is being made real, **promote it to `Status: live`** (in place) instead of appending a duplicate. Otherwise append a new `## Capability: <name>` section using the template's capability skeleton.
-- [ ] Added or modified an HTTP API, RPC, MQ producer/consumer, or scheduled task → update the `### Implementation` sub-section of the owning capability (NOT a module-level interface list)
-- [ ] Changed a business flow → update the `### Flow` sub-section of the owning capability
-- [ ] Changed status enums or state machines → update the `### State Transitions` sub-section of the owning capability
-- [ ] Added or modified frontend pages or stores → update the `### Implementation` sub-section of the capability the page serves
-- [ ] Added or modified database tables or fields → (1) update the `## Module Overview` table list (2) note the table under `### Implementation` of the affected capability
-- [ ] Changed module-level facts (technology, service name, core package) → update `## Module Overview`
-- [ ] Added or modified a dependency between capabilities or modules → bidirectional sync: update **this** capability's `### Upstream / Downstream` AND the affected capability's `### Upstream / Downstream` in the other module file
+- [ ] Added a new BCU → create `docs/modules/<bcu-slug>.md` from `assets/templates/module.md` (slug must be Glob-deduplicated and user-confirmed first; see "Slug Selection" below). Apply the **section-omission rule**: only emit sections that have actual content this round.
+- [ ] Promoting a `planned` BCU to live (the planned BCU's implementation just landed) → flip the file's `**Status**: planned` header line to `**Status**: live`, then fill in / update the now-real Implementation / Flow / State Transitions etc. Do NOT create a duplicate file.
+- [ ] Added or modified an HTTP API, RPC, MQ producer/consumer, scheduled task, or third-party callback → update the `## Implementation` section of the owning BCU file
+- [ ] Changed a business flow → update the `## Flow` section of the owning BCU file
+- [ ] Changed status enums or state machines → update the `## State Transitions` section of the owning BCU file (create the section if it didn't exist before — it's a conditional section per the section-omission rule)
+- [ ] Added or modified frontend pages or stores → update the `## Implementation` section of the BCU the page serves
+- [ ] Added or modified database tables or fields → update the `**Database tables touched**` header line + the relevant `## Implementation` table-touch entry of affected BCU(s)
+- [ ] Changed cross-cutting facts (technology, service name, core package) → update each affected BCU file's header lines
+- [ ] Added or modified a dependency between BCUs → bidirectional sync: update **this** BCU file's `## Upstream / Downstream` AND the counterpart BCU file's `## Upstream / Downstream`. If either side previously omitted the section (no relationships before), create it now.
+- [ ] Added or modified a third-party / external system integration → update `## External Dependencies` of the owning BCU file
+- [ ] Added or modified a multi-BCU business chain relationship → update `## Related Business Flows` of each BCU on the chain
 
-> When a single code change spans multiple capabilities, **iterate per capability section** — read the existing content, find the minimal change point, then write. Avoid wholesale rewrites of the module file, which would re-introduce the conflict surface that splitting was meant to eliminate.
+> **Section-omission rule reminder**: when writing or updating a BCU file, do NOT add sections that have no content. Conversely, when content first appears, create the section. Empty headings, `N/A`, and `TBD` placeholders are forbidden.
 
 ### architecture.md
 - [ ] Added/removed service → update service topology (service-level only)
@@ -292,7 +346,7 @@ The unit of edit is **one capability section in one module file**. Never dump ch
 
 ### Slug Selection (modules and ADRs)
 Before creating any new file under `docs/modules/` or `docs/decisions/`:
-1. Derive 1–3 candidate slugs from code signals (package name, controller path, table prefix, MQ topic prefix; for ADRs: decision keywords).
+1. Derive 1–3 candidate slugs from **business capability signals** — what the user / caller can do (verb-noun: `create-order`, `refund`, `consumer-pay`, `merchant-settle`). For ADRs use decision keywords. Do NOT name BCU slugs after a Controller, package, microservice, or table.
 2. `Glob` the target directory and compare candidates against existing slugs — pay special attention to **synonyms** (e.g. `notify` vs `notification`) to avoid orphan files.
 3. Present the chosen slug + the 3 most-similar existing slugs to the user for confirmation.
 4. **Never silently create the file.**
@@ -307,11 +361,11 @@ Before creating any new file under `docs/modules/` or `docs/decisions/`:
 ## Sync Execution Steps
 1. Identify the scope of code changes to sync: inspect this-session edits plus, when needed, `git diff` / file state to detect prior unsynced landed changes
 2. Filter to net delta: exclude changes that were tried and then reverted within this session (no net delta → skip to avoid false reporting)
-3. Check against the above checklist item by item. For each module change, you MUST resolve **two** things before writing: (a) which `docs/modules/<x>.md` file owns the change, and (b) which `## Capability:` section within that file owns it. If (b) is unclear, follow the "Identifying the owning Capability" guidance in the modules/* checklist — including asking the user when no existing capability matches
-4. For matched items, read the current content of the corresponding section (capability section preferred over whole-file read)
+3. Check against the above checklist item by item. For each modules change, resolve which BCU file owns the change. If no existing BCU file matches, follow the BCU Splitting Decision Flow + "Identifying the owning BCU" guidance — including asking the user before creating a new BCU file
+4. For matched items, read the current content of the BCU file (BCU files are bounded; a full read is cheap)
 5. Execute updates following existing doc format and style (maintain consistency)
-6. Cross-document consistency check: verify that updates to one document are consistent with related content in other documents (e.g., a new service in `modules/<x>.md` should also appear in `architecture.md` service topology; a cross-module dependency change must update both modules' capability `### Upstream / Downstream` sub-sections)
-7. Identify shared files touched in this round (`architecture.md`, multiple module files in cross-module changes) — list them explicitly in the sync summary so reviewers can preempt merge conflicts
+6. Cross-document consistency check: verify that updates to one document are consistent with related content in other documents (e.g., a new service should also appear in `architecture.md` service topology; a cross-BCU dependency change must update both BCU files' `## Upstream / Downstream` sections)
+7. Identify shared files touched in this round (`architecture.md`, multiple BCU files in cross-BCU changes) — list them explicitly in the sync summary so reviewers can preempt merge conflicts
 8. Output a sync summary to inform the user
 
 ## Handling Missing Documents
@@ -348,8 +402,9 @@ After completing sync, output in the following format:
 Code changes: [brief description of changes]
 
 ### Updated
-- modules/<slug>.md → Capability "<name>" → Implementation: [what was updated]
-- modules/<slug>.md → Capability "<name>" → Upstream/Downstream: [what was updated]
+- modules/<bcu-slug>.md → Implementation: [what was updated]
+- modules/<bcu-slug>.md → Upstream/Downstream: [what was updated]
+- modules/<bcu-slug>.md → External Dependencies: [what was updated]
 - architecture.md: [what was updated]
 - ...
 
@@ -369,7 +424,7 @@ Code changes: [brief description of changes]
 
 ### Shared files touched (watch for merge conflicts)
 - docs/architecture.md
-- docs/modules/<slug-A>.md (also touched by capability X today)
+- docs/modules/<bcu-slug-A>.md (also touched by another change today)
 
 ### Needs User Confirmation
 - decisions/: Chose xxx approach this time, should an ADR be recorded? Suggested slug: `ADR-...`
