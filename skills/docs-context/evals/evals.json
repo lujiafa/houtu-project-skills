@@ -7,7 +7,7 @@
     "Observable signals per run: (1) transcript (Skill invocations, tool calls, replies); (2) filesystem diff of docs/; (3) sync summary text if written.",
     "Run each test twice: with docs-context skill available / without it. Compare pass rates and token cost.",
     "Priority 1 (P1) tests cover the highest-risk, highest-signal behaviors: net-delta auto-trigger, reverse rollback sync, no-op on design, slug-confirmation, multi-module Upstream/Downstream sync.",
-    "Schema note (v1.2): docs/modules.md is now docs/modules/<business>.md (one file per business module, internally split by '## Capability:' sections). docs/decisions.md is now docs/decisions/ADR-<slug>.md (one file per decision; old decisions deleted, not marked Superseded). No README/index files under either directory."
+    "Schema note (v1.2): docs/modules.md is now docs/modules/<bcu-slug>.md (one file per Business Capability Unit). docs/decisions.md is now docs/decisions/ADR-<slug>.md (one file per decision; old decisions deleted, not marked Superseded). No README/index files under either directory."
   ],
   "evals": [
     {
@@ -15,14 +15,14 @@
       "priority": "P1",
       "category": "auto-trigger",
       "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}. Use the existing controller pattern.",
-      "expected_output": "A /ping endpoint is implemented in the pay service, AND the agent auto-invokes docs-context Write Mode to update docs/modules/pay.md (adding /ping under an appropriate Capability section's Implementation), AND emits a Doc Sync Summary all BEFORE the final task-completion reply. No user prompt to sync was given.",
+      "expected_output": "A /ping endpoint is implemented in the pay service, AND the agent auto-invokes docs-context Write Mode to update docs/modules/create-order.md (adding /ping in the BCU file's Implementation section (or by creating a new BCU file `health-check.md` if /ping warrants its own BCU)), AND emits a Doc Sync Summary all BEFORE the final task-completion reply. No user prompt to sync was given.",
       "files": ["evals/files/fixture-synced-pay/"],
-      "setup_note": "Fixture is a minimal pay service with existing docs/modules/pay.md (containing one or two Capability sections), docs/coding.md, and one controller. No /ping endpoint exists yet. docs/decisions/ is empty.",
+      "setup_note": "Fixture is a minimal pay service with existing docs/modules/create-order.md (containing one or two BCU files), docs/coding.md, and one controller. No /ping endpoint exists yet. docs/decisions/ is empty.",
       "assertions": [
         "A /ping endpoint implementation exists in the pay service source files after the run.",
         "The agent invoked the docs-context skill's Write Mode (visible as Skill tool invocation in transcript).",
-        "docs/modules/pay.md contains a new entry referencing /ping under some '## Capability:' section's '### Implementation' (e.g. listed as 'HTTP API: GET /ping').",
-        "The /ping entry is placed under a Capability section, NOT at the module top level outside any Capability.",
+        "docs/modules/create-order.md contains a new entry referencing /ping in the appropriate BCU file's `## Implementation` section (e.g. listed as 'HTTP API: GET /ping').",
+        "The /ping entry is placed in a BCU file (either appended to an existing BCU's `## Implementation` if conservatively merged, or in its own new `health-check.md` BCU file).",
         "The transcript contains a section labeled 'Doc Sync Summary' (or Chinese equivalent '文档同步摘要').",
         "Write Mode was invoked before the agent's final task-completion reply, not after.",
         "The final task-completion reply acknowledges docs were synced."
@@ -39,7 +39,7 @@
       "assertions": [
         "A /ping endpoint implementation exists after the run.",
         "The agent invoked docs-context Write Mode without being asked by the user.",
-        "docs/modules/pay.md contains a new /ping entry under a Capability section's '### Implementation'.",
+        "docs/modules/create-order.md contains a new /ping entry in the appropriate BCU file's `## Implementation` section.",
         "Write Mode was invoked before the final reply."
       ]
     },
@@ -78,14 +78,14 @@
       "priority": "P1",
       "category": "rollback-reverse-sync",
       "prompt": "Remove the /ping endpoint from the pay service — we're deprecating it. Clean up the code and any references.",
-      "expected_output": "The /ping endpoint code is removed, AND the agent auto-invokes Write Mode to REMOVE the /ping entry from docs/modules/pay.md (reverse sync — docs must stay consistent with code). The Doc Sync Summary reports the removal under 'Updated'.",
+      "expected_output": "The /ping endpoint code is removed, AND the agent auto-invokes Write Mode to REMOVE the /ping entry from docs/modules/create-order.md (reverse sync — docs must stay consistent with code). The Doc Sync Summary reports the removal under 'Updated'.",
       "files": ["evals/files/fixture-synced-pay-with-ping/"],
-      "setup_note": "Fixture is pay service WITH /ping endpoint implemented AND documented under a Capability in docs/modules/pay.md. This is the critical rollback scenario: the entry was synced previously and must now be removed.",
+      "setup_note": "Fixture is pay service WITH /ping endpoint implemented AND documented in docs/modules/create-order.md or docs/modules/health-check.md (BCU file). This is the critical rollback scenario: the entry was synced previously and must now be removed.",
       "assertions": [
         "The /ping endpoint code no longer exists in the pay service after the run.",
-        "docs/modules/pay.md no longer contains a /ping entry under any Capability section after the run.",
+        "No BCU file under docs/modules/ contains a /ping entry after the run (either docs/modules/health-check.md is deleted entirely, or /ping is removed from create-order.md's Implementation).",
         "The agent invoked docs-context Write Mode.",
-        "The Doc Sync Summary mentions removing the /ping entry from modules/pay.md.",
+        "The Doc Sync Summary mentions removing the /ping entry from modules/create-order.md.",
         "No orphan references to /ping remain in other docs (e.g., architecture.md if it previously mentioned /ping)."
       ]
     },
@@ -94,14 +94,14 @@
       "priority": "P1",
       "category": "once-per-task",
       "prompt": "Add a new notification module with: (1) a NotificationService class, (2) a REST controller with POST /notify, (3) a Kafka consumer for 'notification.events' topic, (4) a DB migration adding a notifications table, (5) a config entry for kafka topic name. Use the existing patterns.",
-      "expected_output": "All 5 changes are landed across 5+ files. A new docs/modules/notification.md is created from the template. Write Mode is invoked EXACTLY ONCE at the end of the task, producing a single Doc Sync Summary covering all 5 changes. The notification module is organized with at least one Capability section grouping the related implementations.",
+      "expected_output": "All 5 changes are landed across 5+ files. A new docs/modules/notification.md (or similarly-slugged BCU file) is created from the template — it represents the new send-notification BCU. Write Mode is invoked EXACTLY ONCE at the end of the task, producing a single Doc Sync Summary covering all 5 changes. The BCU file's `## Implementation` lists the controller + Kafka consumer + scheduled task as parts of the same business capability.",
       "files": ["evals/files/fixture-synced-pay/"],
-      "setup_note": "Multi-file task. Critical assertions: (a) Write Mode does not fire per file; (b) new module file is created (not appended to pay.md); (c) Capability-based organization is used.",
+      "setup_note": "Multi-file task. Critical assertions: (a) Write Mode does not fire per file; (b) a new BCU file is created (not appended to create-order.md); (c) the new BCU groups the 5 implementation artifacts as parts of the same business capability.",
       "assertions": [
         "All 5 code artifacts exist after the run (NotificationService, controller, Kafka consumer, migration, config).",
         "The agent invoked docs-context Write Mode exactly 1 time during the run (count skill invocations in transcript).",
         "A new file docs/modules/notification.md exists after the run.",
-        "docs/modules/notification.md contains at least one '## Capability:' section that groups the controller + Kafka consumer + scheduled task as parts of the same business capability under '### Implementation'.",
+        "docs/modules/notification.md is a single BCU file whose `## Implementation` section groups the controller + Kafka consumer + scheduled task as parts of the same business capability.",
         "The single Doc Sync Summary references all affected document targets (modules/notification.md, tech-stack.md or architecture.md as applicable).",
         "Write Mode was invoked after all 5 file changes, not between them."
       ]
@@ -119,7 +119,7 @@
         "OrderService.createOrder contains a new log statement referencing the caller's IP.",
         "The agent invoked docs-context Write Mode.",
         "The Doc Sync Summary does NOT mention any Order entity field change.",
-        "docs/modules/pay.md is either unchanged or only carries a logging-related note (no field/table change)."
+        "docs/modules/create-order.md is either unchanged or only carries a logging-related note (no field/table change)."
       ]
     },
     {
@@ -129,10 +129,10 @@
       "prompt": "I've just added the /ping endpoint to pay service (files already written). Please do a pre-commit doc sync check.",
       "expected_output": "The agent detects the already-made code changes (inspecting git diff or file state), invokes Write Mode based on the user's explicit signal, and updates docs accordingly.",
       "files": ["evals/files/fixture-synced-pay-with-new-ping-code/"],
-      "setup_note": "Fixture: pay service has /ping code but docs/modules/pay.md does NOT yet mention it. Simulates user coming back post-coding to sync.",
+      "setup_note": "Fixture: pay service has /ping code but docs/modules/create-order.md does NOT yet mention it. Simulates user coming back post-coding to sync.",
       "assertions": [
         "The agent invoked docs-context Write Mode in response to the user's sync request.",
-        "docs/modules/pay.md now contains a /ping entry under a Capability section's '### Implementation'.",
+        "docs/modules/create-order.md now contains a /ping entry in the appropriate BCU file's `## Implementation` section.",
         "The Doc Sync Summary acknowledges the endpoint addition."
       ]
     },
@@ -141,9 +141,9 @@
       "priority": "P2",
       "category": "read-mode",
       "prompt": "Add an Order refund endpoint POST /orders/{id}/refund that calls the existing RefundService.",
-      "expected_output": "Before coding, the agent invokes docs-context Read Mode. It uses Glob to enumerate docs/modules/, then loads at least docs/coding.md (always-load rule) plus task-appropriate module files (e.g. order.md / pay.md) and at least one capability section that matches the refund task.",
+      "expected_output": "Before coding, the agent invokes docs-context Read Mode. It uses Glob to enumerate docs/modules/, then loads at least docs/coding.md (always-load rule) plus task-appropriate BCU files (e.g. refund.md or create-order.md) that match the refund task.",
       "files": ["evals/files/fixture-synced-multi-module/"],
-      "setup_note": "Fixture has docs/modules/order.md and docs/modules/payment.md both present, each with multiple Capability sections.",
+      "setup_note": "Fixture has docs/modules/create-order.md, docs/modules/refund.md, and docs/modules/pre-charge.md (3 BCU files) — refund references pre-charge cross-BCU.",
       "assertions": [
         "The agent invoked docs-context Read Mode before making code changes.",
         "The transcript shows docs/coding.md being read.",
@@ -159,7 +159,7 @@
       "prompt": "There's a bug in OrderService.createOrder — when the order amount is zero, it throws a NullPointerException instead of a validation error. Fix it.",
       "expected_output": "The agent invokes Read Mode for a bug-fix task, loading docs/coding.md (always) + at least one docs/modules/<x>.md (the one containing OrderService context). It does NOT load architecture.md or tech-stack.md (not required for bug fix).",
       "files": ["evals/files/fixture-synced-pay-with-bug/"],
-      "setup_note": "Fixture: docs/modules/ contains pay.md and order.md. OrderService has the described NPE bug.",
+      "setup_note": "Fixture: docs/modules/ contains create-order.md and order.md. OrderService has the described NPE bug.",
       "assertions": [
         "The agent read docs/coding.md during the run.",
         "The agent read at least one docs/modules/<x>.md during the run (preferably order.md as the most relevant).",
@@ -177,7 +177,7 @@
       "files": ["evals/files/fixture-synced-pay/"],
       "setup_note": "Tests the Slug Selection guardrail. Without confirmation flow, AI may create 'notify.md' while convention is 'notification.md', producing orphan files in future sessions.",
       "assertions": [
-        "The agent's transcript shows a Glob (or directory listing) of docs/modules/ before creating any new module file.",
+        "The agent's transcript shows a Glob (or directory listing) of docs/modules/ before creating any new BCU file.",
         "The agent presents at least one candidate slug to the user along with the closest existing slugs (e.g. lists current modules for comparison).",
         "The agent waits for / requests user confirmation before creating docs/modules/<slug>.md (does NOT create silently).",
         "If the agent did create the file, only one new file is created (no orphan duplicates like both notify.md and notification.md)."
@@ -188,16 +188,16 @@
       "priority": "P1",
       "category": "multi-module-load",
       "prompt": "In the order module, add a new step in the create-order flow that calls payment.preCharge(orderId, amount) (RPC) before persisting the order. Implement and document.",
-      "expected_output": "Read Mode loads BOTH docs/modules/order.md and docs/modules/payment.md (cross-module dependency). After the code change, Write Mode performs bidirectional Upstream/Downstream sync: order's create-order Capability gets payment.preCharge added to its '### Upstream / Downstream' Upstream list; payment's preCharge Capability gets order added to its Downstream list.",
+      "expected_output": "Read Mode loads BOTH docs/modules/create-order.md and docs/modules/pre-charge.md (cross-module dependency). After the code change, Write Mode performs bidirectional Upstream/Downstream sync: the create-order BCU file gets pre-charge added to its `## Upstream / Downstream` Upstream list; the pre-charge BCU file gets create-order added to its Downstream list.",
       "files": ["evals/files/fixture-synced-multi-module/"],
-      "setup_note": "Fixture has both order.md (with 'Create Order' Capability) and payment.md (with 'Pre Charge' Capability already documented). Tests that loading and sync correctly span two module files.",
+      "setup_note": "Fixture has both create-order.md and pre-charge.md as separate BCU files. Tests that loading and sync correctly span two BCU files.",
       "assertions": [
-        "The Read Mode transcript shows both docs/modules/order.md and docs/modules/payment.md being read.",
+        "The Read Mode transcript shows both docs/modules/create-order.md and docs/modules/pre-charge.md being read.",
         "The new payment.preCharge call exists in the order create-order code path after the run.",
-        "docs/modules/order.md's 'Create Order' Capability now lists payment.preCharge in its '### Upstream / Downstream' Upstream sub-section.",
-        "docs/modules/payment.md's 'Pre Charge' Capability now lists order in its '### Upstream / Downstream' Downstream sub-section.",
-        "The Doc Sync Summary lists both modified module files separately (order.md → Capability X → Upstream/Downstream; payment.md → Capability Y → Upstream/Downstream).",
-        "The Doc Sync Summary's 'Shared files touched' (or Chinese equivalent) section flags that the change spans multiple module files."
+        "docs/modules/create-order.md now lists pre-charge in its `## Upstream / Downstream` Upstream sub-section.",
+        "docs/modules/pre-charge.md now lists create-order in its `## Upstream / Downstream` Downstream sub-section.",
+        "The Doc Sync Summary lists both modified BCU files separately (create-order.md → Upstream/Downstream; pre-charge.md → Upstream/Downstream).",
+        "The Doc Sync Summary's 'Shared files touched' (or Chinese equivalent) section flags that the change spans multiple BCU files."
       ]
     },
     {
@@ -205,17 +205,17 @@
       "priority": "P1",
       "category": "context-reconstruction",
       "prompt": "I just opened this project for the first time and have no context. I need to add a refund flow to the order module. Walk through what you'd need to understand first, then implement.",
-      "expected_output": "The agent performs context reconstruction (scenario A) before coding: reads coding.md, architecture.md, tech-stack.md, Globs docs/modules/, Globs docs/decisions/, then loads the matched module file (order.md) and uses Grep to focus on the relevant Capability section. Total file reads stay bounded (≤ 6-8). The agent does NOT fan out into reading every module file or every ADR.",
+      "expected_output": "The agent performs context reconstruction (scenario A) before coding: reads coding.md, architecture.md, tech-stack.md, Globs docs/modules/, Globs docs/decisions/, then loads the matched BCU file (create-order.md) in full. Total file reads stay bounded (≤ 6-8). The agent does NOT fan out into reading every BCU file or every ADR.",
       "files": ["evals/files/fixture-synced-multi-module/"],
       "setup_note": "Fixture has multiple modules (order.md, payment.md) and at least one ADR. Tests that the agent uses the bounded reconstruction sequence rather than greedily loading everything, which is the user's primary concern with the no-README directory layout.",
       "assertions": [
         "The transcript shows docs/coding.md being read.",
         "The transcript shows docs/architecture.md being read.",
         "The transcript shows docs/tech-stack.md being read.",
-        "The transcript shows a Glob over docs/modules/ (file listing only, not full reads of all module files).",
+        "The transcript shows a Glob over docs/modules/ (file listing only, not full reads of all BCU files).",
         "The transcript shows a Glob over docs/decisions/ (file listing only, not full reads of all ADRs).",
-        "The agent loaded docs/modules/order.md (the relevant module file for the refund task).",
-        "The agent did NOT load every other module file (e.g., payment.md should not be fully read unless the task explicitly requires it).",
+        "The agent loaded docs/modules/refund.md (the relevant BCU file for the refund task).",
+        "The agent did NOT load every other BCU file (e.g., pre-charge.md should not be fully read unless the task explicitly requires it).",
         "Total markdown file Reads under docs/ is ≤ 8 in the reconstruction phase before code work begins."
       ]
     },
@@ -238,19 +238,19 @@
     {
       "id": 15,
       "priority": "P1",
-      "category": "append-capability",
-      "prompt": "Add a Bulk Refund capability to the order module: a POST /orders/bulk-refund endpoint that accepts a list of order IDs and triggers refunds via RefundService. Use the standard pattern.",
-      "expected_output": "The agent appends a NEW '## Capability: Bulk Refund' section to the existing docs/modules/order.md (it does NOT create a new module file, and does NOT modify the existing 'Create Order' Capability section). The new Capability section is filled in with Implementation (HTTP API + RPC reference), Flow, and Upstream/Downstream subsections.",
+      "category": "extend-or-split-bcu",
+      "prompt": "Add a Bulk Refund capability: a POST /orders/bulk-refund endpoint that accepts a list of order IDs and triggers refunds via RefundService. Use the standard pattern.",
+      "expected_output": "The agent runs the BCU Splitting Decision Flow. Bulk Refund and the existing Refund BCU share the same downstream gateway, state machine, and team — answer Q1/Q2/Q3 leans toward 'merge'. So the agent extends docs/modules/refund.md (the existing BCU) with a new bulk-refund implementation entry under its `## Implementation` section, OR — only if the user signals clear independent-evolution criteria — creates a separate `bulk-refund.md` BCU file. The agent does NOT silently create a duplicate BCU and does NOT modify the unrelated Create Order BCU.",
       "files": ["evals/files/fixture-synced-multi-module/"],
-      "setup_note": "Tests the most common write operation: adding a new business capability to an existing module file. Distinct from eval 6 (which creates a whole new module file). Validates that the Capability template skeleton is followed and that existing Capability sections are not disturbed.",
+      "setup_note": "Tests the BCU splitting decision: when a new operation (Bulk Refund) is similar to an existing BCU (Refund), the conservative-merging principle says extend the existing BCU first. Distinct from eval 6 (which creates a whole new BCU file for a clearly-separate capability). Validates that the BCU Splitting Decision Flow is run and that unrelated BCUs are not disturbed.",
       "assertions": [
         "A POST /orders/bulk-refund endpoint implementation exists in the order-service source files after the run.",
-        "docs/modules/order.md contains a NEW '## Capability:' section whose name reflects bulk refund (e.g. 'Bulk Refund', 'Batch Refund').",
-        "The new Capability section has at least these subsections filled in: '### Implementation', '### Flow', '### Upstream / Downstream'.",
-        "The new Capability's '### Implementation' lists the HTTP API entry (POST /orders/bulk-refund) AND references RefundService.",
-        "The pre-existing 'Create Order' Capability section in order.md is unchanged (no edits to its Implementation/Flow/etc. subsections).",
+        "Either docs/modules/refund.md gains a bulk-refund entry under its `## Implementation` (preferred per conservative merging), OR a new docs/modules/bulk-refund.md BCU file is created (only with explicit splitting rationale).",
+        "The change includes at minimum the Implementation entry; Flow and Upstream/Downstream are updated when affected. Section-omission rule applies — sections with no content are not added.",
+        "The updated/created BCU file's `## Implementation` lists the HTTP API entry (POST /orders/bulk-refund) AND references RefundService.",
+        "The pre-existing 'Create Order' BCU file (docs/modules/create-order.md) is unchanged (no edits to its Implementation/Flow/etc. sections).",
         "No new file under docs/modules/ was created (the change goes into the existing order.md).",
-        "The Doc Sync Summary references the new Capability addition under modules/order.md."
+        "The Doc Sync Summary references the BCU file (refund.md or bulk-refund.md) that was updated/created."
       ]
     },
     {
@@ -291,15 +291,15 @@
       "priority": "P2",
       "category": "priority-chain-conflict",
       "prompt": "Add an interest_rate field to the Loan entity. Default 0, nullable.",
-      "expected_output": "The agent reads both docs/coding.md (which mandates Long basis points for rate fields) AND docs/modules/loan.md (which incorrectly notes that loan rates are stored as BigDecimal — an intentional doc inconsistency seeded by the fixture). The agent recognizes the conflict, applies the document priority chain (coding.md > modules/*), generates a Long-typed field, AND in the Sync Summary flags the inconsistency in modules/loan.md so it can be cleaned up.",
+      "expected_output": "The agent reads both docs/coding.md (which mandates Long basis points for rate fields) AND docs/modules/issue-loan.md (which incorrectly notes that loan rates are stored as BigDecimal — an intentional doc inconsistency seeded by the fixture). The agent recognizes the conflict, applies the document priority chain (coding.md > modules/*), generates a Long-typed field, AND in the Sync Summary flags the inconsistency in modules/issue-loan.md so it can be cleaned up.",
       "files": ["evals/files/fixture-priority-conflict/"],
-      "setup_note": "Fixture has an INTENTIONAL conflict: docs/coding.md says 'rate fields use Long basis points', but docs/modules/loan.md (in the existing 'Issue Loan' Capability) says 'rate stored as BigDecimal'. Tests that the agent (1) detects the conflict, (2) defers to coding.md per the priority chain, (3) surfaces the modules/loan.md inconsistency for follow-up.",
+      "setup_note": "Fixture has an INTENTIONAL conflict: docs/coding.md says 'rate fields use Long basis points', but docs/modules/issue-loan.md (the Issue Loan BCU file) says 'rate stored as BigDecimal'. Tests that the agent (1) detects the conflict, (2) defers to coding.md per the priority chain, (3) surfaces the modules/issue-loan.md inconsistency for follow-up.",
       "assertions": [
-        "The agent's transcript shows reading both docs/coding.md and docs/modules/loan.md during the run.",
+        "The agent's transcript shows reading both docs/coding.md and docs/modules/issue-loan.md during the run.",
         "The generated interest_rate field in source uses Long type (not BigDecimal, not Double).",
-        "The agent's reply or Sync Summary explicitly mentions the conflict between coding.md and modules/loan.md.",
-        "The agent's reply or Sync Summary suggests updating modules/loan.md to align with coding.md (or actually performs the update as part of the sync, removing the BigDecimal mention).",
-        "If modules/loan.md was edited to remove the BigDecimal mention, the change is correct and does not introduce new inconsistencies."
+        "The agent's reply or Sync Summary explicitly mentions the conflict between coding.md and modules/issue-loan.md.",
+        "The agent's reply or Sync Summary suggests updating modules/issue-loan.md to align with coding.md (or actually performs the update as part of the sync, removing the BigDecimal mention).",
+        "If modules/issue-loan.md was edited to remove the BigDecimal mention, the change is correct and does not introduce new inconsistencies."
       ]
     },
     {
@@ -307,12 +307,12 @@
       "priority": "P1",
       "category": "read-mode-spec-design",
       "prompt": "Write a detailed spec for adding a `status` field to the Order entity. Include the migration DDL, valid status enum values, the state machine for status transitions, and any API contract changes.",
-      "expected_output": "The agent loads docs/modules/order.md, docs/coding.md (for naming/type conventions), and likely docs/architecture.md before authoring the spec. The produced spec references concrete columns/capabilities present in the loaded docs. NO source files are modified. NO docs are modified. Write Mode is NOT invoked (the spec is design output; no code landed).",
+      "expected_output": "The agent loads docs/modules/create-order.md, docs/coding.md (for naming/type conventions), and likely docs/architecture.md before authoring the spec. The produced spec references concrete columns/capabilities present in the loaded docs. NO source files are modified. NO docs are modified. Write Mode is NOT invoked (the spec is design output; no code landed).",
       "files": ["evals/files/fixture-synced-multi-module/"],
       "setup_note": "Tests that DETAILED spec authoring triggers Read Mode (must load real project state to write a spec that references the actual Order entity, naming conventions, and architecture topology) but does NOT trigger Write Mode (no code landed yet).",
       "assertions": [
-        "The agent's transcript shows reading docs/coding.md AND at least docs/modules/order.md before producing the spec.",
-        "The produced spec references real existing fields/capabilities (e.g. existing Order columns or the 'Create Order' Capability) found in the loaded docs.",
+        "The agent's transcript shows reading docs/coding.md AND at least docs/modules/create-order.md before producing the spec.",
+        "The produced spec references real existing fields/capabilities (e.g. existing Order columns or the create-order BCU) found in the loaded docs.",
         "The produced spec respects coding.md naming/type conventions (e.g. enum/Long types as mandated).",
         "No source code files were modified.",
         "No files under docs/ were modified.",
@@ -325,11 +325,11 @@
       "priority": "P1",
       "category": "read-mode-architecture-review",
       "prompt": "Review the current microservice split between order-service and payment-service. Is the boundary correct? Are there any responsibilities that should move between them? Recommend changes if any.",
-      "expected_output": "The agent loads docs/architecture.md, docs/modules/order.md, docs/modules/payment.md, and any decisions/ ADRs that touch service boundaries. It produces a reasoned review that references the actual responsibilities documented. NO code is changed. NO docs are modified. Write Mode is NOT invoked.",
+      "expected_output": "The agent loads docs/architecture.md, docs/modules/create-order.md, docs/modules/pre-charge.md, and any decisions/ ADRs that touch service boundaries. It produces a reasoned review that references the actual responsibilities documented. NO code is changed. NO docs are modified. Write Mode is NOT invoked.",
       "files": ["evals/files/fixture-synced-multi-module/"],
       "setup_note": "Tests that ARCHITECTURE REVIEW (a design-time activity) triggers Read Mode loading of architecture.md + modules/* + decisions/*, but does NOT trigger Write Mode.",
       "assertions": [
-        "The agent's transcript shows reading docs/architecture.md, docs/modules/order.md, AND docs/modules/payment.md.",
+        "The agent's transcript shows reading docs/architecture.md, docs/modules/create-order.md, AND docs/modules/pre-charge.md.",
         "The agent's reply discusses the boundary between order-service and payment-service with reference to documented responsibilities.",
         "No source code files were modified.",
         "No files under docs/ were modified.",
@@ -359,13 +359,13 @@
       "priority": "P1",
       "category": "rollback-reverse-sync-cross-session",
       "prompt": "Remove the `status` field from the Order entity — we're rolling back this feature. Clean up the code, the migration script if any, and any docs references.",
-      "expected_output": "Code is removed: the `status` field disappears from the Order entity, related getters/setters/migration are removed. The agent auto-invokes Write Mode and REVERSE-SYNCS docs/modules/pay.md (or order.md) — the previously-synced 'status' entry is deleted from the relevant Capability's '### Implementation' subsection (and from any state-transition listing). The Doc Sync Summary explicitly notes the removal. Write Mode fires before the final reply.",
+      "expected_output": "Code is removed: the `status` field disappears from the Order entity, related getters/setters/migration are removed. The agent auto-invokes Write Mode and REVERSE-SYNCS the relevant BCU file — either docs/modules/order-state-tracking.md is deleted entirely (since its sole purpose was state tracking), or the 'status' entry is removed from create-order.md's `## Implementation` and `## State Transitions` is dropped per the section-omission rule. The Doc Sync Summary explicitly notes the removal. Write Mode fires before the final reply.",
       "files": ["evals/files/fixture-synced-pay-with-status/"],
       "setup_note": "This is the CROSS-SESSION removal scenario: the fixture starts in a state where status was added and synced in a 'previous session' (the docs already mention status). Now the user wants to undo. The agent must reverse-sync the docs to match the new (status-free) code state.",
       "assertions": [
         "The `status` field no longer exists in the Order entity source after the run.",
         "Any related migration script for adding status is removed (or a new rollback migration is added — fixture/policy decides).",
-        "docs/modules/pay.md (or order.md) no longer mentions 'status' under any Capability's '### Implementation' subsection after the run.",
+        "No BCU file under docs/modules/ mentions 'status' under any `## Implementation` after the run (order-state-tracking.md is deleted entirely if state tracking is fully removed).",
         "The agent invoked docs-context Write Mode (visible in transcript).",
         "A 'Doc Sync Summary' (or '文档同步摘要') appears in the transcript and explicitly lists the status-related deletion.",
         "Write Mode was invoked before the final task-completion reply."
@@ -376,13 +376,13 @@
       "priority": "P1",
       "category": "implicit-trigger",
       "prompt": "Bump the request timeout in the pay service from 30s to 60s.",
-      "expected_output": "The agent reads docs/modules/pay.md and docs/coding.md (if relevant), changes the timeout config in src/, and auto-invokes Write Mode to update docs/modules/pay.md if the timeout is documented there. Doc Sync Summary appears before the final reply. The user did NOT explicitly say 'load docs' or 'sync docs' — both modes still trigger.",
+      "expected_output": "The agent reads docs/modules/create-order.md and docs/coding.md (if relevant), changes the timeout config in src/, and auto-invokes Write Mode to update docs/modules/create-order.md if the timeout is documented there. Doc Sync Summary appears before the final reply. The user did NOT explicitly say 'load docs' or 'sync docs' — both modes still trigger.",
       "files": ["evals/files/fixture-synced-pay/"],
       "setup_note": "Tests IMPLICIT triggering — the user gives a casual code-change request without any meta-instructions about docs. Both Read Mode (before code change) and Write Mode (after net delta) must trigger automatically.",
       "assertions": [
         "The timeout config in src/ has changed from 30s to 60s after the run.",
-        "The agent's transcript shows reading at least docs/modules/pay.md (or other relevant doc) before making the change.",
-        "If docs/modules/pay.md previously documented the timeout, it now reflects the new value (60s) after the run.",
+        "The agent's transcript shows reading at least docs/modules/create-order.md (or other relevant doc) before making the change.",
+        "If docs/modules/create-order.md previously documented the timeout, it now reflects the new value (60s) after the run.",
         "The agent invoked docs-context Write Mode without being explicitly asked.",
         "A 'Doc Sync Summary' (or '文档同步摘要') appears in the transcript.",
         "Write Mode was invoked before the final task-completion reply."
@@ -411,7 +411,7 @@
       "priority": "P1",
       "category": "negative-trigger-code-explanation",
       "prompt": "Walk me through what the OrderService.createOrder method actually does. I just want to understand the flow line by line.",
-      "expected_output": "The agent reads the source for OrderService.createOrder and explains it. The agent MAY load docs/modules/order.md to enrich the explanation, but this is a read-only Q&A. NO files are modified. Write Mode is NOT invoked (no code landed; pure explanation).",
+      "expected_output": "The agent reads the source for OrderService.createOrder and explains it. The agent MAY load docs/modules/create-order.md to enrich the explanation, but this is a read-only Q&A. NO files are modified. Write Mode is NOT invoked (no code landed; pure explanation).",
       "files": ["evals/files/fixture-synced-multi-module/"],
       "setup_note": "Tests that PURE CODE-EXPLANATION Q&A does not trigger Write Mode. Read Mode loading of relevant module docs is acceptable (they enrich the explanation), but there must be NO writes anywhere.",
       "assertions": [
@@ -445,11 +445,11 @@
       "priority": "P2",
       "category": "read-mode-architecture-inventory",
       "prompt": "Take stock of the current cross-service dependencies between order-service and payment-service. List every call edge and its purpose, including direction (Upstream / Downstream).",
-      "expected_output": "The agent loads docs/architecture.md, docs/modules/order.md, and docs/modules/payment.md and produces an inventory of cross-service call edges. The Upstream / Downstream direction matches the convention enforced by docs-context (Upstream = this capability calls; Downstream = depends on this capability). NO files are modified. Write Mode is NOT invoked.",
+      "expected_output": "The agent loads docs/architecture.md, docs/modules/create-order.md, and docs/modules/pre-charge.md and produces an inventory of cross-BCU call edges. The Upstream / Downstream direction matches the convention enforced by docs-context (Upstream = this BCU calls; Downstream = depends on this BCU). NO files are modified. Write Mode is NOT invoked.",
       "files": ["evals/files/fixture-synced-multi-module/"],
-      "setup_note": "Tests EXISTING ARCHITECTURE INVENTORY (current state-of-the-system audit) triggers Read Mode loading of architecture.md + modules/order.md + modules/payment.md. The output should respect the documented Upstream/Downstream convention. Write Mode must not fire (read-only inventory).",
+      "setup_note": "Tests EXISTING ARCHITECTURE INVENTORY (current state-of-the-system audit) triggers Read Mode loading of architecture.md + modules/create-order.md + modules/pre-charge.md. The output should respect the documented Upstream/Downstream convention. Write Mode must not fire (read-only inventory).",
       "assertions": [
-        "The agent's transcript shows reading docs/architecture.md, docs/modules/order.md, AND docs/modules/payment.md.",
+        "The agent's transcript shows reading docs/architecture.md, docs/modules/create-order.md, AND docs/modules/pre-charge.md.",
         "The agent's reply lists at least one concrete cross-service call edge (e.g. order calls payment.preCharge or similar).",
         "Edge directionality in the reply uses 'Upstream / Downstream' consistent with each module's documented convention (Upstream = outbound; Downstream = inbound).",
         "No source code files were modified.",
@@ -463,11 +463,11 @@
       "priority": "P2",
       "category": "read-mode-capacity-planning",
       "prompt": "We're expecting 10x traffic on POST /pay/orders during the upcoming holiday sale. What capacity changes should we plan? Consider DB throughput, caching, and service instance count.",
-      "expected_output": "The agent loads docs/architecture.md (topology + scaling assumptions), docs/tech-stack.md (DB, framework versions), and docs/modules/pay.md (the affected capability). It produces a capacity plan referencing real current configuration. NO source files are modified. Write Mode is NOT invoked.",
+      "expected_output": "The agent loads docs/architecture.md (topology + scaling assumptions), docs/tech-stack.md (DB, framework versions), and docs/modules/create-order.md (the affected BCU). It produces a capacity plan referencing real current configuration. NO source files are modified. Write Mode is NOT invoked.",
       "files": ["evals/files/fixture-synced-pay/"],
-      "setup_note": "Tests CAPACITY PLANNING triggers Read Mode loading of architecture.md + tech-stack.md + modules/pay.md. The plan should reference real existing facts (DB type, JPA, current instance count if documented) from loaded docs.",
+      "setup_note": "Tests CAPACITY PLANNING triggers Read Mode loading of architecture.md + tech-stack.md + modules/create-order.md. The plan should reference real existing facts (DB type, JPA, current instance count if documented) from loaded docs.",
       "assertions": [
-        "The agent's transcript shows reading docs/architecture.md, docs/tech-stack.md, AND docs/modules/pay.md.",
+        "The agent's transcript shows reading docs/architecture.md, docs/tech-stack.md, AND docs/modules/create-order.md.",
         "The agent's reply mentions at least one concrete current-stack detail (Spring Boot, JPA, h2, etc.) drawn from the loaded docs.",
         "The agent's reply addresses DB, caching, AND instance count (the three topics the user asked about).",
         "No source code files were modified.",
@@ -481,11 +481,11 @@
       "priority": "P2",
       "category": "read-mode-security-design",
       "prompt": "Do a basic threat model on the POST /pay/orders endpoint. What are the top 3 risks (e.g. injection, replay, IDOR) and what mitigations do you recommend?",
-      "expected_output": "The agent loads docs/coding.md (input validation / error handling rules), docs/tech-stack.md, and docs/modules/pay.md (endpoint behavior, idempotency key usage). It produces a threat model citing specific risks for this endpoint with mitigations grounded in the project's actual conventions. NO source files are modified. Write Mode is NOT invoked.",
+      "expected_output": "The agent loads docs/coding.md (input validation / error handling rules), docs/tech-stack.md, and docs/modules/create-order.md (endpoint behavior, idempotency key usage). It produces a threat model citing specific risks for this endpoint with mitigations grounded in the project's actual conventions. NO source files are modified. Write Mode is NOT invoked.",
       "files": ["evals/files/fixture-synced-pay/"],
-      "setup_note": "Tests SECURITY DESIGN / THREAT MODELING triggers Read Mode loading of coding.md + tech-stack.md + modules/pay.md. The threat list should call out at least 3 distinct risks. Mitigations should reference real project conventions (e.g. merchantOrderNo idempotency key, Long amount validation rule).",
+      "setup_note": "Tests SECURITY DESIGN / THREAT MODELING triggers Read Mode loading of coding.md + tech-stack.md + modules/create-order.md. The threat list should call out at least 3 distinct risks. Mitigations should reference real project conventions (e.g. merchantOrderNo idempotency key, Long amount validation rule).",
       "assertions": [
-        "The agent's transcript shows reading docs/coding.md AND docs/modules/pay.md.",
+        "The agent's transcript shows reading docs/coding.md AND docs/modules/create-order.md.",
         "The agent's reply identifies at least 3 distinct risk categories.",
         "Mitigations reference at least one concrete project convention (e.g. idempotency key, Long type rule, BizException pattern) drawn from the loaded docs.",
         "No source code files were modified.",
@@ -499,12 +499,12 @@
       "priority": "P2",
       "category": "read-mode-code-review",
       "prompt": "Code-review my latest commit to OrderService — check for any violations of our coding standards, missing error handling, or inconsistencies with the documented Pay module conventions. Don't change the code; just report findings.",
-      "expected_output": "The agent loads docs/coding.md AND docs/modules/pay.md, then reads OrderService source and reports violations / inconsistencies / missing error handling. NO source files are modified. NO docs are modified. Write Mode is NOT invoked (review-only).",
+      "expected_output": "The agent loads docs/coding.md AND docs/modules/create-order.md, then reads OrderService source and reports violations / inconsistencies / missing error handling. NO source files are modified. NO docs are modified. Write Mode is NOT invoked (review-only).",
       "files": ["evals/files/fixture-synced-pay/"],
-      "setup_note": "Tests CODE REVIEW triggers Read Mode loading of coding.md (the conventions ground truth) AND the relevant modules/pay.md. The review must point out concrete observations grounded in those docs. Write Mode must not fire (review only — no code change yet).",
+      "setup_note": "Tests CODE REVIEW triggers Read Mode loading of coding.md (the conventions ground truth) AND the relevant modules/create-order.md. The review must point out concrete observations grounded in those docs. Write Mode must not fire (review only — no code change yet).",
       "assertions": [
-        "The agent's transcript shows reading docs/coding.md AND docs/modules/pay.md AND OrderService source.",
-        "The agent's reply contains at least one finding tied to a specific rule from coding.md or convention from pay.md.",
+        "The agent's transcript shows reading docs/coding.md AND docs/modules/create-order.md AND OrderService source.",
+        "The agent's reply contains at least one finding tied to a specific rule from coding.md or convention from create-order.md.",
         "No source code files were modified.",
         "No files under docs/ were modified.",
         "The agent did NOT invoke docs-context Write Mode.",
@@ -515,14 +515,14 @@
       "id": 31,
       "priority": "P3",
       "category": "long-session-correction",
-      "prompt": "Hold on — earlier you mentioned an OrderStatus convention but I'm not sure I have the latest. Please re-check what docs/coding.md and docs/modules/pay.md currently say about Order status and remind me of the rules.",
-      "expected_output": "Even though the agent may believe it already knows the conventions from earlier in the (simulated) session, it explicitly re-reads docs/coding.md AND docs/modules/pay.md before answering. The reply summarizes the documented status conventions (enum values, transitions, persistence type) accurately. NO files are modified. Write Mode is NOT invoked.",
+      "prompt": "Hold on — earlier you mentioned an OrderStatus convention but I'm not sure I have the latest. Please re-check what docs/coding.md and docs/modules/create-order.md currently say about Order status and remind me of the rules.",
+      "expected_output": "Even though the agent may believe it already knows the conventions from earlier in the (simulated) session, it explicitly re-reads docs/coding.md AND docs/modules/create-order.md before answering. The reply summarizes the documented status conventions (enum values, transitions, persistence type) accurately. NO files are modified. Write Mode is NOT invoked.",
       "files": ["evals/files/fixture-synced-pay-with-status/"],
       "setup_note": "Tests LONG-SESSION CORRECTION (Read Mode re-load) — when the user signals possible context drift ('not sure I have the latest'), the agent must re-read the authoritative docs rather than answer from stale memory. P3 priority because true validation requires multi-turn context simulation; this single-prompt eval only tests that the agent chooses to re-read on an explicit re-check signal.",
       "assertions": [
-        "The agent's transcript shows reading BOTH docs/coding.md AND docs/modules/pay.md during this run (not skipped because 'I already know').",
+        "The agent's transcript shows reading BOTH docs/coding.md AND docs/modules/create-order.md during this run (not skipped because 'I already know').",
         "The agent's reply correctly summarizes documented status enum values (PENDING / PAID / CANCELLED / EXPIRED) AND the @Enumerated(EnumType.STRING) persistence convention from the loaded docs.",
-        "The agent's reply correctly summarizes at least one transition rule from the State Transitions table in pay.md.",
+        "The agent's reply correctly summarizes at least one transition rule from the State Transitions table in create-order.md.",
         "No source code files were modified.",
         "No files under docs/ were modified.",
         "The agent did NOT invoke docs-context Write Mode.",
@@ -534,7 +534,7 @@
       "priority": "P1",
       "category": "missing-doc-creation-coding",
       "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}. Use the existing controller pattern.",
-      "expected_output": "Read Mode requires docs/coding.md (always-load), but it is missing. Per the 'Handling Missing Documents' flow, the agent detects the absence, asks the user before creating, and only after user confirmation creates docs/coding.md from assets/templates/coding.md. After creation, normal Read Mode and Write Mode proceed: /ping is implemented and docs/modules/pay.md gets the new entry.",
+      "expected_output": "Read Mode requires docs/coding.md (always-load), but it is missing. Per the 'Handling Missing Documents' flow, the agent detects the absence, asks the user before creating, and only after user confirmation creates docs/coding.md from assets/templates/coding.md. After creation, normal Read Mode and Write Mode proceed: /ping is implemented and docs/modules/create-order.md gets the new entry.",
       "files": ["evals/files/fixture-no-coding/"],
       "setup_note": "fixture-no-coding mirrors fixture-synced-pay but with docs/coding.md removed. Tests the missing-doc creation flow for the always-load file. The agent must NOT silently generate a coding.md (silent creation is forbidden per SKILL.md).",
       "assertions": [
@@ -542,8 +542,8 @@
         "The agent asked the user for confirmation before creating docs/coding.md (no silent creation).",
         "After user confirmation, docs/coding.md exists and its structure matches assets/templates/coding.md (top-level sections from the template are present).",
         "The /ping endpoint is implemented in the pay service source.",
-        "docs/modules/pay.md contains a new /ping entry under a Capability section's '### Implementation'.",
-        "The Doc Sync Summary mentions both the creation of docs/coding.md AND the /ping addition to pay.md."
+        "docs/modules/create-order.md contains a new /ping entry in the appropriate BCU file's `## Implementation` section.",
+        "The Doc Sync Summary mentions both the creation of docs/coding.md AND the /ping addition to create-order.md."
       ]
     },
     {
@@ -585,17 +585,17 @@
       "priority": "P1",
       "category": "missing-doc-creation-modules-dir",
       "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}.",
-      "expected_output": "docs/modules/ directory does not exist. Per the missing-doc flow, the agent (1) detects that the modules directory is missing, (2) asks the user before creating, (3) creates docs/modules/ AND docs/modules/pay.md from assets/templates/module.md, populating it with at least one Capability section that hosts /ping under '### Implementation'.",
+      "expected_output": "docs/modules/ directory does not exist. Per the missing-doc flow, the agent (1) detects that the modules directory is missing, (2) asks the user before creating, (3) creates docs/modules/ AND a BCU file (e.g. docs/modules/health-check.md or docs/modules/create-order.md) from assets/templates/module.md, populating it with /ping under `## Implementation`.",
       "files": ["evals/files/fixture-no-modules-dir/"],
       "setup_note": "fixture-no-modules-dir mirrors fixture-synced-pay but with docs/modules/ entirely removed. Tests directory creation (not just file creation) and first-module bootstrap. NO README/index file should appear inside docs/modules/.",
       "assertions": [
         "The agent's transcript shows detection that docs/modules/ is missing (e.g., a Glob returning empty or a stat on the directory failing).",
-        "The agent asked the user for confirmation before creating docs/modules/pay.md (no silent creation).",
+        "The agent asked the user for confirmation before creating docs/modules/create-order.md (no silent creation).",
         "After user confirmation, docs/modules/ exists as a directory.",
-        "After user confirmation, docs/modules/pay.md exists and its structure follows assets/templates/module.md (frontmatter + at least one '## Capability:' section).",
-        "docs/modules/pay.md contains a /ping entry under a Capability section's '### Implementation'.",
+        "After user confirmation, a BCU file exists under docs/modules/ and its structure follows assets/templates/module.md (BCU title + Status/Owning service header + Business Goal + Implementation + Flow).",
+        "docs/modules/create-order.md contains a /ping entry in the appropriate BCU file's `## Implementation` section.",
         "No README.md or index.md was created under docs/modules/.",
-        "The Doc Sync Summary mentions creation of docs/modules/pay.md."
+        "The Doc Sync Summary mentions creation of docs/modules/create-order.md."
       ]
     },
     {
@@ -622,7 +622,7 @@
       "priority": "P1",
       "category": "missing-doc-creation-empty-workspace",
       "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}.",
-      "expected_output": "The entire docs/ directory is missing. The agent (1) detects the absence, (2) asks the user before creating any docs, (3) creates docs/ + at minimum docs/coding.md (always-load) and docs/modules/pay.md (write target) from templates, AND only the docs needed for THIS task — does NOT preemptively create architecture.md / tech-stack.md / decisions/ if they aren't touched by this task.",
+      "expected_output": "The entire docs/ directory is missing. The agent (1) detects the absence, (2) asks the user before creating any docs, (3) creates docs/ + at minimum docs/coding.md (always-load) and docs/modules/create-order.md (write target) from templates, AND only the docs needed for THIS task — does NOT preemptively create architecture.md / tech-stack.md / decisions/ if they aren't touched by this task.",
       "files": ["evals/files/fixture-empty-workspace/"],
       "setup_note": "fixture-empty-workspace mirrors fixture-synced-pay but with the entire docs/ directory removed. Tests root-level bootstrap. Critical: agent must scope creation to the docs THIS task actually needs — preemptively creating all 5 doc types would be over-eager and pollute the project.",
       "assertions": [
@@ -630,7 +630,7 @@
         "The agent asked the user for confirmation at least once before creating any docs.",
         "After user confirmation, docs/ exists as a directory.",
         "After user confirmation, docs/coding.md exists and follows assets/templates/coding.md.",
-        "After user confirmation, docs/modules/pay.md exists and contains a Capability section with /ping under '### Implementation'.",
+        "After user confirmation, a BCU file under docs/modules/ exists and lists /ping under `## Implementation`.",
         "docs/architecture.md was NOT created (this task did not change topology).",
         "docs/tech-stack.md was NOT created (this task did not introduce a new dependency).",
         "docs/decisions/ was NOT created (this task did not record a decision).",
@@ -649,7 +649,7 @@
       "assertions": [
         "The agent's transcript shows the agent asking to create docs/coding.md.",
         "After the user's declination, docs/coding.md DOES NOT exist on disk.",
-        "No other docs files were silently created either (docs/architecture.md, docs/tech-stack.md, docs/modules/pay.md should match their pre-task state).",
+        "No other docs files were silently created either (docs/architecture.md, docs/tech-stack.md, docs/modules/create-order.md should match their pre-task state).",
         "The /ping endpoint is implemented in the pay service source (the user only refused doc creation, not the code work).",
         "The Doc Sync Summary explicitly notes that docs/coding.md creation was declined and not synced (transparency, not silence).",
         "The Doc Sync Summary does NOT falsely report any doc as created or updated."
@@ -660,14 +660,14 @@
       "priority": "P2",
       "category": "missing-doc-creation-partial",
       "prompt": "Add a /ping endpoint to the pay service that returns {\"status\": \"ok\"}.",
-      "expected_output": "docs/coding.md is missing but the rest of docs/ exists and is in sync. The agent must (1) detect ONLY the missing coding.md, (2) ask once for that one file, (3) leave the existing docs/architecture.md / tech-stack.md / modules/pay.md untouched (no re-prompt, no re-creation, no needless re-write), (4) sync only what truly changed.",
+      "expected_output": "docs/coding.md is missing but the rest of docs/ exists and is in sync. The agent must (1) detect ONLY the missing coding.md, (2) ask once for that one file, (3) leave the existing docs/architecture.md / tech-stack.md / modules/create-order.md untouched (no re-prompt, no re-creation, no needless re-write), (4) sync only what truly changed.",
       "files": ["evals/files/fixture-no-coding/"],
       "setup_note": "Reuses fixture-no-coding. Tests that the missing-doc flow is targeted: only the missing file triggers the create-confirmation; existing files do NOT trigger redundant prompts. Critical: failure mode is asking to recreate already-existing docs or producing a noisy 'Created' list that includes untouched files.",
       "assertions": [
         "The agent asked to create docs/coding.md exactly ONCE (not multiple times, not for other doc types).",
-        "The agent did NOT ask to recreate docs/architecture.md, docs/tech-stack.md, or docs/modules/pay.md.",
+        "The agent did NOT ask to recreate docs/architecture.md, docs/tech-stack.md, or docs/modules/create-order.md.",
         "docs/architecture.md, docs/tech-stack.md byte content is unchanged from the fixture state.",
-        "docs/modules/pay.md gains the /ping entry but otherwise its other Capability sections are unchanged.",
+        "The /ping entry lands in either docs/modules/create-order.md or a new docs/modules/health-check.md, and unrelated BCU files are unchanged.",
         "The Doc Sync Summary's 'Created' list contains only docs/coding.md (not the other doc files).",
         "The /ping endpoint exists in the pay service source."
       ]
@@ -682,7 +682,7 @@
       "setup_note": "Tests Write Mode TIMING explicitly. Failure modes: (a) Sync Summary appears AFTER the final user-facing reply, (b) agent waits for the user to ask for sync, (c) agent emits the final reply without ever syncing. Distinct from eval 1 which tests trigger but not strict ordering.",
       "assertions": [
         "The /ping endpoint is implemented in the pay service source after the run.",
-        "docs/modules/pay.md contains a new /ping entry under a Capability section's '### Implementation'.",
+        "docs/modules/create-order.md contains a new /ping entry in the appropriate BCU file's `## Implementation` section.",
         "A 'Doc Sync Summary' (or '文档同步摘要') appears in the transcript.",
         "The byte offset of the 'Doc Sync Summary' line in the transcript is BEFORE the byte offset of the agent's final closing reply paragraph (the one that wraps up the task for the user). If the transcript is structured (stream-json), the assistant message containing the summary precedes the assistant message containing the final wrap-up.",
         "The agent did NOT wait for the user to say 'sync docs' before emitting the summary."
@@ -693,14 +693,14 @@
       "priority": "P2",
       "category": "deprecate-not-delete-distinction",
       "prompt": "We're deprecating the /ping endpoint but keeping the code for one more release for backward compatibility. Mark it as deprecated everywhere, but do NOT remove it from the codebase or docs.",
-      "expected_output": "The agent recognizes that 'deprecate but keep' is NOT the same as 'remove'. It (1) adds @Deprecated annotation (or equivalent) to the /ping handler, (2) does NOT delete the /ping entry from docs/modules/pay.md but instead annotates it (e.g. '(deprecated, scheduled for removal in v2.0)'), (3) does NOT trigger the Removal & Rollback Sync flow because the code is not removed.",
+      "expected_output": "The agent recognizes that 'deprecate but keep' is NOT the same as 'remove'. It (1) adds @Deprecated annotation (or equivalent) to the /ping handler, (2) does NOT delete the /ping entry from docs/modules/create-order.md but instead annotates it (e.g. '(deprecated, scheduled for removal in v2.0)'), (3) does NOT trigger the Removal & Rollback Sync flow because the code is not removed.",
       "files": ["evals/files/fixture-synced-pay-with-ping/"],
-      "setup_note": "Tests that the agent distinguishes between 'remove' (which triggers reverse sync per Removal & Rollback Sync section) and 'deprecate' (which is a forward annotation on still-living code). Failure modes: (a) agent deletes /ping from docs/modules/pay.md (treating deprecate as remove), (b) agent removes the source code, (c) agent silently does both.",
+      "setup_note": "Tests that the agent distinguishes between 'remove' (which triggers reverse sync per Removal & Rollback Sync section) and 'deprecate' (which is a forward annotation on still-living code). Failure modes: (a) agent deletes /ping from docs/modules/create-order.md (treating deprecate as remove), (b) agent removes the source code, (c) agent silently does both.",
       "assertions": [
         "The /ping endpoint code STILL EXISTS in the pay service source after the run (not deleted).",
         "The /ping handler is annotated @Deprecated (or equivalent language idiom).",
-        "docs/modules/pay.md STILL contains a /ping entry under a Capability section (NOT deleted).",
-        "The /ping entry in docs/modules/pay.md is annotated with deprecation language (e.g. 'deprecated', '将废弃', 'scheduled for removal').",
+        "docs/modules/create-order.md or docs/modules/health-check.md STILL contains a /ping entry (NOT deleted).",
+        "The /ping entry in docs/modules/create-order.md is annotated with deprecation language (e.g. 'deprecated', '将废弃', 'scheduled for removal').",
         "The Doc Sync Summary describes the change as a deprecation note, NOT a removal.",
         "The Doc Sync Summary's 'Updated' or 'Deleted' fields do NOT list /ping under deletions."
       ]
@@ -710,18 +710,18 @@
       "priority": "P2",
       "category": "legacy-monolith-migration",
       "prompt": "Our docs are in the legacy single-file format (docs/modules.md, docs/decisions.md). Migrate them to the new per-business-module / per-decision layout: split docs/modules.md into docs/modules/<slug>.md files (one per business module) and split docs/decisions.md into docs/decisions/ADR-<slug>.md files. Then add a /ping endpoint to the pay service.",
-      "expected_output": "The agent (1) reads the legacy docs/modules.md and docs/decisions.md, (2) proposes a slug list for the split with user-confirmable mapping, (3) on confirmation, creates per-module / per-decision files preserving content fidelity, (4) deletes the old monolithic files (docs/modules.md, docs/decisions.md) since they no longer match the new layout, (5) THEN proceeds with the /ping addition under the migrated docs/modules/pay.md.",
+      "expected_output": "The agent (1) reads the legacy docs/modules.md and docs/decisions.md, (2) proposes a slug list for the split with user-confirmable mapping, (3) on confirmation, creates per-module / per-decision files preserving content fidelity, (4) deletes the old monolithic files (docs/modules.md, docs/decisions.md) since they no longer match the new layout, (5) THEN proceeds with the /ping addition under the migrated docs/modules/create-order.md.",
       "files": ["evals/files/fixture-legacy-monolith/"],
       "setup_note": "fixture-legacy-monolith has docs/modules.md (single file with pay + order modules inline) and docs/decisions.md (single file with 2 ADRs inline). NO docs/modules/ or docs/decisions/ directories exist. Tests the upgrade path from v1.0 to v1.2 schema.",
       "assertions": [
-        "After the run, docs/modules/ directory exists and contains AT LEAST docs/modules/pay.md.",
+        "After the run, docs/modules/ directory exists and contains AT LEAST docs/modules/create-order.md.",
         "After the run, docs/decisions/ directory exists and contains AT LEAST one ADR-*.md file.",
         "After the run, the legacy docs/modules.md file no longer exists (migration cleanup).",
         "After the run, the legacy docs/decisions.md file no longer exists (migration cleanup).",
         "The agent presented the slug split to the user for confirmation BEFORE creating files (no silent migration).",
         "The /ping endpoint is implemented in the pay service source.",
-        "docs/modules/pay.md contains a /ping entry AND retains the pay module content from the original docs/modules.md.",
-        "Content fidelity: information from docs/modules.md (capability descriptions, upstream/downstream notes) is preserved in the new per-module files (no silent loss)."
+        "docs/modules/create-order.md contains a /ping entry AND retains the pay module content from the original docs/modules.md.",
+        "Content fidelity: information from docs/modules.md (capability descriptions, upstream/downstream notes) is preserved in the new per-BCU files (no silent loss)."
       ]
     },
     {
@@ -729,14 +729,14 @@
       "priority": "P1",
       "category": "merge-conflict-guardrail",
       "prompt": "Add a /ping endpoint to the pay service.",
-      "expected_output": "The agent attempts Read Mode and discovers that docs/modules/pay.md has unresolved git merge conflict markers (<<<<<<<, =======, >>>>>>>). It HALTS and asks the user to resolve the conflict before proceeding. It does NOT silently overwrite the file or pick one side. The /ping code change MAY proceed if it doesn't depend on the unresolved doc state, but Write Mode does NOT touch pay.md while conflicts remain.",
+      "expected_output": "The agent attempts Read Mode and discovers that docs/modules/create-order.md has unresolved git merge conflict markers (<<<<<<<, =======, >>>>>>>). It HALTS and asks the user to resolve the conflict before proceeding. It does NOT silently overwrite the file or pick one side. The /ping code change MAY proceed if it doesn't depend on the unresolved doc state, but Write Mode does NOT touch create-order.md while conflicts remain.",
       "files": ["evals/files/fixture-merge-conflict/"],
-      "setup_note": "fixture-merge-conflict has docs/modules/pay.md with literal git conflict markers in the middle of a Capability section. Tests the agent's safety guardrail against blindly overwriting unresolved conflicts. Critical: failure mode is silent overwrite that destroys one branch's work.",
+      "setup_note": "fixture-merge-conflict has docs/modules/create-order.md (a BCU file) with literal git conflict markers in the middle of `## Implementation`. Tests the agent's safety guardrail against blindly overwriting unresolved conflicts. Critical: failure mode is silent overwrite that destroys one branch's work.",
       "assertions": [
-        "The agent's transcript explicitly mentions detecting git merge conflict markers in docs/modules/pay.md (search for 'conflict' or 'merge' or '<<<<<<<' references).",
+        "The agent's transcript explicitly mentions detecting git merge conflict markers in docs/modules/create-order.md (search for 'conflict' or 'merge' or '<<<<<<<' references).",
         "The agent asked the user to resolve the conflict before proceeding (HALT signal).",
-        "After the run, docs/modules/pay.md STILL contains the conflict markers if the user did not resolve them in this turn (no silent overwrite).",
-        "The Doc Sync Summary mentions the conflict and explicitly skips pay.md sync, OR the summary is not emitted at all because Write Mode was blocked.",
+        "After the run, docs/modules/create-order.md STILL contains the conflict markers if the user did not resolve them in this turn (no silent overwrite).",
+        "The Doc Sync Summary mentions the conflict and explicitly skips create-order.md sync, OR the summary is not emitted at all because Write Mode was blocked.",
         "If the agent did proceed with the /ping code change, the source file change is conservative (no docs touch)."
       ]
     }
@@ -746,27 +746,27 @@
     "fixtures_needed": [
       {
         "name": "fixture-synced-pay",
-        "description": "Minimal pay microservice with src/ containing one controller and one service class. docs/ contains: architecture.md, coding.md, tech-stack.md, modules/pay.md (with 1-2 Capability sections, no /ping), and an empty decisions/ directory. No /ping endpoint exists.",
+        "description": "Minimal pay microservice with src/ containing one controller and one service class. docs/ contains: architecture.md, coding.md, tech-stack.md, modules/create-order.md (BCU file, no /ping), and an empty decisions/ directory. No /ping endpoint exists.",
         "purpose": "Baseline fixture for most tests."
       },
       {
         "name": "fixture-synced-pay-with-ping",
-        "description": "Same as fixture-synced-pay, plus a /ping endpoint in source AND a /ping entry under an existing Capability section of docs/modules/pay.md.",
+        "description": "Same as fixture-synced-pay, plus a /ping endpoint in source AND a docs/modules/health-check.md BCU file documenting it.",
         "purpose": "Used for rollback reverse-sync test (eval 5). The /ping entry must be documented for the rollback scenario to be meaningful."
       },
       {
         "name": "fixture-synced-pay-with-new-ping-code",
-        "description": "Same as fixture-synced-pay, plus /ping endpoint in source but NOT yet in docs/modules/pay.md.",
+        "description": "Same as fixture-synced-pay, plus /ping endpoint in source but NOT yet in docs/modules/create-order.md.",
         "purpose": "Simulates post-coding pre-sync state for user-triggered sync test (eval 8)."
       },
       {
         "name": "fixture-synced-pay-with-bug",
-        "description": "Same as fixture-synced-pay, but src/ also contains OrderService with the NPE bug when amount is zero. docs/modules/ contains pay.md and order.md (the latter documenting the order capabilities including createOrder).",
-        "purpose": "Used for bug-fix read-mode-scope test (eval 10). Must have order.md so the agent has a relevant module file to load."
+        "description": "Same as fixture-synced-pay, but src/ also contains OrderService with the NPE bug when amount is zero. docs/modules/ contains create-order.md and order.md (the latter documenting the order capabilities including createOrder).",
+        "purpose": "Used for bug-fix read-mode-scope test (eval 10). Must have create-order.md so the agent has a relevant BCU file to load."
       },
       {
         "name": "fixture-synced-multi-module",
-        "description": "Two-module fixture. src/ contains order-service code and payment-service code. docs/modules/ contains order.md (with 'Create Order' Capability) and payment.md (with 'Pre Charge' Capability already documented). docs/decisions/ is empty. Used to test cross-module Read loading and bidirectional Upstream/Downstream sync.",
+        "description": "Two-domain fixture (order + payment). src/ contains order-service code and payment-service code. docs/modules/ contains create-order.md, refund.md, and pre-charge.md as separate BCU files. docs/decisions/ is empty. Used to test cross-BCU Read loading and bidirectional Upstream/Downstream sync.",
         "purpose": "Used for evals 9 and 12."
       },
       {
@@ -781,17 +781,17 @@
       },
       {
         "name": "fixture-priority-conflict",
-        "description": "A loan-service fixture. docs/coding.md mandates 'rate fields use Long basis points'. docs/modules/loan.md exists with an 'Issue Loan' Capability whose Implementation incorrectly notes 'rate stored as BigDecimal' (this inconsistency is intentional). src/ contains a Loan entity without an interest_rate field. docs/decisions/ is empty.",
+        "description": "A loan-service fixture. docs/coding.md mandates 'rate fields use Long basis points'. docs/modules/issue-loan.md (the Issue Loan BCU file) incorrectly notes 'rate stored as BigDecimal' under its Risks/Constraints section (this inconsistency is intentional). src/ contains a Loan entity without an interest_rate field. docs/decisions/ is empty.",
         "purpose": "Used for priority-chain-conflict test (eval 18). Tests that the agent applies the document priority chain (coding.md > modules/*) when docs disagree, AND surfaces the inconsistency for cleanup."
       },
       {
         "name": "fixture-synced-pay-with-status",
-        "description": "Same as fixture-synced-pay, plus the Order entity in src/ ALREADY has a `status` field (with a small enum: PENDING, PAID, CANCELLED) AND docs/modules/pay.md ALREADY documents the status field under the relevant Capability's '### Implementation' subsection (and any related state transitions). Represents the post-sync state from a 'previous session' that the user now wants to roll back.",
+        "description": "Same as fixture-synced-pay, plus the Order entity in src/ ALREADY has a `status` field (with a small enum: PENDING, PAID, CANCELLED) AND a docs/modules/order-state-tracking.md BCU file ALREADY documents the status field under `## Implementation` and `## State Transitions`. Represents the post-sync state from a 'previous session' that the user now wants to roll back.",
         "purpose": "Used for cross-session reverse-sync test (eval 22). The fixture must look like docs and code are already in sync regarding status; the test then verifies the agent reverse-syncs docs when the user asks to remove status."
       },
       {
         "name": "fixture-no-coding",
-        "description": "Mirrors fixture-synced-pay but with docs/coding.md REMOVED. Other docs (architecture.md, tech-stack.md, modules/pay.md) and the empty decisions/ directory remain. src/ is identical to baseline.",
+        "description": "Mirrors fixture-synced-pay but with docs/coding.md REMOVED. Other docs (architecture.md, tech-stack.md, modules/create-order.md) and the empty decisions/ directory remain. src/ is identical to baseline.",
         "purpose": "Used for missing-doc creation tests covering the always-load file (evals 32, 38, 39)."
       },
       {
@@ -806,8 +806,8 @@
       },
       {
         "name": "fixture-no-modules-dir",
-        "description": "Mirrors fixture-synced-pay but with the entire docs/modules/ directory REMOVED (no pay.md, no directory). docs/architecture.md, docs/coding.md, docs/tech-stack.md and empty decisions/ remain. src/ is identical to baseline.",
-        "purpose": "Used for missing-directory creation test — first business module bootstrap (eval 35). Validates that the agent creates the directory AND the first module file from template, with no README/index file."
+        "description": "Mirrors fixture-synced-pay but with the entire docs/modules/ directory REMOVED (no create-order.md, no directory). docs/architecture.md, docs/coding.md, docs/tech-stack.md and empty decisions/ remain. src/ is identical to baseline.",
+        "purpose": "Used for missing-directory creation test — first BCU bootstrap (eval 35). Validates that the agent creates the directory AND the first BCU file from template, with no README/index file."
       },
       {
         "name": "fixture-no-decisions-dir",
@@ -826,10 +826,10 @@
       },
       {
         "name": "fixture-merge-conflict",
-        "description": "Mirrors fixture-synced-pay but with docs/modules/pay.md containing UNRESOLVED git merge conflict markers ('<<<<<<<', '=======', '>>>>>>>') in the middle of a Capability section's '### Implementation' subsection. Other docs and src/ are clean.",
+        "description": "Mirrors fixture-synced-pay but with docs/modules/create-order.md (BCU file) containing UNRESOLVED git merge conflict markers ('<<<<<<<', '=======', '>>>>>>>') in the middle of `## Implementation`. Other docs and src/ are clean.",
         "purpose": "Used for merge-conflict guardrail test (eval 43). Validates that the agent halts on conflict markers rather than silently overwriting one side."
       }
     ],
-    "how_to_create": "Fixtures can be assembled as minimal Java/Go/Node projects. Suggested: copy a small real subproject, strip to 10-20 files, seed docs/ per templates in skills/docs-context/assets/templates/. For module files, follow the Capability-based template (assets/templates/module.md). For ADRs, follow the minimal-frontmatter template (assets/templates/decision.md). Do NOT create README files under docs/modules/ or docs/decisions/."
+    "how_to_create": "Fixtures can be assembled as minimal Java/Go/Node projects. Suggested: copy a small real subproject, strip to 10-20 files, seed docs/ per templates in skills/docs-context/assets/templates/. For BCU files, follow the BCU template (assets/templates/module.md) — one file per Business Capability Unit. For ADRs, follow the minimal-frontmatter template (assets/templates/decision.md). Do NOT create README files under docs/modules/ or docs/decisions/."
   }
 }

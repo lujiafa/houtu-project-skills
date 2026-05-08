@@ -25,12 +25,12 @@ docs-context 通过三大能力解决 Agent Coding 中项目上下文缺失和�
 | **项目持续演进下的上下文理解问题** | AI 不了解项目现状，生成的代码与项目风格、约束不一致 | 读模式在任何引用项目现状的工作之前加载相关文档——写代码、设计、写 spec / plan、架构评审、技术选型、ADR 研究、性能 / 安全分析、代码审查——建立上下文认知。加载后强制确认编码规范合规性，违反约束时主动提醒 |
 | **架构随迭代演进逐渐失控** | 架构决策散落在代码和口头沟通中，无人维护全局视图 | `architecture.md` 持续维护架构全局视图（服务拓扑、流程、约束）；`docs/decisions/ADR-<slug>.md`（一个决策一个文件）以完整 ADR 格式（背景→方案→决策→后果）记录每次决策。被取代时旧 ADR 直接删除——目录里只保留与代码一致的活决策 |
 | **跨会话/多人协作的上下文同步问题** | 换人、换会话后上下文归零，重复沟通成本高 | 持久化文档体系（架构、技术栈、编码规范，加 `docs/modules/` 与 `docs/decisions/` 两个目录）作为跨工具、跨会话、跨团队的共享知识库，按任务类型按需加载 |
-| **修改类需求的影响范围不可见** | 改一个模块不知道会影响哪些上下游 | 每个 `docs/modules/<business>.md` 内部按 `## Capability:` 节切分，每个能力节自带 `### Upstream / Downstream` 表达本地视角依赖。跨模块变更触发能力节之间的双向同步 |
+| **修改类需求的影响范围不可见** | 改一个模块不知道会影响哪些上下游 | 每个 `docs/modules/<bcu-slug>.md` 是**一个业务能力单元（BCU）**——一个能独立开发、测试、修改的业务能力。每个 BCU 文件自带 `## Upstream / Downstream` 表达本地视角依赖。跨 BCU 变更触发 BCU 文件之间的双向同步 |
 | **历史设计与决策不可追溯** | "当初为什么这样设计"无人能答 | `docs/decisions/ADR-<slug>.md` 以 ADR 格式（背景→方案→决策→后果）一文件一决策。技术选型与架构讨论时自动加载相关历史决策 |
-| **不同粒度的上下文混杂** | 架构级、模块级、代码级信息混在一起，找不到重点 | 文档按职责分离（架构/技术栈/编码规范/模块/决策）；模块文件内部按能力节进一步分隔。文档优先级链明确裁决冲突，任务感知加载只提供当前粒度所需的文档 |
-| **文档、注释和代码不同步** | 文档写了不更新，逐渐变成误导 | 写模式按检查清单逐项核对代码变更（双向同步——新增/修改使文档增长，删除/回滚使文档收缩），把每项变更精确路由到 `<文件> + Capability 节`，并执行跨文档一致性检查避免矛盾。反向同步（代码删除时同步删除对应 capability / 模块 / ADR 节）作为一等概念，与会话内 try-and-undo 严格区分 |
-| **长上下文衰减问题** | 一次性灌入过多上下文，AI 对关键信息的关注度下降 | 当上下文因衰减或压缩而失真时，**只重读相关能力节**（不读整文件）+ 扫描代码与注释修正。10 种任务类型选择性加载，只加载当前任务需要的文档 |
-| **多窗口/多人协同GIT文档冲突** | 单体的 `modules.md` / `decisions.md` 在并发协作时是合并冲突高发点 | 一业务模块一文件、一决策一文件，把并发编辑物理隔离到不同文件。`docs/modules/` 与 `docs/decisions/` 下不放 README/索引文件——新增/删除文件 100% 无冲突 |
+| **不同粒度的上下文混杂** | 架构级、模块级、代码级信息混在一起，找不到重点 | 文档按职责分离（架构/技术栈/编码规范/模块/决策）；每个 BCU 文件锁定一个业务能力，上下文按能力粒度干净加载。文档优先级链明确裁决冲突，任务感知加载只提供当前粒度所需的文档 |
+| **文档、注释和代码不同步** | 文档写了不更新，逐渐变成误导 | 写模式按检查清单逐项核对代码变更（双向同步——新增/修改使文档增长，删除/回滚使文档收缩），把每项变更精确路由到所属 BCU 文件，并执行跨文档一致性检查避免矛盾。反向同步（代码删除时同步删除对应 BCU / ADR 文件）作为一等概念，与会话内 try-and-undo 严格区分 |
+| **长上下文衰减问题** | 一次性灌入过多上下文，AI 对关键信息的关注度下降 | 当上下文因衰减或压缩而失真时，重读相关 BCU 文件（每文件天然有界、锁定一个业务能力）+ 扫描代码与注释修正。10 种任务类型选择性加载，只加载当前任务需要的文档 |
+| **多窗口/多人协同GIT文档冲突** | 单体的 `modules.md` / `decisions.md` 在并发协作时是合并冲突高发点 | 一 BCU 一文件、一决策一文件，把并发编辑物理隔离到不同文件。`docs/modules/` 与 `docs/decisions/` 下不放 README/索引文件——新增/删除文件 100% 无冲突 |
 
 ---
 
@@ -58,7 +58,7 @@ docs-context 通过三大能力解决 Agent Coding 中项目上下文缺失和�
 | 架构文档 | `docs/architecture.md` | 目录结构、项目背景、系统架构、服务级拓扑、约束、未来规划 |
 | 技术栈文档 | `docs/tech-stack.md` | 框架版本、依赖约束、AI 代码生成限制 |
 | 编码规范 | `docs/coding.md` | 编码规范、命名约定、API 设计规范、错误处理、日志规范、测试规范 |
-| 模块注册表 | `docs/modules/<business>.md` | 一个业务模块一个文件。文件内部按 `## Capability:` 节进一步切分，每个能力节自带实现清单（HTTP / RPC / MQ / 定时任务 / 数据表 / 前端页面）、流程、状态机、本地上下游 |
+| 模块注册表 | `docs/modules/<bcu-slug>.md` | **一个文件一个业务能力单元（BCU）**。每个 BCU 文件包含一个业务能力的实现清单（HTTP / RPC / MQ / 定时任务 / 第三方回调 / 数据表 / 前端页面）、流程、状态机、本地上下游、外部依赖、相关业务链路。Slug 命名一个业务能力（如 `create-order`、`consumer-pay`），**不**对应微服务 / Controller / 包 / 数据表 |
 | 决策记录 | `docs/decisions/ADR-<slug>.md` | 一个架构决策一个文件（ADR）。文件名仅用 slug（不带数字编号、不带日期前缀），日期写在 frontmatter。被取代的旧决策直接删除——目录里只保留活决策 |
 
 所有文档均提供初始化模板，首次使用时按模板创建。模板包含项目类型条件注释，可按需裁剪。`docs/modules/` 与 `docs/decisions/` 下**不放 README/索引文件**——Agent 通过 `Glob` 按需枚举。
@@ -70,15 +70,21 @@ docs/
 ├── architecture.md            # 服务级拓扑 + 全局约束
 ├── tech-stack.md
 ├── coding.md
-├── modules/                   # 一个业务模块一个文件
-│   ├── order.md               # ## Module Overview + ## Capability: Create Order + ## Capability: Refund + ...
-│   └── payment.md             # ## Module Overview + ## Capability: Pre Charge + ## Capability: Settle + ...
+├── modules/                   # 一个业务能力单元（BCU）一个文件
+│   ├── create-order.md        # # Create Order + ## Business Goal + ## Implementation + ## Flow + ## State Transitions + ## Upstream / Downstream
+│   ├── refund.md
+│   ├── pre-charge.md
+│   └── consumer-pay.md
 └── decisions/                 # 一个架构决策一个文件
     ├── ADR-payment-gateway-selection.md
     └── ADR-order-state-machine-redesign.md
 ```
 
-每个 `## Capability:` 节都是自包含的：`### Implementation` 列出该能力涉及的所有制品（HTTP 接口、RPC、MQ 生产/消费、定时任务、数据表、前端页面）；`### Flow` 展示端到端流程；`### Upstream / Downstream` 记录本地依赖。跨模块依赖通过对两个文件中两个能力节的**双向编辑**表达——不维护全局依赖矩阵。
+每个 BCU 文件都是自包含的：`## Implementation` 列出该 BCU 涉及的所有制品（HTTP 接口、RPC、MQ 生产/消费、定时任务、第三方回调、数据表、前端页面）；`## Flow` 展示端到端流程；`## Upstream / Downstream` 记录本地依赖。跨 BCU 依赖通过对两个 BCU 文件的**双向编辑**表达——不维护全局依赖矩阵。可选段（State Transitions / External Dependencies / Related Business Flows / Risks-Constraints / Notes）遵循**段级缺省规则**——有内容时出现，无内容时整段省略。
+
+### BCU 拆分原则
+
+BCU 是一份能独立开发、测试、修改的业务价值——修改主要影响一条业务链路。**不按**微服务 / Controller / API / 技术模块 / 数据表拆。**按**真实业务链路 / 实际开发任务边界 / 并行开发单元拆。默认**保守合并**——完整 7 条 BCU 必满足条件 + 3 问决策流程见 `SKILL.md` 的 "BCU 拆分原则" 段。
 
 ---
 
