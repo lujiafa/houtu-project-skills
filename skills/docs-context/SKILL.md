@@ -78,22 +78,49 @@ When in doubt whether to merge or split, run this 3-question test:
 
 ### Diagrams in BCU files
 
-The `## Flow` section, when present, is the BCU's **end-to-end execution path** — including every service / resource / external system this BCU traverses, traced like a distributed-tracing span tree. It is bounded to this BCU; the system's global service topology belongs in `docs/architecture.md`, not here.
+A BCU file uses **two layers** of diagrams, each with its own purpose. Both layers respect the section-omission rule — never draw a diagram for its own sake.
 
-**Format by complexity** (apply the section-omission rule — never draw a diagram for its own sake):
+**Layer 1 — Per-entry tracing diagrams** (live inside `## Implementation`)
 
-| BCU complexity | Format |
+Each *entry-point* item — HTTP API (inbound), MQ Consumption, Scheduled Task, Third-party Callback — MAY carry its own Mermaid `sequenceDiagram` tracing this entry's full call chain end-to-end: every service / RPC / MQ Production / DB / external system / resource it touches becomes a participant.
+
+**Two rules apply together — optional + complete-when-present**:
+- **Optional** — not every entry needs a diagram. Trivial single-step entries (e.g. read-and-return query, single SQL insert) can stay diagram-free.
+- **Complete when present** — if a diagram is drawn for an entry, it MUST trace every real hop end-to-end. Half-drawn / placeholder / partial-chain diagrams are forbidden — they mislead more than they help. Either skip the diagram or trace it fully.
+
+| Entry-point complexity | Format |
 |---|---|
-| ≤3 steps, single service, no async branches | ASCII arrows / numbered text |
-| Cross-service, multi-actor, async callback, multi-roundtrip, 4+ participants | Mermaid `sequenceDiagram` (one participant per service / external system / resource the BCU actually touches) |
-| Trivial flow already covered by `## Implementation` | **Omit the entire `## Flow` section.** Do not keep an empty heading or a one-line restatement of Implementation. |
+| Trivial single-step (e.g. read-and-return query) | Omit the diagram |
+| Multi-step within one service | ASCII or short Mermaid (still complete — every step shown) |
+| Cross-service / async / 4+ participants | Mermaid `sequenceDiagram` (one participant per service / external / resource the entry touches; trace every hop) |
 
-**Inclusion boundary** (what goes in vs out):
-- IN: services / RPC targets / MQ topics / DBs / third-party gateways that **this BCU itself** invokes or is invoked by during the chain
-- OUT: services / dependencies that have nothing to do with this BCU's chain
-- OUT: the system-wide service topology diagram (that belongs in `docs/architecture.md`)
+**Non-entry items NEVER carry their own diagram**: outbound RPC, MQ Production, Database tables touched, Frontend page, State management. They appear as nodes inside the calling entry's diagram. A separate diagram for these is redundant and is forbidden.
 
-**Why this split**: each BCU file must be self-sufficient for impact analysis — an agent reading one BCU file should see every external touchpoint of that BCU. But a BCU file should not duplicate the global topology, which would re-introduce the conflict surface that splitting was meant to eliminate.
+**Layer 2 — BCU business flow(s)** (the `## Flow` section, **0 / 1 / N diagrams**)
+
+The business-level view: how front-end interactions, business steps, and state transitions weave through the entry points to deliver the BCU's value. This is the **business view**, NOT a technical hop trace.
+
+A BCU may carry **0, 1, or N** business-flow diagrams (1-to-many relationship):
+
+| BCU business-flow situation | Shape |
+|---|---|
+| Single-entry BCU, business flow already obvious from `## Implementation` | **0** — omit the entire `## Flow` section |
+| One coherent business flow | **1** — one diagram directly under `## Flow` |
+| Multiple distinct business sub-flows (e.g. passive-scan vs aggregated-scan vs refund) | **N** — `### <Sub-flow name>` headings, one diagram per sub-flow. Don't bloat one diagram with mutually exclusive branches. |
+
+Format per diagram: Mermaid `sequenceDiagram` or `flowchart` describing business steps; numbered text when truly simple.
+
+**Non-redundancy contract**:
+- Layer 1 nodes = services / RPC / resources / externals (technical hops)
+- Layer 2 nodes = business steps / user actions / state transitions
+- Layer 2 references Layer 1 by **entry name** (e.g. "calls `POST /pay/passive-scan`"); it does NOT redraw the entry's internal hops
+
+**Inclusion boundary** (both layers):
+- IN: services / resources / externals that **this BCU itself** invokes during its chain
+- OUT: services unrelated to this BCU's chain
+- OUT: the system-wide service topology diagram — that belongs in `docs/architecture.md`
+
+**Why this split**: a multi-entry BCU (e.g. consumer pay with passive-scan / aggregated-scan / async callback / reconciliation job) needs **per-entry tracing** for technical clarity AND **business-flow diagrams** for business clarity. Forcing both into one diagram either bloats it beyond reading or loses one of the two views. Splitting cleanly maps to "what each entry does technically" + "how the business strings them together".
 
 ### Section-Omission Rule (hard)
 
