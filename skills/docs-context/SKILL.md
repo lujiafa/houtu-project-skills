@@ -82,19 +82,39 @@ A BCU file uses **two layers** of diagrams, each with its own purpose. Both laye
 
 **Layer 1 — Per-entry tracing diagrams** (live inside `## Implementation`)
 
-Each *entry-point* item — HTTP API (inbound), MQ Consumption, Scheduled Task, Third-party Callback — MAY carry its own Mermaid `sequenceDiagram` tracing this entry's full call chain end-to-end: every service / RPC / MQ Production / DB / external system / resource it touches becomes a participant.
+Each *entry-point* item — HTTP API (inbound), MQ Consumption, Scheduled Task, Third-party Callback — MAY carry a tracing diagram of this entry's full call chain (services / RPC / MQ Production / DB / external systems / resources).
+
+**Format — primary: ASCII span tree, supplementary: Mermaid `sequenceDiagram`**:
+
+- **Primary (default)** — ASCII **span tree** of the factual call chain, mirroring distributed-tracing UIs (SkyWalking / Jaeger / etc.): hierarchical indentation showing parent → child calls.
+  - Compact, diff-friendly, readable in plain text and in any Markdown renderer.
+  - Use box-drawing chars (`├── / └── / │`) or plain ASCII (`+--`).
+  - Each line: one hop (service.method / DB op / RPC / MQ produce / external call) with its result if non-obvious.
+- **Supplementary (optional)** — when the entry is async / multi-roundtrip / has callbacks that the tree shape can't naturally express, ADD a Mermaid `sequenceDiagram` BELOW the tree for global overview. **Don't replace the tree — add alongside.** The tree is the factual chain; the sequence diagram is the temporal overview.
+- **Trivial entries** — omit both. Single read-and-return query, single SQL insert: no diagram.
 
 **Two rules apply together — optional + complete-when-present**:
-- **Optional** — not every entry needs a diagram. Trivial single-step entries (e.g. read-and-return query, single SQL insert) can stay diagram-free.
-- **Complete when present** — if a diagram is drawn for an entry, it MUST trace every real hop end-to-end. Half-drawn / placeholder / partial-chain diagrams are forbidden — they mislead more than they help. Either skip the diagram or trace it fully.
+- **Optional** — not every entry needs a diagram. Trivial entries stay diagram-free.
+- **Complete when present** — if a diagram (tree or sequence) is drawn, it MUST cover every real hop end-to-end. Half-drawn / placeholder / partial-chain diagrams are forbidden.
 
 | Entry-point complexity | Format |
 |---|---|
-| Trivial single-step (e.g. read-and-return query) | Omit the diagram |
-| Multi-step within one service | ASCII or short Mermaid (still complete — every step shown) |
-| Cross-service / async / 4+ participants | Mermaid `sequenceDiagram` (one participant per service / external / resource the entry touches; trace every hop) |
+| Trivial single-step (read-and-return / single insert) | Omit |
+| Linear / synchronous chain (any depth) | ASCII span tree |
+| Async / multi-roundtrip / external callbacks where temporal order matters | ASCII span tree **+** supplementary Mermaid `sequenceDiagram` |
 
-**Non-entry items NEVER carry their own diagram**: outbound RPC, MQ Production, Database tables touched, Frontend page, State management. They appear as nodes inside the calling entry's diagram. A separate diagram for these is redundant and is forbidden.
+ASCII span tree shape:
+
+```
+ENTRY: [protocol/method] [name]
+├── [Service.method] (this service)
+│   ├── DB.[table] insert/update
+│   └── [DownstreamService].[op] (RPC) → [result]
+├── [ExternalGateway].[op] (HTTP/SDK) → [result]
+└── MQ produce [topic]
+```
+
+**Non-entry items NEVER carry their own diagram**: outbound RPC, MQ Production, Database tables touched, Frontend page, State management. They appear as nodes inside the calling entry's tree. A separate diagram for these is redundant and is forbidden.
 
 **Layer 2 — BCU business flow(s)** (the `## Flow` section, **0 / 1 / N diagrams**)
 
